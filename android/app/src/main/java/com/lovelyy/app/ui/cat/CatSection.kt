@@ -437,7 +437,7 @@ internal fun CatStage(
                 fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Brown,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(top = bubbleTop, end = bubbleEnd)
+                    .padding(top = bubbleTop + if (wearing == com.lovelyy.app.data.CareRewards.Accessory.Sapka) 18.dp else 0.dp, end = bubbleEnd)
                     .zIndex(3f)
                     .graphicsLayer { translationY = bob.dp.toPx() }
                     .softShadow(RoundedCornerShape(16.dp, 16.dp, 4.dp, 16.dp), 4.dp)
