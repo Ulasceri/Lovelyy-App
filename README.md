@@ -50,11 +50,13 @@ Tasarımı Firebase olmadan da görebilirsin: `HomeScreen.kt` veya `LoginScreen.
 2. Proje ana sayfasında **Android simgesine** tıkla (Uygulama ekle):
    - **Android paket adı:** `com.lovelyy.app` (birebir aynı olmalı)
    - **Uygulama takma adı:** Lovelyy
-   - **SHA-1:** Google girişi için gerekli. Android Studio'da alttaki **Terminal** sekmesini aç ve yaz:
-     ```
-     .\gradlew signingReport
-     ```
-     Çıktıda `Variant: debug` altındaki `SHA1:` satırını kopyalayıp yapıştır.
+   - **SHA-1:** Google girişi için gerekli. Repo kendi debug anahtarıyla gelir
+     (`android/app/debug.keystore`), bu yüzden `signingReport` çalıştırmana gerek yok. Şunları ekle:
+     - SHA-1: `19:AA:9E:5A:47:AE:5D:7F:70:51:A0:A6:17:AE:83:0E:9C:30:0A:B3`
+     - SHA-256: `34:F5:C1:9F:87:19:D8:1D:83:76:06:27:7A:1F:34:C5:D2:B9:98:9D:26:47:06:50:08:81:A7:E1:59:A1:79:40`
+
+     (Bu anahtar sadece debug içindir; aynı paket adını kullanan başka bir Firebase projesiyle
+     "identical OAuth client" çakışması yaşamamak için uygulamaya özel tutulur. Release için ayrı anahtar gerekir.)
 3. **google-services.json** dosyasını indir ve **`android/app/`** klasörüne koy
    (`android/app/google-services.json`). Bu dosya `.gitignore`'da, GitHub'a gitmez.
 
@@ -90,7 +92,7 @@ Firebase Console → **Build → Authentication** → **Get started** → **Sign
 | Sorun | Çözüm |
 |---|---|
 | "Google girişi henüz ayarlanmadı" | Adım 4.3: Google'ı açtıktan sonra google-services.json'u yeniden indir. |
-| Google girişi açılıp hata veriyor | SHA-1'i Firebase'e eklediğinden emin ol (Adım 3.2). Emülatörde Google Play'li imaj kullan ve emülatörde bir Google hesabıyla oturum aç. |
+| Google girişi açılıp hata veriyor | Repo'daki debug anahtarının SHA-1'ini Firebase'e eklediğinden emin ol (Adım 3.2), sonra google-services.json'u yeniden indir. Emülatörde Google Play'li imaj kullan ve emülatörde bir Google hesabıyla oturum aç. |
 | "İzin hatası" / ana sayfaya geçmiyor | Firestore kurallarını yayınla (Adım 5.3). |
 | Gradle sync hatası | File → *Invalidate Caches / Restart*. JDK olarak Android Studio'nun kendi JDK'sı (17+) seçili olmalı. |
 

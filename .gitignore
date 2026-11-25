@@ -17,6 +17,8 @@ android/.kotlin/
 *.aab
 *.keystore
 *.jks
+# Shared debug-only signing key (see README step 3). Never put a release key here.
+!android/app/debug.keystore
 
 # Firebase secrets / local state
 google-services.json

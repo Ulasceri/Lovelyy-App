@@ -25,7 +25,21 @@ android {
         versionName = "0.1.0"
     }
 
+    // App-specific debug key, committed to the repo, so every machine has the same
+    // SHA-1 registered in Firebase (needed for Google sign-in). Debug only.
+    signingConfigs {
+        getByName("debug") {
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
+        debug {
+            signingConfig = signingConfigs.getByName("debug")
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
