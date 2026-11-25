@@ -21,6 +21,9 @@ class AnalyticsEventTest {
         AnalyticsEvent.QuestionAnswered,
         AnalyticsEvent.NoteAdded,
         AnalyticsEvent.PlanAdded(yearly = true),
+        AnalyticsEvent.LocationSharingChanged(sharing = true),
+        AnalyticsEvent.LocationUpdated(cityOnly = true),
+        AnalyticsEvent.ProfileNameChanged,
         AnalyticsEvent.ScreenView("home"),
         AnalyticsEvent.ScreenView("day_counter"),
     )

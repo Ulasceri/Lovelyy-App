@@ -88,6 +88,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -126,7 +127,7 @@ import kotlin.random.Random
 
 /** The whole cat block of Home: the living cat, its needs, the care buttons and the streak. */
 @Composable
-fun CatSection(me: UserProfile, couple: Couple?, partner: UserProfile?, modifier: Modifier = Modifier) {
+fun CatSection(me: UserProfile, couple: Couple?, partner: UserProfile?, modifier: Modifier = Modifier, onOpenCare: () -> Unit = {}) {
     val coupleId = me.coupleId ?: return
     val app = lovelyyApp()
     val vm: CatViewModel = viewModel(key = "cat-$coupleId") { CatViewModel(app, coupleId, me.uid) }
@@ -225,6 +226,7 @@ fun CatSection(me: UserProfile, couple: Couple?, partner: UserProfile?, modifier
                 onPetting = { animator.setPetting(it) },
                 onStroke = { view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK) },
                 onPetDone = { strokes -> if (strokes > 0) vm.act(me, members, CatActionType.Pet, strokes) },
+                onStreakClick = onOpenCare,
             )
             NeedsRow(ui?.levels)
         }
@@ -269,11 +271,11 @@ fun CatSection(me: UserProfile, couple: Couple?, partner: UserProfile?, modifier
     }
 }
 
-private fun confirmHaptic() =
+internal fun confirmHaptic() =
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) HapticFeedbackConstants.CONFIRM else HapticFeedbackConstants.KEYBOARD_TAP
 
 /** The animation that shows an action. Sleep/Wake are shown by the mood itself. */
-private fun CatActionType.clip(): CatClip? = when (this) {
+internal fun CatActionType.clip(): CatClip? = when (this) {
     CatActionType.Feed -> CatClip.Eating
     CatActionType.Water -> CatClip.Drinking
     CatActionType.Play -> CatClip.Playing
@@ -287,7 +289,7 @@ private fun CatActionType.clip(): CatClip? = when (this) {
 private data class Heart(val id: Long, val at: Offset, val drift: Float, val size: Float)
 
 @Composable
-private fun CatStage(
+internal fun CatStage(
     animator: CatAnimator,
     sleepingPoster: Boolean,
     name: String?,
@@ -299,6 +301,15 @@ private fun CatStage(
     onPetting: (Boolean) -> Unit,
     onStroke: () -> Unit,
     onPetDone: (Int) -> Unit,
+    stageModifier: Modifier = Modifier.aspectRatio(STAGE_RATIO),
+    /** Which part of the square video stays visible when the stage is wider than tall (0.5 = middle). */
+    cropBias: Float = 0.5f,
+    showChips: Boolean = true,
+    bubbleTop: Dp = 64.dp,
+    bubbleEnd: Dp = 18.dp,
+    /** A small line pinned bottom-left ("Bugün: sen sevdin"), hidden while a banner shows. */
+    footer: String? = null,
+    onStreakClick: (() -> Unit)? = null,
 ) {
     val hearts = remember { mutableStateListOf<Heart>() }
     val density = LocalDensity.current
@@ -312,7 +323,7 @@ private fun CatStage(
     BoxWithConstraints(
         Modifier
             .fillMaxWidth()
-            .aspectRatio(STAGE_RATIO)
+            .then(stageModifier)
             .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
             .background(CatBg)
             // Tap = surprise. Stroke = petting (hearts + purring + love).
@@ -359,7 +370,8 @@ private fun CatStage(
     ) {
         val side = maxWidth
         // Videos are square; the stage is a bit wider than tall, so crop top and bottom evenly.
-        Box(Modifier.requiredSize(side, side)) {
+        val shift = (side - maxHeight) * (0.5f - cropBias)
+        Box(Modifier.requiredSize(side, side).offset(y = shift)) {
             if (!animator.started) {
                 Image(
                     painter = painterResource(if (sleepingPoster) R.drawable.cat_sleep else R.drawable.cat_base),
@@ -382,7 +394,7 @@ private fun CatStage(
         hearts.forEach { h -> key(h.id) { FloatingHeart(h) { hearts.remove(h) } } }
 
         // Top: name tag and streak.
-        Row(
+        if (showChips) Row(
             Modifier
                 .fillMaxWidth()
                 .padding(14.dp)
@@ -398,7 +410,7 @@ private fun CatStage(
                 Icon(Icons.Filled.Edit, null, Modifier.size(14.dp), tint = BrownSoft)
             }
             Spacer(Modifier.weight(1f))
-            Chip(solid = true) {
+            Chip(onClick = onStreakClick, solid = true) {
                 Icon(Icons.Filled.LocalFireDepartment, null, Modifier.size(16.dp), tint = Color(0xFFE07A45))
                 Spacer(Modifier.width(4.dp))
                 Text(stringResource(R.string.cat_streak_chip, streak), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Brown)
@@ -415,13 +427,28 @@ private fun CatStage(
                 fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Brown,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(top = 64.dp, end = 18.dp)
+                    .padding(top = bubbleTop, end = bubbleEnd)
                     .zIndex(3f)
                     .graphicsLayer { translationY = bob.dp.toPx() }
                     .softShadow(RoundedCornerShape(16.dp, 16.dp, 4.dp, 16.dp), 4.dp)
                     .clip(RoundedCornerShape(16.dp, 16.dp, 4.dp, 16.dp))
                     .background(CreamCard)
                     .padding(horizontal = 12.dp, vertical = 8.dp),
+            )
+        }
+
+        if (footer != null && banner == null) {
+            Text(
+                footer,
+                fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Brown,
+                maxLines = 1, overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(start = 14.dp, end = 14.dp, bottom = 12.dp)
+                    .zIndex(3f)
+                    .clip(RoundedCornerShape(50))
+                    .background(CreamCard.copy(alpha = 0.9f))
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
             )
         }
 
@@ -547,7 +574,7 @@ private fun NeedMeter(label: String, value: Double?, modifier: Modifier) {
 }
 
 /** The care button to highlight: the need that is lowest (if it's getting low). */
-private fun mostNeeded(l: CatLevels): CatActionType? {
+internal fun mostNeeded(l: CatLevels): CatActionType? {
     if (l.sleeping) return null
     val needs = listOf(
         CatActionType.Feed to l.hunger,
@@ -559,7 +586,7 @@ private fun mostNeeded(l: CatLevels): CatActionType? {
     return if (v < CatRules.HAPPY) type else null
 }
 
-private fun CatMood.bubbleRes(): Int = when (this) {
+internal fun CatMood.bubbleRes(): Int = when (this) {
     CatMood.Sleeping -> R.string.bubble_sleeping
     CatMood.Hungry -> R.string.bubble_hungry
     CatMood.Thirsty -> R.string.bubble_thirsty
@@ -671,7 +698,7 @@ private fun relativeTime(at: Long): String {
 
 /** "Deniz besledi", "Sen oynadın"... */
 @Composable
-private fun actionTexts(partnerName: String, myUid: String): (CatAction) -> String {
+internal fun actionTexts(partnerName: String, myUid: String): (CatAction) -> String {
     val context = LocalContext.current
     return remember(partnerName, myUid) {
         { a: CatAction ->
@@ -692,7 +719,7 @@ private fun actionTexts(partnerName: String, myUid: String): (CatAction) -> Stri
 }
 
 @Composable
-private fun refusalTexts(catName: String?): (CatRules.Refusal) -> String {
+internal fun refusalTexts(catName: String?): (CatRules.Refusal) -> String {
     val context = LocalContext.current
     val name = catName?.takeIf { it.isNotBlank() } ?: context.getString(R.string.cat_generic)
     return remember(name) {
@@ -713,7 +740,7 @@ private fun refusalTexts(catName: String?): (CatRules.Refusal) -> String {
 // ---------- naming ----------
 
 @Composable
-private fun NameCatDialog(initial: String, canDismiss: Boolean, onDismiss: () -> Unit, onSave: (String) -> Unit) {
+internal fun NameCatDialog(initial: String, canDismiss: Boolean, onDismiss: () -> Unit, onSave: (String) -> Unit) {
     var text by remember { mutableStateOf(initial) }
     AlertDialog(
         onDismissRequest = { if (canDismiss) onDismiss() },
@@ -741,5 +768,5 @@ private fun NameCatDialog(initial: String, canDismiss: Boolean, onDismiss: () ->
     )
 }
 
-private const val STAGE_RATIO = 1.12f
+internal const val STAGE_RATIO = 1.12f
 private const val STROKE_DP = 70

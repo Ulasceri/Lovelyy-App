@@ -42,7 +42,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AutoStories
 import androidx.compose.material.icons.rounded.Brush
 import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.Checkroom
@@ -51,8 +50,6 @@ import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.Groups
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.HourglassTop
-import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
-import androidx.compose.material.icons.rounded.Mood
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Photo
 import androidx.compose.material.icons.rounded.Place
@@ -70,7 +67,6 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -100,7 +96,10 @@ import com.lovelyy.app.data.Signal
 import com.lovelyy.app.data.SignalKind
 import com.lovelyy.app.data.UserProfile
 import com.lovelyy.app.signals.labelRes
+import com.lovelyy.app.ui.cat.CatCareScreen
 import com.lovelyy.app.ui.cat.CatSection
+import com.lovelyy.app.ui.distance.DistanceScreen
+import com.lovelyy.app.ui.profile.ProfileScreen
 import com.lovelyy.app.ui.components.CircleIconButton
 import com.lovelyy.app.ui.components.IconCircle
 import com.lovelyy.app.ui.components.Pill
@@ -133,7 +132,6 @@ import com.lovelyy.app.ui.theme.PeachTint
 import com.lovelyy.app.ui.theme.Quicksand
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.launch
 
 /** Bottom-nav tabs. The center heart is not a tab: it opens the heartbeat screen. */
 private enum class Tab { Yuva, Anilar, Planlar, Biz }
@@ -145,6 +143,8 @@ private object Routes {
     const val MOOD = "mood"
     const val QUESTION = "question"
     const val NOTES = "notes"
+    const val CAT = "cat"
+    const val DISTANCE = "distance"
 }
 
 /** Everything after pairing: the home tabs and the inner screens. */
@@ -176,7 +176,13 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
                 Routes.MOOD -> InnerScreens.MOOD
                 Routes.QUESTION -> InnerScreens.QUESTION
                 Routes.NOTES -> InnerScreens.NOTES
-                else -> if (tab == Tab.Planlar) InnerScreens.PLANS else "home"
+                Routes.CAT -> InnerScreens.CAT_CARE
+                Routes.DISTANCE -> InnerScreens.DISTANCE
+                else -> when (tab) {
+                    Tab.Planlar -> InnerScreens.PLANS
+                    Tab.Biz -> InnerScreens.PROFILE
+                    else -> "home"
+                }
             },
         )
     }
@@ -216,13 +222,22 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
                             Tab.Yuva -> YuvaTab(me, couple, partner, moods, soon, open = ::push, openPlans = { tab = Tab.Planlar })
                             Tab.Anilar -> ComingSoon(stringResource(R.string.tab_memories), stringResource(R.string.tab_memories_soon), Icons.Rounded.Photo, Modifier.padding(top = 40.dp))
                             Tab.Planlar -> PlansScreen(me, couple, partner, onBucket = soon, onWheel = soon)
-                            Tab.Biz -> BizTab(me, couple, partner, open = ::push)
+                            Tab.Biz -> ProfileScreen(
+                                me, couple, partner,
+                                onMood = { push(Routes.MOOD) },
+                                onQuestion = { push(Routes.QUESTION) },
+                                onDistance = { push(Routes.DISTANCE) },
+                                onCounter = { push(Routes.COUNTER) },
+                                onSoon = soon,
+                            )
                         }
                     }
                     Routes.COUNTER -> CounterScreen(me, couple, partner, onBack = ::pop)
                     Routes.MOOD -> MoodScreen(me, partner, moods, onBack = ::pop, onHistory = soon)
                     Routes.QUESTION -> QuestionScreen(me, couple, partner, onBack = ::pop, onHistory = soon)
                     Routes.NOTES -> NotesScreen(me, partner, onBack = ::pop, onSearch = soon)
+                    Routes.CAT -> CatCareScreen(me, couple, partner, onBack = ::pop, onAccessories = soon)
+                    Routes.DISTANCE -> DistanceScreen(me, partner, onBack = ::pop)
                     Routes.HEARTBEAT -> HeartbeatScreen(me, partner, Emotion.of(route.substringAfter(':', "")), onHistory = soon)
                 }
             }
@@ -232,8 +247,8 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
             val routeKey = top?.substringBefore(':')
             val navTab = when (routeKey) {
                 null -> tab
-                Routes.COUNTER -> Tab.Yuva
-                Routes.MOOD, Routes.QUESTION -> Tab.Biz
+                Routes.COUNTER, Routes.CAT -> Tab.Yuva
+                Routes.MOOD, Routes.QUESTION, Routes.DISTANCE -> Tab.Biz
                 Routes.NOTES -> Tab.Anilar
                 else -> null
             }
@@ -343,7 +358,7 @@ private fun YuvaTab(
     ) {
         Header(me, partnerName, startMillis, onDays = { open(Routes.COUNTER) }, onBell = soon)
 
-        CatSection(me, couple, partner, Modifier.padding(top = 16.dp))
+        CatSection(me, couple, partner, Modifier.padding(top = 16.dp), onOpenCare = { open(Routes.CAT) })
 
         TogetherCard(startMillis, Modifier.padding(top = 18.dp)) { open(Routes.COUNTER) }
 
@@ -371,10 +386,10 @@ private fun YuvaTab(
             CornerItem(Icons.Rounded.EditNote, R.string.feature_notes, PeachTint, Routes.NOTES),
             CornerItem(Icons.Rounded.Event, R.string.feature_calendar, MintTint, PLANS_TAB),
             CornerItem(Icons.Rounded.Restaurant, R.string.feature_food, PeachTint),
-            CornerItem(Icons.Rounded.Place, R.string.feature_distance, MintTint),
+            CornerItem(Icons.Rounded.Place, R.string.feature_distance, MintTint, Routes.DISTANCE),
             CornerItem(Icons.Rounded.HourglassTop, R.string.feature_capsule, PeachTint),
             CornerItem(Icons.Rounded.Star, R.string.feature_bucket, MintTint),
-            CornerItem(Icons.Rounded.Checkroom, R.string.feature_wardrobe, PeachTint),
+            CornerItem(Icons.Rounded.Checkroom, R.string.feature_wardrobe, PeachTint, Routes.CAT),
         )
         corner.chunked(3).forEach { row ->
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(bottom = 10.dp)) {
@@ -545,72 +560,6 @@ private fun CornerTile(icon: ImageVector, title: String, tint: Color, modifier: 
             Box(Modifier.alpha(if (ready) 0f else 1f)) {
                 Pill(stringResource(R.string.home_soon), background = Color(0xFFF6EEE8), color = BrownSoft, fontSize = 11)
             }
-        }
-    }
-}
-
-// ---------- Biz (us) tab ----------
-
-@Composable
-private fun BizTab(me: UserProfile, couple: Couple?, partner: UserProfile?, open: (String) -> Unit) {
-    val app = lovelyyApp()
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    val partnerName = partner?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.home_partner_fallback)
-    val startMillis = couple?.startDate?.toDate()?.time
-    Column(
-        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(top = 24.dp, bottom = 120.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
-        SoftCard(Modifier.fillMaxWidth(), color = PeachCard) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.width(92.dp)) {
-                    Avatar(me.displayName, Peach, Modifier.scale(1.3f))
-                    Avatar(partnerName, Mint, Modifier.offset(x = 40.dp).scale(1.3f))
-                }
-                Column(Modifier.weight(1f)) {
-                    Text(stringResource(R.string.home_us, me.displayName, partnerName), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = Brown)
-                    Text(
-                        if (startMillis != null) stringResource(R.string.biz_since, formatDate(startMillis))
-                        else stringResource(R.string.home_set_date),
-                        fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = BrownSoft,
-                    )
-                }
-            }
-        }
-        BizRow(Icons.Rounded.Mood, stringResource(R.string.feature_mood)) { open(Routes.MOOD) }
-        BizRow(Icons.Rounded.QuestionAnswer, stringResource(R.string.feature_question)) { open(Routes.QUESTION) }
-        BizRow(Icons.Rounded.AutoStories, stringResource(R.string.feature_days)) { open(Routes.COUNTER) }
-        BizRow(Icons.Rounded.Notifications, stringResource(R.string.biz_notifications)) {
-            val i = android.content.Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-                .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, context.packageName)
-            runCatching { context.startActivity(i) }
-        }
-        Text(
-            stringResource(R.string.biz_profile_soon),
-            fontFamily = Quicksand, fontWeight = FontWeight.Medium, fontSize = 13.sp, color = BrownSoft,
-            modifier = Modifier.padding(horizontal = 4.dp),
-        )
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .height(52.dp)
-                .clip(RoundedCornerShape(18.dp))
-                .background(Color(0xFFF6EEE8))
-                .bounceClick { scope.launch { app.authRepository.signOut(context) } },
-            contentAlignment = Alignment.Center,
-        ) { Text(stringResource(R.string.sign_out), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Brown) }
-    }
-}
-
-@Composable
-private fun BizRow(icon: ImageVector, title: String, onClick: () -> Unit) {
-    SoftCard(Modifier.fillMaxWidth(), padding = 14.dp, onClick = onClick) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconCircle(icon, PeachTint)
-            Spacer(Modifier.width(14.dp))
-            Text(title, fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Brown, modifier = Modifier.weight(1f))
-            Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null, tint = BrownSoft)
         }
     }
 }

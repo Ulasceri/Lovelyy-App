@@ -110,6 +110,7 @@ treats them as valid for 30 minutes (the rules still allow up to 24h).
 | `couples/{id}/questions/{yyyy-MM-dd}` | day, question, answers.{uid} = {name, text, at} | günün sorusu; question text comes from `QuestionBank.forDay` so both phones agree without a server |
 | `couples/{id}/notes/{auto}` | text, color (0-4), pinned, by, byName, at | shared sticky notes |
 | `couples/{id}/events/{auto}` | title, date (yyyy-MM-dd), emoji, yearly, by, byName, at | plans and special days; the anniversary is built in from `startDate`, not stored |
+| `couples/{id}/locations/{uid}` | city, lat, lng (rounded: 0.1° city-only or 0.01°), cityOnly, at | only while the partner shares location on Mesafe; turning sharing off deletes it. The app shows only city and distance |
 
 Günün sorusu hides the partner's answer until you answer, but only in the app: Firestore rules
 can't hide one field of a document from a member, and both partners are members. That's fine for

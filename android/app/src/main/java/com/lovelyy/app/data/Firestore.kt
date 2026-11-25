@@ -14,6 +14,7 @@ object Paths {
     const val QUESTIONS = "questions"
     const val NOTES = "notes"
     const val EVENTS = "events"
+    const val LOCATIONS = "locations"
 }
 
 internal fun DocumentSnapshot.toUserProfile(): UserProfile? =

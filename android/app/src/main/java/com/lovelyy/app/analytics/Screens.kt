@@ -25,4 +25,7 @@ object InnerScreens {
     const val QUESTION = "daily_question"
     const val NOTES = "notes"
     const val PLANS = "plans"
+    const val CAT_CARE = "cat_care"
+    const val PROFILE = "profile"
+    const val DISTANCE = "distance"
 }

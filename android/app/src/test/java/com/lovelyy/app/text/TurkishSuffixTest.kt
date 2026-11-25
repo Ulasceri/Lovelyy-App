@@ -30,4 +30,14 @@ class TurkishSuffixTest {
         assertEquals("Salı'dan", TurkishSuffix.ablative("Salı"))
         assertEquals("Ahmet'ten", TurkishSuffix.ablative("Ahmet"))
     }
+
+    @Test
+    fun ablativeOfYears() {
+        assertEquals("9 Ekim 2025'ten", TurkishSuffix.ablative("9 Ekim 2025"))
+        assertEquals("2010'dan", TurkishSuffix.ablative("2010"))
+        assertEquals("2020'den", TurkishSuffix.ablative("2020"))
+        assertEquals("2000'den", TurkishSuffix.ablative("2000"))
+        assertEquals("2026'dan", TurkishSuffix.ablative("2026"))
+        assertEquals("1940'tan", TurkishSuffix.ablative("1940"))
+    }
 }

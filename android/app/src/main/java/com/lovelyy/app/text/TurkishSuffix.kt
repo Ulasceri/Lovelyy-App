@@ -39,10 +39,30 @@ object TurkishSuffix {
     fun ablative(word: String): String {
         val n = word.trim()
         if (n.isEmpty()) return n
+        if (n.last().isDigit()) return "$n'" + numberAblative(n.takeLastWhile { it.isDigit() })
         val v = lastVowel(n) ?: 'e'
         val e = if (v in "aıou") "an" else "en"
         val last = n.lowercase(TR).last()
         val d = if (last in "çfhkpsşt") "t" else "d"
         return "$n'$d$e"
+    }
+
+    /** "2025'ten", "2010'dan", "2000'den": the ending follows how the number is read aloud. */
+    private fun numberAblative(digits: String): String {
+        val n = digits.toLongOrNull() ?: return "den"
+        if (n == 0L) return "dan" // sıfır
+        if (n % 1000 == 0L) return "den" // bin, milyon
+        if (n % 100 == 0L) return "den" // yüz
+        if (n % 10 == 0L) return when ((n / 10 % 10).toInt()) {
+            1, 3, 9 -> "dan" // on, otuz, doksan
+            4, 6 -> "tan" // kırk, altmış
+            7 -> "ten" // yetmiş
+            else -> "den" // yirmi, elli, seksen
+        }
+        return when ((n % 10).toInt()) {
+            3, 4, 5 -> "ten" // üç, dört, beş
+            6, 9 -> "dan" // altı, dokuz
+            else -> "den" // bir, iki, yedi, sekiz
+        }
     }
 }

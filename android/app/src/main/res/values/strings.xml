@@ -452,4 +452,85 @@
     <string name="p_editor_date">Tarih: %1$s</string>
     <string name="p_editor_yearly">Her yıl tekrarlasın (özel gün)</string>
     <string name="p_pick_date">Tarih seç</string>
+
+    <!-- Kedi bakımı (approved design 14) -->
+    <string name="cc_accessories">Aksesuarlar</string>
+    <string name="cc_today">Bugün: %1$s</string>
+    <string name="cc_today_none">Bugün henüz kimse ilgilenmedi</string>
+    <string name="cc_me_feed">sen besledin</string>
+    <string name="cc_me_water">sen su verdin</string>
+    <string name="cc_me_play">sen oynadın</string>
+    <string name="cc_me_pet">sen sevdin</string>
+    <string name="cc_me_sleep">sen uyuttun</string>
+    <string name="cc_me_wake">sen uyandırdın</string>
+    <string name="cc_feed">%1$s besledi</string>
+    <string name="cc_water">%1$s su verdi</string>
+    <string name="cc_play">%1$s oynadı</string>
+    <string name="cc_pet">%1$s sevdi</string>
+    <string name="cc_sleep">%1$s uyuttu</string>
+    <string name="cc_wake">%1$s uyandırdı</string>
+    <string name="cc_percent">%%%1$d</string>
+    <string name="cc_streak_title">%1$d gün bakım serisi</string>
+    <string name="cc_streak_next">%1$s için %2$d gün kaldı</string>
+    <string name="cc_streak_all">Tüm aksesuarlar açıldı</string>
+    <string name="cc_streak_chip">%1$d / %2$d</string>
+    <string name="cc_day">%1$d. gün</string>
+    <string name="cc_acc_kurdele">Kurdele</string>
+    <string name="cc_acc_papyon">Papyon</string>
+    <string name="cc_acc_sapka">Şapka</string>
+    <string name="cc_acc_gozluk">Gözlük</string>
+    <string name="cc_locked">%1$s, kilitli</string>
+    <string name="cc_unlocked">%1$s, açıldı</string>
+
+    <!-- Biz: profil ve ayarlar (approved design 10) -->
+    <string name="pf_title">Biz</string>
+    <string name="pf_subtitle">Profil ve ayarlar</string>
+    <string name="pf_since">%1$s beri</string>
+    <string name="pf_together">Birlikte %1$d gün</string>
+    <string name="pf_edit">Profili düzenle</string>
+    <string name="pf_edit_title">Adın</string>
+    <string name="pf_edit_body">Sevgilin seni bu isimle görecek.</string>
+    <string name="pf_bell">Bildirimler</string>
+    <string name="pf_mood">Ruh hali</string>
+    <string name="pf_question">Günün sorusu</string>
+    <string name="pf_distance">Mesafe</string>
+    <string name="pf_days">Gün sayacı</string>
+    <string name="pf_notifications">Bildirimler</string>
+    <string name="pf_on">Açık</string>
+    <string name="pf_off">Kapalı</string>
+    <string name="pf_location">Konum paylaşımı</string>
+    <string name="pf_location_city">Şehir düzeyi</string>
+    <string name="pf_location_precise">Yaklaşık 1 km</string>
+    <string name="pf_widgets">Ana ekran widget\'ları</string>
+    <string name="pf_widgets_count">%1$d ekli</string>
+    <string name="pf_widgets_none">Ekle</string>
+    <string name="pf_cat_name">Kedinin adı</string>
+    <string name="pf_account">Hesap</string>
+    <string name="pf_account_google">Google ile bağlı</string>
+    <string name="pf_account_email">E-posta ile bağlı</string>
+    <string name="pf_unpair">Eşleşmeyi kaldır</string>
+
+    <!-- Mesafe (approved design 9) -->
+    <string name="ds_title">Mesafe</string>
+    <string name="ds_refresh">Konumu güncelle</string>
+    <string name="ds_between">Aranızda</string>
+    <string name="ds_km">%1$d km</string>
+    <string name="ds_updated">%1$s güncellendi</string>
+    <string name="ds_no_city">Şehir yok</string>
+    <string name="ds_waiting_me">Mesafeyi görmek için konumunu paylaş</string>
+    <string name="ds_waiting_partner">%1$s henüz konum paylaşmadı</string>
+    <string name="ds_car">Arabayla</string>
+    <string name="ds_plane">Uçakla</string>
+    <string name="ds_duration">%1$d sa %2$d dk</string>
+    <string name="ds_duration_min">%1$d dk</string>
+    <string name="ds_next_meet">Bir sonraki buluşma</string>
+    <string name="ds_no_meet">Henüz plan yok, Planlar\'dan ekleyebilirsin</string>
+    <string name="ds_meet_today">Bugün</string>
+    <string name="ds_meet_days">%1$d gün</string>
+    <string name="ds_share">Konumumu paylaş</string>
+    <string name="ds_share_sub">Yalnızca %1$s görür</string>
+    <string name="ds_city_only">Sadece şehir ve mesafe</string>
+    <string name="ds_city_only_sub">Tam adresin hiçbir zaman gösterilmez</string>
+    <string name="ds_no_permission">Konum izni olmadan mesafe gösterilemez</string>
+    <string name="ds_no_fix">Konum bulunamadı, biraz sonra tekrar dene</string>
 </resources>

@@ -2,8 +2,10 @@
 
 Çiftler için, ortak bir kediyi birlikte büyüttüğünüz mobil uygulama. Önce Android.
 
-> **Şu anki adım (1):** Giriş (Google + e-posta), partnerle kodla eşleşme ve ana sayfa iskeleti.
-> Kedi ve diğer özellikler sonraki adımlarda gelecek.
+> **Şu an:** Giriş (Google + e-posta), kodla eşleşme, ortak kedi (ana sayfa + kedi bakımı ekranı, seri ve aksesuarlar),
+> gün sayacı, kalp atışı, ruh hali, günün sorusu, notlar, Planlar (takvim + özel günler), Biz (profil ve ayarlar)
+> ve Mesafe (şehir düzeyinde konum paylaşımı). Ekranlar onaylı tasarımlardan üçer üçer kodlanıyor; sıradakiler:
+> canlı çizim, karar çarkı, zaman kapsülü, hayaller listesi, Anılar ve widget'lar.
 
 ## Klasör yapısı (monorepo)
 

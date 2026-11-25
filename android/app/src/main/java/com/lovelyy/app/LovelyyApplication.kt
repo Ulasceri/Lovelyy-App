@@ -7,6 +7,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.lovelyy.app.data.AuthRepository
 import com.lovelyy.app.data.CatRepository
 import com.lovelyy.app.data.EventRepository
+import com.lovelyy.app.data.LocationRepository
 import com.lovelyy.app.data.MoodRepository
 import com.lovelyy.app.data.NoteRepository
 import com.lovelyy.app.data.QuestionRepository
@@ -37,5 +38,6 @@ class LovelyyApplication : Application() {
     val questionRepository by lazy { QuestionRepository(FirebaseFirestore.getInstance()) }
     val noteRepository by lazy { NoteRepository(FirebaseFirestore.getInstance()) }
     val eventRepository by lazy { EventRepository(FirebaseFirestore.getInstance()) }
+    val locationRepository by lazy { LocationRepository(FirebaseFirestore.getInstance()) }
     val signalCenter by lazy { SignalCenter(this) }
 }

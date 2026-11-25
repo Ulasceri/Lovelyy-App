@@ -79,6 +79,23 @@ sealed interface AnalyticsEvent {
         override val params: Map<String, Any> get() = mapOf("yearly" to yearly)
     }
 
+    /** Location sharing on the Mesafe screen was turned on or off. No coordinates or city, ever. */
+    data class LocationSharingChanged(val sharing: Boolean) : AnalyticsEvent {
+        override val name = "location_sharing_changed"
+        override val params: Map<String, Any> get() = mapOf("sharing" to sharing)
+    }
+
+    /** The user's rough location was refreshed. [cityOnly] = rounded to ~10 km. */
+    data class LocationUpdated(val cityOnly: Boolean) : AnalyticsEvent {
+        override val name = "location_updated"
+        override val params: Map<String, Any> get() = mapOf("city_only" to cityOnly)
+    }
+
+    /** The user changed their own display name on the profile. */
+    data object ProfileNameChanged : AnalyticsEvent {
+        override val name = "profile_name_changed"
+    }
+
     /**
      * A screen was shown. [screenName] is a fixed route name like "home", never anything dynamic.
      * Sent as the standard `screen_view` event, so it shows up in the Screens report.
