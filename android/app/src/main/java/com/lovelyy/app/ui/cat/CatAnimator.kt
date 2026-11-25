@@ -34,7 +34,7 @@ import kotlinx.coroutines.launch
  */
 @Stable
 @OptIn(UnstableApi::class)
-class CatAnimator(context: Context, private val scope: CoroutineScope) {
+class CatAnimator(private val context: Context, private val scope: CoroutineScope) {
 
     private inner class Layer(val id: Int) {
         val player: ExoPlayer = ExoPlayer.Builder(context).build().apply {
