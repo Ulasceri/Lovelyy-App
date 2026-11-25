@@ -87,9 +87,15 @@ widget computes the mood itself (time-based), and WorkManager refreshes from Fir
 ## Navigation
 
 `AppState` still picks the big screen (login → name → pairing → home). Inside Home,
-`ui/home/HomeScreen.kt` adds a bottom nav (Yuva · Anılar · ♥ · Planlar · Biz) and a tiny string
-back stack for inner screens (`counter`, `mood`, `heartbeat[:emotion]`). The center heart opens
-the heartbeat screen. Shared building blocks of the approved design are in `ui/components/Design.kt`.
+`ui/home/HomeScreen.kt` adds a bottom nav (Yuva · Anılar · ♥ · Planlar · Biz). Shared building
+blocks of the approved design are in `ui/components/Design.kt`.
+
+**Only designed and approved screens are in the app**: Karşılama, Giriş, Eşleşme, Anasayfa. The
+feature screens built earlier without a design (gün sayacı, kalp atışı, ruh hali, günün sorusu,
+notlar, takvim) were removed on 2026-11-25 at the owner's request; they are in git history
+(up to commit cf23db5). Home cards stay as in the design and answer a tap with "Yakında". The
+data layer below (`data/*`, `signals/*`) is kept for when each screen is designed, approved and
+rebuilt. Rule from now on: design first, approval, then implementation.
 
 Pairing codes are now 6 digits (2-9, so they still match the existing rules regex) and the app
 treats them as valid for 30 minutes (the rules still allow up to 24h).
@@ -119,8 +125,7 @@ Real push (FCM) needs a trusted sender (a Cloud Function), and functions need th
 So `signals/SignalCenter.kt` does the best possible without a server:
 
 - While the app process is alive (open or recently backgrounded) a Firestore listener sees a new
-  signal within about a second: on screen it plays a full-screen animation with a heartbeat
-  vibration; in the background it posts a local notification.
+  signal within about a second and posts a local notification.
 - When the app is closed, `SignalWorker` (WorkManager) checks every ~15 minutes, Android's
   minimum, and posts what was missed.
 

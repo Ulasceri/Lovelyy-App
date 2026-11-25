@@ -88,17 +88,8 @@ class SignalCenter(private val app: LovelyyApplication) {
                     val fresh = list.filter { it.to == myUid && it.at > last }.sortedBy { it.at }
                     if (fresh.isEmpty()) return@collect
                     save(app) { putLong(K_LAST, fresh.last().at) }
-                    if (appVisible) {
-                        // Heartbeats and nudges play big on screen; quieter news stays a notification.
-                        val (big, small) = fresh.partition { it.kind == SignalKind.Heartbeat || it.kind == SignalKind.Nudge }
-                        big.lastOrNull()?.let {
-                            _incoming.tryEmit(it)
-                            vibrate(app, it.kind)
-                        }
-                        small.takeLast(MAX_NOTIFY).forEach { notify(app, it) }
-                    } else {
-                        fresh.takeLast(MAX_NOTIFY).forEach { notify(app, it) }
-                    }
+                    // No in-app overlay yet (its design isn't approved): everything is a notification.
+                    fresh.takeLast(MAX_NOTIFY).forEach { notify(app, it) }
                 }
         }
     }

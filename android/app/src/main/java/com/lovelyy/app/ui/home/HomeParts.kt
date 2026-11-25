@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import com.lovelyy.app.R
+import com.lovelyy.app.signals.labelRes
 import com.lovelyy.app.data.SignalKind
 import com.lovelyy.app.data.UserProfile
 import com.lovelyy.app.signals.SignalCenter
@@ -120,3 +121,9 @@ fun ComingSoon(title: String, body: String, icon: androidx.compose.ui.graphics.v
         Text(body, fontFamily = Quicksand, fontWeight = FontWeight.Medium, fontSize = 15.sp, lineHeight = 22.sp, color = BrownSoft, textAlign = TextAlign.Center)
     }
 }
+
+@Composable
+fun moodLabel(kind: com.lovelyy.app.data.MoodKind): String = stringResource(kind.labelRes())
+
+fun formatDate(millis: Long): String =
+    com.lovelyy.app.data.DayCounter.dateOf(millis).format(java.time.format.DateTimeFormatter.ofPattern("d MMMM yyyy", java.util.Locale("tr")))
