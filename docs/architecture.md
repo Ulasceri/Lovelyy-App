@@ -82,6 +82,13 @@ refills it), love 8h. The streak grows by one for each day on which both partner
 RemoteViews widget with one picture per mood. The app saves the cat whenever it changes; the
 widget computes the mood itself (time-based), and WorkManager refreshes from Firestore every 30 min.
 
+Four widgets (all RemoteViews, `widget/CatWidget.kt` + `widget/MoreWidgets.kt`): small cat, wide cat
+(needs bars + streak + couple day), day counter with a heart, and live drawing. Widgets can't read
+Firestore while the app is closed, so `WidgetData` keeps the couple (ids, names, start date) in
+SharedPreferences; sign-out clears it. The heart is a `HeartReceiver` broadcast that sends a "Sevgi"
+heartbeat with the signed-in user. The drawing widget shows a 420 px PNG rendered by the app (or by the
+30-min worker) into app storage. In-app showcase: `ui/widgets/WidgetsScreen.kt` (Biz → Ana ekran widget'ları).
+
 # Step 3: redesigned screens + first three features
 
 ## Navigation
@@ -111,6 +118,12 @@ treats them as valid for 30 minutes (the rules still allow up to 24h).
 | `couples/{id}/notes/{auto}` | text, color (0-4), pinned, by, byName, at | shared sticky notes |
 | `couples/{id}/events/{auto}` | title, date (yyyy-MM-dd), emoji, yearly, by, byName, at | plans and special days; the anniversary is built in from `startDate`, not stored |
 | `couples/{id}/locations/{uid}` | city, lat, lng (rounded: 0.1° city-only or 0.01°), cityOnly, at | only while the partner shares location on Mesafe; turning sharing off deletes it. The app shows only city and distance |
+| `couples/{id}/dreams/{auto}` | title, category (seyahat/deneyim/hayat/diger), goal, by, byName, at, doneAt | shared bucket list (Hayaller) |
+| `couples/{id}/wheels/{id}` | label, items[], at | decision wheels; ids `yemek`, `gezi`, `izle` override the built-in wheels, other ids are custom wheels. Spins are not stored |
+| `couples/{id}/capsules/{auto}` | title, text, openOn (yyyy-MM-dd), by, byName, at | time-capsule letters; the app hides the text until `openOn` (rules can't hide a field, so this is not a hard lock) |
+| `couples/{id}/strokes/{auto}` | by, color, width, points[] (normalized 0..1, max 400 points), at | the current shared canvas (Canlı çizim), max 600 strokes |
+| `couples/{id}/drawing/presence` | {uid: millis} | last time each partner drew; "drawing now" = within 45 s |
+| `couples/{id}/drawings/{auto}` | strokes[], by, byName, at | drawings saved to Anılar; saving clears the canvas |
 
 Günün sorusu hides the partner's answer until you answer, but only in the app: Firestore rules
 can't hide one field of a document from a member, and both partners are members. That's fine for

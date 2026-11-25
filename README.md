@@ -4,8 +4,8 @@
 
 > **Şu an:** Giriş (Google + e-posta), kodla eşleşme, ortak kedi (ana sayfa + kedi bakımı ekranı, seri ve aksesuarlar),
 > gün sayacı, kalp atışı, ruh hali, günün sorusu, notlar, Planlar (takvim + özel günler), Biz (profil ve ayarlar)
-> ve Mesafe (şehir düzeyinde konum paylaşımı). Ekranlar onaylı tasarımlardan üçer üçer kodlanıyor; sıradakiler:
-> canlı çizim, karar çarkı, zaman kapsülü, hayaller listesi, Anılar ve widget'lar.
+> Mesafe (şehir düzeyinde konum paylaşımı), canlı çizim, karar çarkı, zaman kapsülü, hayaller listesi, Anılar sekmesi
+> ve 4 ana ekran widget'ı (küçük kedi, geniş kedi, gün sayacı + kalp, canlı çizim). Onaylı tasarımlardaki tüm v1 ekranları kodlandı.
 
 ## Klasör yapısı (monorepo)
 

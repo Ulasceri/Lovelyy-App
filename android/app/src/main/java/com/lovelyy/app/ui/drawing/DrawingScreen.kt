@@ -1,0 +1,396 @@
+package com.lovelyy.app.ui.drawing
+
+import android.widget.Toast
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.keyframes
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.lovelyy.app.LovelyyApplication
+import com.lovelyy.app.R
+import com.lovelyy.app.analytics.AnalyticsEvent
+import com.lovelyy.app.data.DrawingMath
+import com.lovelyy.app.data.Stroke as LineStroke
+import com.lovelyy.app.data.UserProfile
+import com.lovelyy.app.telemetry.Telemetry
+import com.lovelyy.app.ui.components.CenteredTopBar
+import com.lovelyy.app.ui.components.InitialAvatar
+import com.lovelyy.app.ui.components.Kit
+import com.lovelyy.app.ui.components.MainAction
+import com.lovelyy.app.ui.components.RoundSvgButton
+import com.lovelyy.app.ui.components.SvgStrokeIcon
+import com.lovelyy.app.ui.components.SwitchRow
+import com.lovelyy.app.ui.components.WhiteCard
+import com.lovelyy.app.ui.components.bounceClick
+import com.lovelyy.app.ui.components.softShadow
+import com.lovelyy.app.ui.heartbeat.timeAgo
+import com.lovelyy.app.ui.lovelyyApp
+import com.lovelyy.app.ui.theme.Brown
+import com.lovelyy.app.ui.theme.BrownSoft
+import com.lovelyy.app.ui.theme.Cream
+import com.lovelyy.app.ui.theme.CreamCard
+import com.lovelyy.app.ui.theme.Mint
+import com.lovelyy.app.ui.theme.Peach
+import com.lovelyy.app.ui.theme.Quicksand
+import com.lovelyy.app.widget.DrawingWidget
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import timber.log.Timber
+
+/** Pen colors from the design. */
+val PenColors = listOf(0xFFF07B45, 0xFF3E9C82, 0xFF4A3B35, 0xFFE86A8A, 0xFFF2B632)
+private const val ERASER = 0xFFFFFFFF
+private val BrushWidths = listOf(0.012f, 0.022f, 0.04f)
+private val LiveGreen = Color(0xFF2F7F69)
+
+private const val BRUSH_D = "M14 4l6 6-8 8H6v-6z M4 20c2 0 3-1 3-2.5"
+private const val ERASER_D = "M4 16l9-10 7 6-7 8H8z M9 11l6 6M4 20h16"
+private const val UNDO_D = "M8 8L4 12l4 4M4 12h10a5 5 0 0 1 0 10h-2"
+
+class DrawingViewModel(private val app: LovelyyApplication, private val coupleId: String, private val myUid: String) : ViewModel() {
+    val strokes: StateFlow<List<LineStroke>?> = app.drawingRepository.observe(coupleId)
+        .catch { Timber.w(it, "Drawing unavailable") }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    val presence: StateFlow<Map<String, Long>> = app.drawingRepository.observePresence(coupleId)
+        .catch { Timber.w(it, "Presence unavailable") }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
+
+    private var lastTouch = 0L
+
+    fun add(color: Long, width: Float, points: List<Float>) {
+        viewModelScope.launch {
+            runCatching { app.drawingRepository.add(coupleId, myUid, color, width, points) }.onFailure { Timber.w(it, "Saving the stroke failed") }
+        }
+    }
+
+    /** "I'm drawing": at most every 20 s. */
+    fun touch() {
+        val now = System.currentTimeMillis()
+        if (now - lastTouch < 20_000) return
+        lastTouch = now
+        viewModelScope.launch { runCatching { app.drawingRepository.touch(coupleId, myUid) } }
+    }
+
+    fun undo() {
+        val mine = strokes.value.orEmpty().lastOrNull { it.by == myUid } ?: return
+        viewModelScope.launch { runCatching { app.drawingRepository.delete(coupleId, mine.id) }.onFailure { Timber.w(it, "Undo failed") } }
+    }
+
+    fun save(me: UserProfile, onDone: () -> Unit) {
+        val current = strokes.value.orEmpty()
+        if (current.isEmpty()) return
+        viewModelScope.launch {
+            runCatching { app.drawingRepository.saveAndClear(coupleId, me, current) }
+                .onSuccess { Telemetry.track(AnalyticsEvent.DrawingSaved(current.size)); onDone() }
+                .onFailure { Timber.w(it, "Saving the drawing failed") }
+        }
+    }
+}
+
+/** Canlı çizim (approved design 17): one canvas, both of you draw on it. */
+@Composable
+fun DrawingScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onOld: () -> Unit) {
+    val coupleId = me.coupleId ?: return
+    val app = lovelyyApp()
+    val context = LocalContext.current
+    val vm: DrawingViewModel = viewModel(key = "drawing-$coupleId") { DrawingViewModel(app, coupleId, me.uid) }
+    val strokes by vm.strokes.collectAsStateWithLifecycle()
+    val presence by vm.presence.collectAsStateWithLifecycle()
+    val partnerName = partner?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.home_partner_fallback)
+
+    var colorIndex by remember { mutableIntStateOf(0) }
+    var widthIndex by remember { mutableIntStateOf(1) }
+    var eraser by remember { mutableStateOf(false) }
+    var widgetOn by remember { mutableStateOf(DrawingWidget.isEnabled(context)) }
+
+    // "Now" ticks so the live chip turns off by itself.
+    var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(Unit) { while (true) { delay(10_000); now = System.currentTimeMillis() } }
+    val partnerAt = partner?.uid?.let { presence[it] }
+    val partnerLive = partnerAt != null && now - partnerAt < DrawingMath.ACTIVE_MS
+
+    // Keep the home-screen widget in step with the canvas.
+    LaunchedEffect(strokes, widgetOn, partnerLive) {
+        strokes?.let { DrawingWidget.save(context, it, if (partnerLive) partnerName else null) }
+    }
+
+    Column(
+        Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 20.dp)
+            .navigationBarsPadding()
+            .padding(top = 20.dp, bottom = 140.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        CenteredTopBar(stringResource(R.string.lv_title), onBack) {
+            RoundSvgButton(Kit.PHOTO_D, stringResource(R.string.lv_old), onOld)
+        }
+
+        // Who is here.
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                Modifier.clip(RoundedCornerShape(50)).background(if (partnerLive) Kit.MintCell else Kit.ButtonIdle)
+                    .padding(start = 8.dp, end = 12.dp, top = 7.dp, bottom = 7.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                InitialAvatar(partnerName, Mint, 22.dp, 11.sp, border = false)
+                Text(
+                    when {
+                        partnerLive -> stringResource(R.string.lv_partner_now, partnerName)
+                        partnerAt != null -> stringResource(R.string.lv_partner_last, partnerName, timeAgo(partnerAt))
+                        else -> stringResource(R.string.lv_partner_never, partnerName)
+                    },
+                    fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Brown, maxLines = 1,
+                )
+                if (partnerLive) {
+                    val beat by rememberInfiniteTransition(label = "live").animateFloat(
+                        1f, 1f,
+                        infiniteRepeatable(keyframes { durationMillis = 1800; 1f at 0; 1.3f at 270; 1f at 540; 1.2f at 810; 1f at 1080 }),
+                        label = "b",
+                    )
+                    Box(Modifier.size(8.dp).scale(beat).clip(CircleShape).background(LiveGreen))
+                }
+            }
+            Spacer(Modifier.weight(1f))
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                InitialAvatar(me.displayName, Peach, 22.dp, 11.sp, border = false)
+                Text(stringResource(R.string.lv_you), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Brown)
+            }
+        }
+
+        // The canvas.
+        val list = strokes.orEmpty()
+        val color = if (eraser) ERASER else PenColors[colorIndex]
+        val width = BrushWidths[widthIndex] * if (eraser) 2f else 1f
+        DrawingCanvas(
+            strokes = list,
+            color = color,
+            width = width,
+            hint = if (list.isEmpty()) stringResource(R.string.lv_empty_hint, partnerName) else null,
+            partnerLabel = if (partnerLive) partnerName else null,
+            partnerUid = partner?.uid,
+            onStart = vm::touch,
+            onStroke = { pts -> vm.add(color, width, pts) },
+            modifier = Modifier.fillMaxWidth().height(356.dp),
+        )
+
+        // Tools.
+        WhiteCard(padding = 0.dp, radius = 28.dp) {
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                PenColors.forEachIndexed { i, c ->
+                    val sel = !eraser && i == colorIndex
+                    val label = stringResource(R.string.lv_color, i + 1)
+                    Box(
+                        Modifier.size(44.dp).semantics { role = Role.RadioButton; selected = sel; contentDescription = label }
+                            .bounceClick { colorIndex = i; eraser = false },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Box(
+                            Modifier.size(30.dp)
+                                .then(if (sel) Modifier.border(2.dp, Brown, CircleShape).padding(5.dp) else Modifier)
+                                .clip(CircleShape).background(Color(c)),
+                        )
+                    }
+                }
+                ToolButton(BRUSH_D, stringResource(R.string.lv_brush), false) { widthIndex = (widthIndex + 1) % BrushWidths.size }
+                ToolButton(ERASER_D, stringResource(R.string.lv_eraser), eraser) { eraser = !eraser }
+                ToolButton(UNDO_D, stringResource(R.string.lv_undo), false, vm::undo)
+            }
+        }
+
+        WhiteCard(padding = 0.dp) {
+            Box(Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+                SwitchRow(stringResource(R.string.lv_widget), stringResource(R.string.lv_widget_sub), widgetOn) { on ->
+                    widgetOn = on
+                    DrawingWidget.setEnabled(context, on)
+                }
+            }
+        }
+
+        val savedText = stringResource(R.string.lv_saved)
+        MainAction(stringResource(R.string.lv_save), Kit.PHOTO_D, {
+            vm.save(me) { Toast.makeText(context, savedText, Toast.LENGTH_SHORT).show() }
+        }, enabled = list.isNotEmpty())
+    }
+}
+
+@Composable
+private fun ToolButton(d: String, label: String, active: Boolean, onClick: () -> Unit) {
+    Box(
+        Modifier.size(44.dp).clip(CircleShape).background(if (active) Peach else Kit.ButtonIdle)
+            .semantics { role = Role.Button; contentDescription = label; selected = active }
+            .bounceClick(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) { SvgStrokeIcon(d, Brown, Modifier.size(20.dp)) }
+}
+
+/** The white canvas: saved strokes, my stroke while I draw, and a little name tag where the partner drew last. */
+@Composable
+private fun DrawingCanvas(
+    strokes: List<LineStroke>,
+    color: Long,
+    width: Float,
+    hint: String?,
+    partnerLabel: String?,
+    partnerUid: String?,
+    onStart: () -> Unit,
+    onStroke: (List<Float>) -> Unit,
+    modifier: Modifier,
+) {
+    val shape = RoundedCornerShape(28.dp)
+    val current = remember { mutableStateListOf<Float>() }
+    val start by rememberUpdatedState(onStart)
+    val finish by rememberUpdatedState(onStroke)
+    val canvasLabel = stringResource(R.string.lv_canvas)
+    BoxWithConstraints(modifier.softShadow(shape, 12.dp).clip(shape).background(CreamCard)) {
+        val w = constraints.maxWidth.toFloat()
+        val h = constraints.maxHeight.toFloat()
+        Canvas(
+            Modifier
+                .fillMaxSize()
+                .semantics { contentDescription = canvasLabel }
+                .pointerInput(w, h) {
+                    awaitEachGesture {
+                        val down = awaitFirstDown()
+                        down.consume()
+                        start()
+                        current.clear()
+                        current += (down.position.x / w).coerceIn(0f, 1f); current += (down.position.y / h).coerceIn(0f, 1f)
+                        while (true) {
+                            val event = awaitPointerEvent()
+                            val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                            if (!change.pressed) break
+                            change.consume()
+                            current += (change.position.x / w).coerceIn(0f, 1f); current += (change.position.y / h).coerceIn(0f, 1f)
+                        }
+                        // A tap becomes a dot.
+                        if (current.size == 2) { current += current[0] + 0.001f; current += current[1] }
+                        finish(current.toList())
+                        current.clear()
+                    }
+                },
+        ) {
+            strokes.forEach { drawNormalized(it.points, Color(it.color), it.width) }
+            if (current.size >= 2) drawNormalized(current, Color(color), width)
+        }
+        if (hint != null) {
+            Text(
+                hint, fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = BrownSoft,
+                modifier = Modifier.align(Alignment.Center).padding(24.dp),
+            )
+        }
+        // Partner's name next to their latest stroke while they draw.
+        val last = partnerUid?.let { uid -> strokes.lastOrNull { it.by == uid } }
+        if (partnerLabel != null && last != null && last.points.size >= 2) {
+            val density = LocalDensity.current
+            val x = last.points[last.points.size - 2] * w
+            val y = last.points[last.points.size - 1] * h
+            val bob by rememberInfiniteTransition(label = "tag").animateFloat(
+                0f, -4f, infiniteRepeatable(tween(1500, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "y",
+            )
+            Text(
+                partnerLabel,
+                fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Color.White,
+                modifier = Modifier
+                    .offset(x = with(density) { (x + 6f).coerceAtMost(w - 80f).toDp() }, y = with(density) { (y - 30f).coerceAtLeast(0f).toDp() })
+                    .graphicsLayer { translationY = bob.dp.toPx() }
+                    .clip(RoundedCornerShape(12.dp, 12.dp, 12.dp, 2.dp))
+                    .background(LiveGreen)
+                    .padding(horizontal = 9.dp, vertical = 4.dp),
+            )
+        }
+    }
+}
+
+/** Draws a normalized stroke into this canvas. Also used for the small previews. */
+fun DrawScope.drawNormalized(points: List<Float>, color: Color, width: Float) {
+    if (points.size < 2) return
+    val path = Path()
+    path.moveTo(points[0] * size.width, points[1] * size.height)
+    var i = 2
+    while (i + 1 < points.size) {
+        path.lineTo(points[i] * size.width, points[i + 1] * size.height)
+        i += 2
+    }
+    drawPath(path, color, style = Stroke(width * size.width, cap = StrokeCap.Round, join = StrokeJoin.Round))
+}
+
+/** A small read-only preview of a drawing (Anılar card). */
+@Composable
+fun DrawingPreview(strokes: List<LineStroke>, modifier: Modifier) {
+    Canvas(modifier) { strokes.forEach { drawNormalized(it.points, Color(it.color), it.width) } }
+}

@@ -28,4 +28,10 @@ object InnerScreens {
     const val CAT_CARE = "cat_care"
     const val PROFILE = "profile"
     const val DISTANCE = "distance"
+    const val DREAMS = "dreams"
+    const val WHEEL = "wheel"
+    const val CAPSULE = "time_capsule"
+    const val DRAWING = "live_drawing"
+    const val MEMORIES = "memories"
+    const val WIDGETS = "widgets"
 }

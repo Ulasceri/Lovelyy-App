@@ -15,6 +15,12 @@ object Paths {
     const val NOTES = "notes"
     const val EVENTS = "events"
     const val LOCATIONS = "locations"
+    const val DREAMS = "dreams"
+    const val WHEELS = "wheels"
+    const val CAPSULES = "capsules"
+    const val STROKES = "strokes"
+    const val DRAWING = "drawing"
+    const val DRAWINGS = "drawings"
 }
 
 internal fun DocumentSnapshot.toUserProfile(): UserProfile? =

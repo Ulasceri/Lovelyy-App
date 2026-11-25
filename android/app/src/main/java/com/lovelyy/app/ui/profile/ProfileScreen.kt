@@ -1,8 +1,5 @@
 package com.lovelyy.app.ui.profile
 
-import android.appwidget.AppWidgetManager
-import android.content.ComponentName
-import android.content.Context
 import android.content.Intent
 import android.provider.Settings
 import androidx.compose.foundation.background
@@ -82,7 +79,6 @@ import com.lovelyy.app.ui.theme.Mint
 import com.lovelyy.app.ui.theme.Peach
 import com.lovelyy.app.ui.theme.PeachSoft
 import com.lovelyy.app.ui.theme.Quicksand
-import com.lovelyy.app.widget.CatWidgetProvider
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -114,6 +110,7 @@ fun ProfileScreen(
     onQuestion: () -> Unit,
     onDistance: () -> Unit,
     onCounter: () -> Unit,
+    onWidgets: () -> Unit,
     onSoon: () -> Unit,
 ) {
     val coupleId = me.coupleId ?: return
@@ -132,7 +129,7 @@ fun ProfileScreen(
     var resumes by remember { mutableIntStateOf(0) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { resumes++ }
     val notificationsOn = remember(resumes) { NotificationManagerCompat.from(context).areNotificationsEnabled() }
-    val widgets = remember(resumes) { widgetCount(context) }
+    val widgets = remember(resumes) { com.lovelyy.app.widget.WidgetData.count(context) }
     val locations by remember(coupleId) { app.locationRepository.observe(coupleId).catch { } }.collectAsStateWithLifecycle(emptyMap())
     val myLocation = locations[me.uid]
     val locationValue = stringResource(
@@ -220,7 +217,8 @@ fun ProfileScreen(
             SettingRow(
                 GRID_D, stringResource(R.string.pf_widgets),
                 if (widgets > 0) stringResource(R.string.pf_widgets_count, widgets) else stringResource(R.string.pf_widgets_none),
-            ) { if (!pinWidget(context)) onSoon() }
+                onClick = onWidgets,
+            )
             SettingRow(PENCIL_D, stringResource(R.string.pf_cat_name), catUi?.doc?.name?.takeIf { it.isNotBlank() } ?: "–") { naming = true }
             SettingRow(PEOPLE_D, stringResource(R.string.pf_account), stringResource(if (google) R.string.pf_account_google else R.string.pf_account_email), onClick = onSoon)
         }
@@ -256,17 +254,6 @@ fun ProfileScreen(
             },
         )
     }
-}
-
-private fun widgetCount(context: Context): Int = runCatching {
-    AppWidgetManager.getInstance(context).getAppWidgetIds(ComponentName(context, CatWidgetProvider::class.java)).size
-}.getOrDefault(0)
-
-/** Asks the launcher to add the cat widget. False if the launcher can't. */
-private fun pinWidget(context: Context): Boolean {
-    val m = AppWidgetManager.getInstance(context)
-    if (!m.isRequestPinAppWidgetSupported) return false
-    return runCatching { m.requestPinAppWidget(ComponentName(context, CatWidgetProvider::class.java), null, null) }.getOrDefault(false)
 }
 
 @Composable

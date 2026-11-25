@@ -76,6 +76,8 @@ class AuthRepository(private val auth: FirebaseAuth) {
 
     suspend fun signOut(context: Context) {
         auth.signOut()
+        // Widgets keep showing the couple otherwise.
+        com.lovelyy.app.widget.WidgetData.clear(context)
         runCatching { CredentialManager.create(context).clearCredentialState(ClearCredentialStateRequest()) }
     }
 

@@ -96,6 +96,40 @@ sealed interface AnalyticsEvent {
         override val name = "profile_name_changed"
     }
 
+    /** A dream was added to the bucket list. [category] is a fixed key (seyahat, deneyim, hayat, diger). */
+    data class DreamAdded(val category: String) : AnalyticsEvent {
+        override val name = "dream_added"
+        override val params: Map<String, Any> get() = mapOf("category" to category)
+    }
+
+    /** A dream was marked as came true. */
+    data object DreamCompleted : AnalyticsEvent {
+        override val name = "dream_completed"
+    }
+
+    /** The decision wheel was spun. [builtIn] = one of the three default wheels (custom labels are never sent). */
+    data class WheelSpun(val builtIn: Boolean, val items: Int) : AnalyticsEvent {
+        override val name = "wheel_spun"
+        override val params: Map<String, Any> get() = mapOf("built_in" to builtIn, "items" to items)
+    }
+
+    /** A custom wheel was created. */
+    data object WheelCreated : AnalyticsEvent {
+        override val name = "wheel_created"
+    }
+
+    /** A time-capsule letter was sealed, to open in [days] days. */
+    data class CapsuleSealed(val days: Int) : AnalyticsEvent {
+        override val name = "capsule_sealed"
+        override val params: Map<String, Any> get() = mapOf("days" to days)
+    }
+
+    /** The shared drawing was saved to Anılar. */
+    data class DrawingSaved(val strokes: Int) : AnalyticsEvent {
+        override val name = "drawing_saved"
+        override val params: Map<String, Any> get() = mapOf("strokes" to strokes)
+    }
+
     /**
      * A screen was shown. [screenName] is a fixed route name like "home", never anything dynamic.
      * Sent as the standard `screen_view` event, so it shows up in the Screens report.

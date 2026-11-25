@@ -24,6 +24,12 @@ class AnalyticsEventTest {
         AnalyticsEvent.LocationSharingChanged(sharing = true),
         AnalyticsEvent.LocationUpdated(cityOnly = true),
         AnalyticsEvent.ProfileNameChanged,
+        AnalyticsEvent.DreamAdded(category = "seyahat"),
+        AnalyticsEvent.DreamCompleted,
+        AnalyticsEvent.WheelSpun(builtIn = true, items = 8),
+        AnalyticsEvent.WheelCreated,
+        AnalyticsEvent.CapsuleSealed(days = 81),
+        AnalyticsEvent.DrawingSaved(strokes = 12),
         AnalyticsEvent.ScreenView("home"),
         AnalyticsEvent.ScreenView("day_counter"),
     )

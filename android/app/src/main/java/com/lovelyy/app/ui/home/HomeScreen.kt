@@ -100,6 +100,13 @@ import com.lovelyy.app.ui.cat.CatCareScreen
 import com.lovelyy.app.ui.cat.CatSection
 import com.lovelyy.app.ui.distance.DistanceScreen
 import com.lovelyy.app.ui.profile.ProfileScreen
+import com.lovelyy.app.ui.capsule.CapsuleScreen
+import com.lovelyy.app.ui.drawing.DrawingScreen
+import com.lovelyy.app.ui.dreams.DreamsScreen
+import com.lovelyy.app.ui.memories.MemoriesScreen
+import com.lovelyy.app.ui.wheel.WheelScreen
+import com.lovelyy.app.ui.widgets.WidgetsScreen
+import com.lovelyy.app.widget.WidgetData
 import com.lovelyy.app.ui.components.CircleIconButton
 import com.lovelyy.app.ui.components.IconCircle
 import com.lovelyy.app.ui.components.Pill
@@ -145,6 +152,11 @@ private object Routes {
     const val NOTES = "notes"
     const val CAT = "cat"
     const val DISTANCE = "distance"
+    const val DREAMS = "dreams"
+    const val WHEEL = "wheel"
+    const val CAPSULE = "capsule"
+    const val DRAWING = "drawing"
+    const val WIDGETS = "widgets"
 }
 
 /** Everything after pairing: the home tabs and the inner screens. */
@@ -178,7 +190,13 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
                 Routes.NOTES -> InnerScreens.NOTES
                 Routes.CAT -> InnerScreens.CAT_CARE
                 Routes.DISTANCE -> InnerScreens.DISTANCE
+                Routes.DREAMS -> InnerScreens.DREAMS
+                Routes.WHEEL -> InnerScreens.WHEEL
+                Routes.CAPSULE -> InnerScreens.CAPSULE
+                Routes.DRAWING -> InnerScreens.DRAWING
+                Routes.WIDGETS -> InnerScreens.WIDGETS
                 else -> when (tab) {
+                    Tab.Anilar -> InnerScreens.MEMORIES
                     Tab.Planlar -> InnerScreens.PLANS
                     Tab.Biz -> InnerScreens.PROFILE
                     else -> "home"
@@ -198,6 +216,21 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
         if (Build.VERSION.SDK_INT >= 33 &&
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
         ) permission.launch(Manifest.permission.POST_NOTIFICATIONS)
+    }
+
+    // The home-screen widgets can't read Firestore while the app is closed: keep who the couple is on the phone.
+    LaunchedEffect(coupleId, me.uid, me.displayName, partner?.uid, partner?.displayName, couple?.startDate) {
+        WidgetData.saveCouple(
+            context,
+            WidgetData.CoupleInfo(
+                coupleId = coupleId,
+                myUid = me.uid,
+                myName = me.displayName,
+                partnerUid = partner?.uid,
+                partnerName = partner?.displayName.orEmpty(),
+                startMillis = couple?.startDate?.toDate()?.time,
+            ),
+        )
     }
 
     // Signed out or offline: keep the last moods instead of crashing on PERMISSION_DENIED.
@@ -220,14 +253,21 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
                     null -> AnimatedContent(tab, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "tab") { t ->
                         when (t) {
                             Tab.Yuva -> YuvaTab(me, couple, partner, moods, soon, open = ::push, openPlans = { tab = Tab.Planlar })
-                            Tab.Anilar -> ComingSoon(stringResource(R.string.tab_memories), stringResource(R.string.tab_memories_soon), Icons.Rounded.Photo, Modifier.padding(top = 40.dp))
-                            Tab.Planlar -> PlansScreen(me, couple, partner, onBucket = soon, onWheel = soon)
+                            Tab.Anilar -> MemoriesScreen(
+                                me, couple, partner,
+                                onDrawing = { push(Routes.DRAWING) },
+                                onNotes = { push(Routes.NOTES) },
+                                onCapsule = { push(Routes.CAPSULE) },
+                                onSearch = soon,
+                            )
+                            Tab.Planlar -> PlansScreen(me, couple, partner, onBucket = { push(Routes.DREAMS) }, onWheel = { push(Routes.WHEEL) })
                             Tab.Biz -> ProfileScreen(
                                 me, couple, partner,
                                 onMood = { push(Routes.MOOD) },
                                 onQuestion = { push(Routes.QUESTION) },
                                 onDistance = { push(Routes.DISTANCE) },
                                 onCounter = { push(Routes.COUNTER) },
+                                onWidgets = { push(Routes.WIDGETS) },
                                 onSoon = soon,
                             )
                         }
@@ -238,6 +278,11 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
                     Routes.NOTES -> NotesScreen(me, partner, onBack = ::pop, onSearch = soon)
                     Routes.CAT -> CatCareScreen(me, couple, partner, onBack = ::pop, onAccessories = soon)
                     Routes.DISTANCE -> DistanceScreen(me, partner, onBack = ::pop)
+                    Routes.DREAMS -> DreamsScreen(me, partner, onBack = ::pop, onSearch = soon)
+                    Routes.WHEEL -> WheelScreen(me, onBack = ::pop, onHistory = soon)
+                    Routes.CAPSULE -> CapsuleScreen(me, partner, onBack = ::pop, onOpenedList = soon)
+                    Routes.DRAWING -> DrawingScreen(me, partner, onBack = ::pop, onOld = soon)
+                    Routes.WIDGETS -> WidgetsScreen(me, couple, partner)
                     Routes.HEARTBEAT -> HeartbeatScreen(me, partner, Emotion.of(route.substringAfter(':', "")), onHistory = soon)
                 }
             }
@@ -248,8 +293,9 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
             val navTab = when (routeKey) {
                 null -> tab
                 Routes.COUNTER, Routes.CAT -> Tab.Yuva
-                Routes.MOOD, Routes.QUESTION, Routes.DISTANCE -> Tab.Biz
-                Routes.NOTES -> Tab.Anilar
+                Routes.MOOD, Routes.QUESTION, Routes.DISTANCE, Routes.WIDGETS -> Tab.Biz
+                Routes.NOTES, Routes.CAPSULE, Routes.DRAWING -> Tab.Anilar
+                Routes.DREAMS, Routes.WHEEL -> Tab.Planlar
                 else -> null
             }
             BottomNav(
@@ -382,13 +428,13 @@ private fun YuvaTab(
         // Route = null means "not built yet": shows the "Yakında" pill and a toast.
         val corner = listOf(
             CornerItem(Icons.Rounded.QuestionAnswer, R.string.feature_question, PeachTint, Routes.QUESTION),
-            CornerItem(Icons.Rounded.Brush, R.string.feature_drawing, MintTint),
+            CornerItem(Icons.Rounded.Brush, R.string.feature_drawing, MintTint, Routes.DRAWING),
             CornerItem(Icons.Rounded.EditNote, R.string.feature_notes, PeachTint, Routes.NOTES),
             CornerItem(Icons.Rounded.Event, R.string.feature_calendar, MintTint, PLANS_TAB),
-            CornerItem(Icons.Rounded.Restaurant, R.string.feature_food, PeachTint),
+            CornerItem(Icons.Rounded.Restaurant, R.string.feature_food, PeachTint, Routes.WHEEL),
             CornerItem(Icons.Rounded.Place, R.string.feature_distance, MintTint, Routes.DISTANCE),
-            CornerItem(Icons.Rounded.HourglassTop, R.string.feature_capsule, PeachTint),
-            CornerItem(Icons.Rounded.Star, R.string.feature_bucket, MintTint),
+            CornerItem(Icons.Rounded.HourglassTop, R.string.feature_capsule, PeachTint, Routes.CAPSULE),
+            CornerItem(Icons.Rounded.Star, R.string.feature_bucket, MintTint, Routes.DREAMS),
             CornerItem(Icons.Rounded.Checkroom, R.string.feature_wardrobe, PeachTint, Routes.CAT),
         )
         corner.chunked(3).forEach { row ->

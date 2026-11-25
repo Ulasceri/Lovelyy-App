@@ -40,4 +40,12 @@ class TurkishSuffixTest {
         assertEquals("2026'dan", TurkishSuffix.ablative("2026"))
         assertEquals("1940'tan", TurkishSuffix.ablative("1940"))
     }
+
+    @Test
+    fun locative() {
+        assertEquals("9 Ekim 2027'de", TurkishSuffix.locative("9 Ekim 2027"))
+        assertEquals("16 Ocak 2026'da", TurkishSuffix.locative("16 Ocak 2026"))
+        assertEquals("Ankara'da", TurkishSuffix.locative("Ankara"))
+        assertEquals("Ahmet'te", TurkishSuffix.locative("Ahmet"))
+    }
 }

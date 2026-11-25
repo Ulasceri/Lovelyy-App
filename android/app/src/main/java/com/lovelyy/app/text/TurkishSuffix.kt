@@ -47,6 +47,9 @@ object TurkishSuffix {
         return "$n'$d$e"
     }
 
+    /** Bulunma hâli (-de/-da/-te/-ta): "9 Ekim 2027'de", "İzmir'de", "Ahmet'te". */
+    fun locative(word: String): String = ablative(word).let { if (it.endsWith("n")) it.dropLast(1) else it }
+
     /** "2025'ten", "2010'dan", "2000'den": the ending follows how the number is read aloud. */
     private fun numberAblative(digits: String): String {
         val n = digits.toLongOrNull() ?: return "den"
