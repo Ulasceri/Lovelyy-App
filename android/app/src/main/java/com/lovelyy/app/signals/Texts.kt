@@ -33,7 +33,7 @@ fun MoodKind.labelRes(): Int = when (this) {
     MoodKind.Huzurlu -> R.string.mood_kind_huzurlu
     MoodKind.Heyecanli -> R.string.mood_kind_heyecanli
     MoodKind.Enerjik -> R.string.mood_kind_enerjik
-    MoodKind.Ozlemli -> R.string.mood_kind_ozlemli
+    MoodKind.Ozlemli -> R.string.mood_kind_ozlemis
     MoodKind.Yorgun -> R.string.mood_kind_yorgun
     MoodKind.Uzgun -> R.string.mood_kind_uzgun
     MoodKind.Stresli -> R.string.mood_kind_stresli

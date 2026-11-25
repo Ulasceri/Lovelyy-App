@@ -88,7 +88,10 @@ fun NudgeCard(
                     state = 1
                     scope.launch {
                         val ok = runCatching { app.signalRepository.send(coupleId, me, p.uid, SignalKind.Nudge) }.isSuccess
-                        if (ok) SignalCenter.vibrate(context, SignalKind.Nudge)
+                        if (ok) {
+                            SignalCenter.vibrate(context, SignalKind.Nudge)
+                            com.lovelyy.app.telemetry.Telemetry.track(com.lovelyy.app.analytics.AnalyticsEvent.NudgeSent)
+                        }
                         state = if (ok) 2 else 0
                     }
                 },

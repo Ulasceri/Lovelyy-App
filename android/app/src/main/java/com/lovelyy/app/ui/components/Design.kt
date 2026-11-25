@@ -321,3 +321,16 @@ fun ScreenTitle(title: String, onBack: () -> Unit, modifier: Modifier = Modifier
 
 @Composable
 fun Gap(h: Dp) = Spacer(Modifier.height(h))
+
+/** Inner-screen top bar from the feature designs: round back button, centered 18sp title, round action. */
+@Composable
+fun CenteredTopBar(title: String, onBack: () -> Unit, modifier: Modifier = Modifier, action: (@Composable () -> Unit)? = null) {
+    Box(modifier.fillMaxWidth().height(44.dp)) {
+        BackButton(onBack, Modifier.align(Alignment.CenterStart))
+        Text(
+            title, fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Brown,
+            modifier = Modifier.align(Alignment.Center),
+        )
+        Box(Modifier.align(Alignment.CenterEnd)) { action?.invoke() }
+    }
+}

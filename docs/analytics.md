@@ -25,8 +25,10 @@ Everything goes through `com.lovelyy.app.telemetry.Telemetry`, set up once in `L
 - Param keys `snake_case` (max 40 chars, max 25 params). Values: String, Long/Int, Double, Boolean (sent as 0/1).
 - Prefer a small number of events with params over many near-duplicate events.
 
-Current events: `pairing_completed`, `cat_fed`, `cat_watered`, `cat_played`, `cat_petted` (`strokes`), `cat_slept`, and `screen_view`.
-Screen names: `login`, `name_setup`, `pairing`, `home`, `error`, `firebase_setup`.
+Current events: `pairing_completed`, `cat_fed`, `cat_watered`, `cat_played`, `cat_petted` (`strokes`), `cat_slept`,
+`start_date_set`, `counter_shared`, `heartbeat_sent` (`emotion`), `nudge_sent`, `mood_shared` (`mood`, `has_note`), and `screen_view`.
+Screen names: `login`, `name_setup`, `pairing`, `home`, `error`, `firebase_setup`, and the inner screens opened from home
+(`analytics/Screens.kt` → `InnerScreens`, logged by `HomeScreen`): `day_counter`, `heartbeat`, `mood`.
 
 ### Adding an event
 

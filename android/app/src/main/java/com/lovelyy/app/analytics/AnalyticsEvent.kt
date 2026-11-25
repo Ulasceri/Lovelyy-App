@@ -39,6 +39,32 @@ sealed interface AnalyticsEvent {
         override val name = "cat_slept"
     }
 
+    /** The couple's first day was set or changed on the day counter. */
+    data object StartDateSet : AnalyticsEvent {
+        override val name = "start_date_set"
+    }
+
+    /** "Bu anı paylaş" on the day counter opened the share sheet. */
+    data object CounterShared : AnalyticsEvent {
+        override val name = "counter_shared"
+    }
+
+    /** A heartbeat was sent. [emotion] is a fixed key like "ozlem", never free text. */
+    data class HeartbeatSent(val emotion: String) : AnalyticsEvent {
+        override val name = "heartbeat_sent"
+        override val params: Map<String, Any> get() = mapOf("emotion" to emotion)
+    }
+
+    data object NudgeSent : AnalyticsEvent {
+        override val name = "nudge_sent"
+    }
+
+    /** A mood was shared. [mood] is a fixed key like "mutlu"; [hasNote] only says whether a note was added. */
+    data class MoodShared(val mood: String, val hasNote: Boolean) : AnalyticsEvent {
+        override val name = "mood_shared"
+        override val params: Map<String, Any> get() = mapOf("mood" to mood, "has_note" to hasNote)
+    }
+
     /**
      * A screen was shown. [screenName] is a fixed route name like "home", never anything dynamic.
      * Sent as the standard `screen_view` event, so it shows up in the Screens report.

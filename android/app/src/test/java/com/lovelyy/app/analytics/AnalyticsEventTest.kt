@@ -13,7 +13,13 @@ class AnalyticsEventTest {
         AnalyticsEvent.CatPlayed,
         AnalyticsEvent.CatPetted(strokes = 4),
         AnalyticsEvent.CatSlept,
+        AnalyticsEvent.StartDateSet,
+        AnalyticsEvent.CounterShared,
+        AnalyticsEvent.HeartbeatSent(emotion = "ozlem"),
+        AnalyticsEvent.NudgeSent,
+        AnalyticsEvent.MoodShared(mood = "mutlu", hasNote = true),
         AnalyticsEvent.ScreenView("home"),
+        AnalyticsEvent.ScreenView("day_counter"),
     )
 
     @Test

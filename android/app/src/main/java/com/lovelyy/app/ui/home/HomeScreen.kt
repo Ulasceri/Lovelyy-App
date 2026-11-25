@@ -52,6 +52,7 @@ import androidx.compose.material.icons.rounded.Groups
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.HourglassTop
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.rounded.Mood
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Photo
 import androidx.compose.material.icons.rounded.Place
@@ -106,7 +107,13 @@ import com.lovelyy.app.ui.components.Pill
 import com.lovelyy.app.ui.components.SoftCard
 import com.lovelyy.app.ui.components.bounceClick
 import com.lovelyy.app.ui.components.softShadow
+import com.lovelyy.app.analytics.InnerScreens
+import com.lovelyy.app.telemetry.Telemetry
+import com.lovelyy.app.ui.counter.CounterScreen
 import com.lovelyy.app.ui.heartbeat.EmotionVisual
+import com.lovelyy.app.ui.heartbeat.HeartbeatScreen
+import com.lovelyy.app.ui.mood.MoodFace
+import com.lovelyy.app.ui.mood.MoodScreen
 import com.lovelyy.app.ui.lovelyyApp
 import com.lovelyy.app.ui.theme.Brown
 import com.lovelyy.app.ui.theme.BrownSoft
@@ -128,7 +135,14 @@ import kotlinx.coroutines.launch
 /** Bottom-nav tabs. The center heart is not a tab: it opens the heartbeat screen. */
 private enum class Tab { Yuva, Anilar, Planlar, Biz }
 
-/** Everything after pairing: the home tabs. */
+/** Inner screens, opened above the tabs (the bottom menu stays). Strings so they survive rotation. */
+private object Routes {
+    const val COUNTER = "counter"
+    const val HEARTBEAT = "heartbeat" // "heartbeat" or "heartbeat:<emotion key>"
+    const val MOOD = "mood"
+}
+
+/** Everything after pairing: the home tabs and the inner screens. */
 @Composable
 fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
     val app = lovelyyApp()
@@ -136,7 +150,29 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
     val coupleId = me.coupleId ?: return
 
     var tab by rememberSaveable { mutableStateOf(Tab.Yuva) }
-    BackHandler(enabled = tab != Tab.Yuva) { tab = Tab.Yuva }
+    val stack = rememberSaveable(
+        saver = listSaver<SnapshotStateList<String>, String>({ it.toList() }, { mutableStateListOf<String>().apply { addAll(it) } }),
+    ) { mutableStateListOf<String>() }
+    fun push(route: String) {
+        if (stack.lastOrNull()?.substringBefore(':') == route.substringBefore(':')) stack.removeAt(stack.lastIndex)
+        stack.add(route)
+    }
+    fun pop() { if (stack.isNotEmpty()) stack.removeAt(stack.lastIndex) }
+    BackHandler(enabled = stack.isNotEmpty()) { pop() }
+    BackHandler(enabled = stack.isEmpty() && tab != Tab.Yuva) { tab = Tab.Yuva }
+
+    // screen_view for inner screens (the tabs themselves count as "home").
+    val top = stack.lastOrNull()
+    LaunchedEffect(top) {
+        Telemetry.onScreen(
+            when (top?.substringBefore(':')) {
+                Routes.COUNTER -> InnerScreens.DAY_COUNTER
+                Routes.HEARTBEAT -> InnerScreens.HEARTBEAT
+                Routes.MOOD -> InnerScreens.MOOD
+                else -> "home"
+            },
+        )
+    }
 
     // Features behind the home cards are designed and approved one by one; until then a tap says "Yakında".
     val soonText = stringResource(R.string.home_soon_toast)
@@ -155,18 +191,48 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
     val moods by remember(coupleId) { app.moodRepository.observe(coupleId).catch { } }.collectAsStateWithLifecycle(emptyMap())
 
     Box(Modifier.fillMaxSize().background(Cream)) {
-        Box(Modifier.fillMaxSize().statusBarsPadding()) {
-            AnimatedContent(tab, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "tab") { t ->
-                when (t) {
-                    Tab.Yuva -> YuvaTab(me, couple, partner, moods, soon)
-                    Tab.Anilar -> ComingSoon(stringResource(R.string.tab_memories), stringResource(R.string.tab_memories_soon), Icons.Rounded.Photo, Modifier.padding(top = 40.dp))
-                    Tab.Planlar -> ComingSoon(stringResource(R.string.tab_plans), stringResource(R.string.tab_plans_soon), Icons.Rounded.CalendarMonth, Modifier.padding(top = 40.dp))
-                    Tab.Biz -> BizTab(me, couple, partner)
+        AnimatedContent(
+            targetState = top,
+            transitionSpec = {
+                if (targetState != null && stack.size > 0) {
+                    (slideInHorizontally { it / 3 } + fadeIn()) togetherWith (slideOutHorizontally { -it / 6 } + fadeOut())
+                } else {
+                    (slideInHorizontally { -it / 6 } + fadeIn()) togetherWith (slideOutHorizontally { it / 3 } + fadeOut())
+                }
+            },
+            label = "route",
+        ) { route ->
+            Box(Modifier.fillMaxSize().statusBarsPadding()) {
+                when (route?.substringBefore(':')) {
+                    null -> AnimatedContent(tab, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "tab") { t ->
+                        when (t) {
+                            Tab.Yuva -> YuvaTab(me, couple, partner, moods, soon, open = ::push)
+                            Tab.Anilar -> ComingSoon(stringResource(R.string.tab_memories), stringResource(R.string.tab_memories_soon), Icons.Rounded.Photo, Modifier.padding(top = 40.dp))
+                            Tab.Planlar -> ComingSoon(stringResource(R.string.tab_plans), stringResource(R.string.tab_plans_soon), Icons.Rounded.CalendarMonth, Modifier.padding(top = 40.dp))
+                            Tab.Biz -> BizTab(me, couple, partner, open = ::push)
+                        }
+                    }
+                    Routes.COUNTER -> CounterScreen(me, couple, partner, onBack = ::pop)
+                    Routes.MOOD -> MoodScreen(me, partner, moods, onBack = ::pop, onHistory = soon)
+                    Routes.HEARTBEAT -> HeartbeatScreen(me, partner, Emotion.of(route.substringAfter(':', "")), onHistory = soon)
                 }
             }
         }
         Box(Modifier.align(Alignment.BottomCenter)) {
-            BottomNav(tab, onTab = { tab = it }, onHeart = soon)
+            // Inner screens light up the tab they belong to (design: counter → Yuva, mood → Biz, heartbeat → the heart).
+            val routeKey = top?.substringBefore(':')
+            val navTab = when (routeKey) {
+                null -> tab
+                Routes.COUNTER -> Tab.Yuva
+                Routes.MOOD -> Tab.Biz
+                else -> null
+            }
+            BottomNav(
+                navTab,
+                heartActive = routeKey == Routes.HEARTBEAT,
+                onTab = { stack.clear(); tab = it },
+                onHeart = { push(Routes.HEARTBEAT) },
+            )
         }
     }
 }
@@ -174,7 +240,7 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
 // ---------- bottom navigation ----------
 
 @Composable
-private fun BottomNav(selected: Tab, onTab: (Tab) -> Unit, onHeart: () -> Unit) {
+private fun BottomNav(selected: Tab?, heartActive: Boolean, onTab: (Tab) -> Unit, onHeart: () -> Unit) {
     val shape = RoundedCornerShape(topStart = 26.dp, topEnd = 26.dp)
     Box(Modifier.fillMaxWidth()) {
         Row(
@@ -206,11 +272,11 @@ private fun BottomNav(selected: Tab, onTab: (Tab) -> Unit, onHeart: () -> Unit) 
                 .align(Alignment.TopCenter)
                 .offset(y = 2.dp)
                 .size(64.dp)
-                .scale(beat)
+                .scale(if (heartActive) 1f else beat)
                 .softShadow(CircleShape, 14.dp, Peach)
                 .clip(CircleShape)
                 .background(Peach)
-                .border(4.dp, Cream, CircleShape)
+                .border(4.dp, if (heartActive) Brown else Cream, CircleShape)
                 .bounceClick(onClick = onHeart),
             contentAlignment = Alignment.Center,
         ) {
@@ -250,6 +316,7 @@ private fun YuvaTab(
     partner: UserProfile?,
     moods: Map<String, MoodEntry>,
     soon: () -> Unit,
+    open: (String) -> Unit,
 ) {
     val app = lovelyyApp()
     val partnerName = partner?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.home_partner_fallback)
@@ -263,23 +330,23 @@ private fun YuvaTab(
             .padding(horizontal = 20.dp)
             .padding(top = 16.dp, bottom = 120.dp),
     ) {
-        Header(me, partnerName, startMillis, onDays = soon, onBell = soon)
+        Header(me, partnerName, startMillis, onDays = { open(Routes.COUNTER) }, onBell = soon)
 
         CatSection(me, couple, partner, Modifier.padding(top = 16.dp))
 
-        TogetherCard(startMillis, Modifier.padding(top = 18.dp), soon)
+        TogetherCard(startMillis, Modifier.padding(top = 18.dp)) { open(Routes.COUNTER) }
 
         Row(Modifier.padding(top = 14.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             HeartbeatCard(
                 last = recent.firstOrNull { it.to == me.uid && it.kind == SignalKind.Heartbeat },
                 partnerName = partnerName,
                 modifier = Modifier.weight(1f),
-                onClick = { soon() },
+                onClick = { e -> open(if (e == null) Routes.HEARTBEAT else "${Routes.HEARTBEAT}:${e.key}") },
             )
-            NudgeCard(me, partner, Modifier.weight(1f), compact = true, onSoon = soon)
+            NudgeCard(me, partner, Modifier.weight(1f), compact = true)
         }
 
-        MoodCard(me, partnerName, moods[me.uid], partner?.uid?.let { moods[it] }, Modifier.padding(top = 14.dp), soon)
+        MoodCard(me, partnerName, moods[me.uid], partner?.uid?.let { moods[it] }, Modifier.padding(top = 14.dp)) { open(Routes.MOOD) }
 
         Text(
             stringResource(R.string.home_corner),
@@ -432,7 +499,7 @@ private fun MoodTile(who: String, entry: MoodEntry?, bg: Color, labelColor: Colo
         modifier.clip(RoundedCornerShape(18.dp)).background(bg).padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(entry?.kind?.emoji ?: "·", fontSize = 26.sp, color = BrownSoft)
+        MoodFace(entry?.kind, Modifier.size(34.dp))
         Spacer(Modifier.width(10.dp))
         Column {
             Text(who, fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, color = labelColor, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -467,7 +534,7 @@ private fun CornerTile(icon: ImageVector, title: String, tint: Color, modifier: 
 // ---------- Biz (us) tab ----------
 
 @Composable
-private fun BizTab(me: UserProfile, couple: Couple?, partner: UserProfile?) {
+private fun BizTab(me: UserProfile, couple: Couple?, partner: UserProfile?, open: (String) -> Unit) {
     val app = lovelyyApp()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -493,6 +560,8 @@ private fun BizTab(me: UserProfile, couple: Couple?, partner: UserProfile?) {
                 }
             }
         }
+        BizRow(Icons.Rounded.Mood, stringResource(R.string.feature_mood)) { open(Routes.MOOD) }
+        BizRow(Icons.Rounded.AutoStories, stringResource(R.string.feature_days)) { open(Routes.COUNTER) }
         BizRow(Icons.Rounded.Notifications, stringResource(R.string.biz_notifications)) {
             val i = android.content.Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
                 .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, context.packageName)

@@ -220,10 +220,10 @@
     <string name="emotion_opucuk">Öpücük</string>
     <string name="emotion_huzur">Huzur</string>
     <string name="emotion_ozlem_msg">%1$s seni çok özledi…</string>
-    <string name="emotion_sevgi_msg">%1$s seni çok seviyor…</string>
-    <string name="emotion_ask_msg">%1$s sana deli gibi âşık…</string>
-    <string name="emotion_sarilma_msg">%1$s sana sımsıkı sarılmak istiyor…</string>
-    <string name="emotion_opucuk_msg">%1$s sana kocaman bir öpücük gönderdi…</string>
+    <string name="emotion_sevgi_msg">%1$s sana sevgisini gönderdi</string>
+    <string name="emotion_ask_msg">%1$s sana deli gibi âşık</string>
+    <string name="emotion_sarilma_msg">%1$s sana kocaman sarıldı</string>
+    <string name="emotion_opucuk_msg">%1$s sana bir öpücük yolladı</string>
     <string name="emotion_huzur_msg">%1$s seninle çok huzurlu…</string>
     <string name="nudge_title">Aklımdasın</string>
     <string name="nudge_body">Tek dokunuşla dürt, %1$s seni düşündüğünü bilsin.</string>
@@ -331,4 +331,67 @@
     <string name="err_already_paired">Zaten biriyle eşleşmişsin.</string>
     <string name="err_permission">İzin hatası. Kod geçersiz olabilir ya da Firestore kuralları yüklenmemiş.</string>
     <string name="err_unknown">Beklenmeyen bir hata oldu. Tekrar dener misin?</string>
+
+    <!-- Gün sayacı (approved design 5) -->
+    <string name="dc_edit_date">Tanışma tarihini düzenle</string>
+    <string name="dc_together">Birlikte</string>
+    <string name="dc_day_word">gün</string>
+    <string name="dc_unit_h">sa</string>
+    <string name="dc_unit_m">dk</string>
+    <string name="dc_unit_s">sn</string>
+    <string name="dc_unit_ms">ms</string>
+    <string name="dc_since">%1$s beri</string>
+    <string name="dc_weeks">hafta</string>
+    <string name="dc_months">ay</string>
+    <string name="dc_hours">saat</string>
+    <string name="dc_path_title">Kutlamalar yolu</string>
+    <string name="dc_until_day">%1$d. güne %2$d gün</string>
+    <string name="dc_until_year">%1$d. yıla %2$d gün</string>
+    <string name="dc_node_year">%1$d. yıl</string>
+    <string name="dc_next_line">%1$s · O gün %2$s parti şapkasını takacak</string>
+    <string name="dc_cat_fallback">kedimiz</string>
+    <string name="dc_share">Bu anı paylaş</string>
+    <string name="dc_share_text">%1$s ve %2$s %3$s gündür birlikte. Lovelyy</string>
+    <string name="dc_pick">Tanışma tarihini seç</string>
+    <string name="dc_no_date">Tarihinizi seçin, sayaç başlasın</string>
+    <string name="dc_today_milestone">Bugün %1$s! Kutlu olsun</string>
+    <string name="dc_milestone_day">%1$d. gün</string>
+
+    <!-- Kalp atışı + dürtme (approved design 6) -->
+    <string name="hb2_title">%1$s kalbini gönder</string>
+    <string name="hb2_last">%1$s %2$s sana %3$s gönderdi</string>
+    <string name="hb2_none">İlk kalbi sen gönder</string>
+    <string name="hb2_history">Geçmiş</string>
+    <string name="hb2_preview_label">%1$s telefonunda böyle görünecek</string>
+    <string name="hb2_preview_app">Lovelyy · şimdi</string>
+    <string name="hb2_hold_cd">Basılı tutarak gönder</string>
+    <string name="hb2_hint_idle">Basılı tut, kalbin %1$s ulaşsın</string>
+    <string name="hb2_hint_holding">Bırakma, kalbin yolda…</string>
+    <string name="hb2_hint_sent">Gönderildi! %1$s telefonu titriyor</string>
+    <string name="hb2_hint_failed">Gönderilemedi, tekrar dene</string>
+    <string name="hb2_nudge_title">Dürt</string>
+    <string name="hb2_nudge_body">Tek dokunuş: “%1$s seni düşünüyor”</string>
+    <string name="hb2_nudge_action">Dürt</string>
+    <string name="hb2_nudge_done">Dürtüldü</string>
+    <string name="time_ago_minutes">%1$d dakika önce</string>
+    <string name="time_ago_hours">%1$d saat önce</string>
+    <string name="time_ago_days">%1$d gün önce</string>
+    <string name="time_ago_now">az önce</string>
+
+    <!-- Ruh hali (approved design 7) -->
+    <string name="md_title">Ruh hali</string>
+    <string name="md_history">Geçmiş ruh halleri</string>
+    <string name="md_you">Sen</string>
+    <string name="md_now">şimdi</string>
+    <string name="md_your_mood_cd">Senin ruh halin</string>
+    <string name="md_partner_mood_cd">%1$s ruh hali: %2$s</string>
+    <string name="md_partner_none">Henüz paylaşmadı</string>
+    <string name="md_partner_note">%1$s notu</string>
+    <string name="md_question">Bugün nasılsın?</string>
+    <string name="md_note_label">Not ekle (isteğe bağlı)</string>
+    <string name="md_note_hint">%1$s bir şey söylemek ister misin?</string>
+    <string name="md_share">%1$s ile paylaş</string>
+    <string name="md_shared">%1$s gönderildi</string>
+    <string name="md_failed">Paylaşılamadı, tekrar dene</string>
+    <string name="mood_kind_ozlemis">Özlemiş</string>
 </resources>
