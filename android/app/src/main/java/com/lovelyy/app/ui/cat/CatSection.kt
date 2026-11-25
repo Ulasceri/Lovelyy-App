@@ -417,7 +417,7 @@ private fun CatStage(
                     .align(Alignment.TopEnd)
                     .padding(top = 64.dp, end = 18.dp)
                     .zIndex(3f)
-                    .graphicsLayer { translationY = bob * density }
+                    .graphicsLayer { translationY = bob.dp.toPx() }
                     .softShadow(RoundedCornerShape(16.dp, 16.dp, 4.dp, 16.dp), 4.dp)
                     .clip(RoundedCornerShape(16.dp, 16.dp, 4.dp, 16.dp))
                     .background(CreamCard)
