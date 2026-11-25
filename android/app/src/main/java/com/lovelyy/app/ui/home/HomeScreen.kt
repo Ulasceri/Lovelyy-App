@@ -126,6 +126,7 @@ import com.lovelyy.app.ui.theme.PeachSoft
 import com.lovelyy.app.ui.theme.PeachTint
 import com.lovelyy.app.ui.theme.Quicksand
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 
 /** Bottom-nav tabs. The center heart is not a tab: it opens the heartbeat screen. */
@@ -168,7 +169,8 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
     var incoming by remember { mutableStateOf<Signal?>(null) }
     LaunchedEffect(Unit) { app.signalCenter.incoming.collect { incoming = it } }
 
-    val moods by remember(coupleId) { app.moodRepository.observe(coupleId) }.collectAsStateWithLifecycle(emptyMap())
+    // Signed out or offline: keep the last moods instead of crashing on PERMISSION_DENIED.
+    val moods by remember(coupleId) { app.moodRepository.observe(coupleId).catch { } }.collectAsStateWithLifecycle(emptyMap())
 
     Box(Modifier.fillMaxSize().background(Cream)) {
         val top = stack.lastOrNull()
