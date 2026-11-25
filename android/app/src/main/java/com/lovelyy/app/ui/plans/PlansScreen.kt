@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -182,15 +184,15 @@ fun PlansScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBucke
             RoundSvgButton(PLUS_D, stringResource(R.string.p_add), { editing = Editing(null, today) })
         }
 
-        // Countdowns
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        // Countdowns (same height, even when one title is shorter)
+        Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             val colors = listOf(PeachSoft, MintCell, ButterCell)
             if (special.isEmpty()) {
-                Countdown(null, stringResource(R.string.p_no_special), "", PeachSoft, Modifier.weight(1f)) { editing = Editing(null, today) }
+                Countdown(null, stringResource(R.string.p_no_special), "", PeachSoft, Modifier.weight(1f).fillMaxHeight()) { editing = Editing(null, today) }
             }
             special.forEachIndexed { i, (e, left) ->
                 val next = CalendarMath.nextOccurrence(e, today) ?: e.date
-                Countdown(left, e.title, next.format(DateTimeFormatter.ofPattern("d MMMM", TR)), colors[i], Modifier.weight(1f)) {
+                Countdown(left, e.title, next.format(DateTimeFormatter.ofPattern("d MMMM", TR)), colors[i], Modifier.weight(1f).fillMaxHeight()) {
                     if (!e.builtIn) editing = Editing(e, e.date)
                 }
             }

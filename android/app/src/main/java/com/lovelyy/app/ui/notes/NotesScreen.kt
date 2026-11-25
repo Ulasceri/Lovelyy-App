@@ -321,7 +321,7 @@ private fun NoteEditor(note: Note?, onDismiss: () -> Unit, onSave: (String, Int,
                     }
                 },
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
                 NoteColors.forEachIndexed { i, c ->
                     val label = stringResource(R.string.n_color, i + 1)
                     Box(
@@ -376,5 +376,5 @@ private fun SmallChip(text: String, bg: Color, modifier: Modifier = Modifier, on
             .bounceClick(onClick = onClick)
             .padding(horizontal = 18.dp),
         contentAlignment = Alignment.Center,
-    ) { Text(text, fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Brown) }
+    ) { Text(text, fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Brown, maxLines = 1, softWrap = false) }
 }
