@@ -1,0 +1,3 @@
+/build
+# Your real Firebase config. Each developer downloads their own from the Firebase console.
+google-services.json

@@ -1,0 +1,29 @@
+# OS / editors
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+*.iml
+.vscode/
+
+# Android / Gradle
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/captures/
+android/.kotlin/
+*.apk
+*.aab
+*.keystore
+*.jks
+
+# Firebase secrets / local state
+google-services.json
+GoogleService-Info.plist
+firebase/.firebaserc
+firebase/*-debug.log
+firebase/.firebase/
+
+# Node
+node_modules/
