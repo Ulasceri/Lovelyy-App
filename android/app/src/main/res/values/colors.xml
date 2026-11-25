@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Lovelyy palette (also defined in ui/theme/Color.kt) -->
+    <color name="peach">#FFB38A</color>
+    <color name="mint">#9ED9C8</color>
+    <color name="brown">#4A3B35</color>
+    <color name="cream">#FFF8F2</color>
+</resources>

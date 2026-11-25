@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Temporary icon: a peach heart. Will be replaced by the cat icon later. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFB38A"
+        android:pathData="M54,76 C54,76 32,62 32,46 C32,38.3 37.8,33 44.5,33 C48.8,33 52.2,35.3 54,38.6 C55.8,35.3 59.2,33 63.5,33 C70.2,33 76,38.3 76,46 C76,62 54,76 54,76 Z" />
+</vector>

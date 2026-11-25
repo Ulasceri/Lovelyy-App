@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Lovelyy</string>
+
+    <!-- Login -->
+    <string name="login_tagline">İkimizin küçük dünyası</string>
+    <string name="login_subtitle">Kedinizi birlikte büyütün, her gün birbirinize biraz daha yakın olun.</string>
+    <string name="login_google">Google ile devam et</string>
+    <string name="login_email">E-posta ile devam et</string>
+    <string name="login_title_signin">Tekrar hoş geldin</string>
+    <string name="login_title_signup">Hesap oluştur</string>
+    <string name="field_name">Adın</string>
+    <string name="field_email">E-posta</string>
+    <string name="field_password">Şifre</string>
+    <string name="action_signin">Giriş yap</string>
+    <string name="action_signup">Kayıt ol</string>
+    <string name="switch_to_signup">Hesabın yok mu? Kayıt ol</string>
+    <string name="switch_to_signin">Zaten hesabın var mı? Giriş yap</string>
+    <string name="action_back">Geri</string>
+
+    <!-- Name -->
+    <string name="name_title">Sana ne diyelim?</string>
+    <string name="name_subtitle">Partnerin seni bu isimle görecek.</string>
+    <string name="action_continue">Devam et</string>
+
+    <!-- Pairing -->
+    <string name="pair_title">Partnerinle eşleş</string>
+    <string name="pair_subtitle">Biriniz kodu paylaşsın, diğeriniz girsin. Hepsi bu kadar.</string>
+    <string name="pair_tab_share">Kodumu paylaş</string>
+    <string name="pair_tab_enter">Kod gir</string>
+    <string name="pair_your_code">Senin kodun</string>
+    <string name="pair_waiting">Partnerinin kodu girmesi bekleniyor…</string>
+    <string name="pair_code_valid">Kod 24 saat geçerli ve tek kullanımlık.</string>
+    <string name="pair_create_code">Kod oluştur</string>
+    <string name="pair_new_code">Yeni kod</string>
+    <string name="pair_share">Kodu paylaş</string>
+    <string name="pair_share_text">Lovelyy\'de benimle eşleş! Kodum: %1$s</string>
+    <string name="pair_enter_hint">6 haneli kod</string>
+    <string name="pair_join">Eşleş</string>
+    <string name="sign_out">Çıkış yap</string>
+
+    <!-- Home -->
+    <string name="home_us">%1$s &amp; %2$s</string>
+    <string name="home_partner_fallback">Partnerin</string>
+    <string name="home_cat_soon">Kediniz yakında burada olacak</string>
+    <string name="home_cat_soon_sub">Birlikte isim verip besleyeceksiniz.</string>
+    <string name="home_soon">Yakında</string>
+    <string name="home_main_action">Seni düşünüyorum</string>
+    <string name="home_main_action_soon">Bu özellik bir sonraki adımda geliyor 💛</string>
+    <string name="feature_days">Gün sayacı</string>
+    <string name="feature_heartbeat">Kalp atışı</string>
+    <string name="feature_drawing">Canlı çizim</string>
+    <string name="feature_question">Günün sorusu</string>
+    <string name="feature_mood">Ruh hali</string>
+    <string name="feature_piggy">Kumbara</string>
+    <string name="feature_distance">Mesafe</string>
+    <string name="feature_notes">Notlar</string>
+
+    <!-- Setup / errors -->
+    <string name="setup_title">Firebase kurulumu gerekiyor</string>
+    <string name="setup_body">Uygulama çalışıyor ama henüz Firebase\'e bağlı değil. README dosyasındaki adımları takip et, google-services.json dosyasını android/app klasörüne koy ve uygulamayı yeniden çalıştır.</string>
+    <string name="error_title">Bir şeyler ters gitti</string>
+    <string name="error_retry_hint">Firestore kurallarının yüklendiğinden emin ol (README, adım 5) ve uygulamayı yeniden aç.</string>
+
+    <string name="err_network">İnternet bağlantısı yok gibi görünüyor.</string>
+    <string name="err_invalid_credentials">E-posta veya şifre hatalı.</string>
+    <string name="err_email_in_use">Bu e-posta ile zaten bir hesap var.</string>
+    <string name="err_weak_password">Şifre en az 6 karakter olmalı.</string>
+    <string name="err_invalid_email">Geçerli bir e-posta gir.</string>
+    <string name="err_google_not_configured">Google girişi henüz ayarlanmadı. README\'deki Google adımını yap.</string>
+    <string name="err_google_cancelled">Google girişi iptal edildi.</string>
+    <string name="err_code_not_found">Bu kod bulunamadı. Harfleri kontrol et.</string>
+    <string name="err_code_expired">Bu kodun süresi dolmuş. Partnerinden yeni kod iste.</string>
+    <string name="err_own_code">Bu senin kendi kodun. 🙂 Partnerinin kodunu gir.</string>
+    <string name="err_already_paired">Zaten bir partnerle eşleşmişsin.</string>
+    <string name="err_permission">İzin hatası. Kod geçersiz olabilir ya da Firestore kuralları yüklenmemiş.</string>
+    <string name="err_unknown">Beklenmeyen bir hata oldu. Tekrar dener misin?</string>
+</resources>

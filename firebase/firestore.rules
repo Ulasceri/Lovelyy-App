@@ -1,0 +1,143 @@
+rules_version = '2';
+
+// Lovelyy Firestore security rules.
+//
+// Data model
+//   users/{uid}            profile: displayName, photoUrl, coupleId, pairCode, createdAt
+//   pairCodes/{CODE}       a partner's one-time pairing code: ownerUid, createdAt
+//   couples/{coupleId}     the shared space: members [ownerUid, joinerUid], createdAt, startDate
+//   couples/{id}/**        every future shared feature (cat, notes, mood...) lives here
+//
+// Pairing (see android/.../data/PairingRepository.kt):
+//   A creates pairCodes/CODE. B, in ONE transaction, creates couples/CODE,
+//   sets coupleId on both user docs and deletes pairCodes/CODE.
+//   These rules accept only that exact shape.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function me() { return request.auth.uid; }
+    function userPath(uid) { return /databases/$(database)/documents/users/$(uid); }
+    function couplePath(id) { return /databases/$(database)/documents/couples/$(id); }
+    function codePath(code) { return /databases/$(database)/documents/pairCodes/$(code); }
+
+    function isUnpaired(uid) {
+      return exists(userPath(uid)) && get(userPath(uid)).data.get('coupleId', null) == null;
+    }
+    function validName(n) { return n is string && n.size() <= 40; }
+
+    // ---------- users ----------
+    match /users/{userId} {
+      // B is allowed to set A's coupleId only while creating their shared couple.
+      function joiningCouple() {
+        let cid = request.resource.data.get('coupleId', null);
+        return resource.data.get('coupleId', null) == null
+          && cid is string
+          && !exists(couplePath(cid))
+          && existsAfter(couplePath(cid))
+          && getAfter(couplePath(cid)).data.members.hasAll([userId, me()]);
+      }
+      function coupleUnchanged() {
+        return request.resource.data.get('coupleId', null) == resource.data.get('coupleId', null);
+      }
+      function validPairCode() {
+        let code = request.resource.data.get('pairCode', null);
+        return code == null
+          || code == resource.data.get('pairCode', null)
+          || (existsAfter(codePath(code)) && getAfter(codePath(code)).data.ownerUid == userId);
+      }
+      function isPartner() {
+        let cid = resource.data.get('coupleId', null);
+        return cid != null && me() in get(couplePath(cid)).data.members;
+      }
+
+      allow get: if signedIn() && (me() == userId || isPartner());
+      allow list: if false;
+
+      allow create: if signedIn() && me() == userId
+        && request.resource.data.keys().hasOnly(['displayName', 'photoUrl', 'coupleId', 'pairCode', 'createdAt'])
+        && validName(request.resource.data.displayName)
+        && request.resource.data.get('coupleId', null) == null
+        && request.resource.data.get('pairCode', null) == null
+        && request.resource.data.createdAt == request.time;
+
+      // Myself: edit my profile, my pairing code, and join a couple.
+      allow update: if signedIn() && me() == userId
+        && request.resource.data.keys().hasOnly(['displayName', 'photoUrl', 'coupleId', 'pairCode', 'createdAt'])
+        && request.resource.data.createdAt == resource.data.createdAt
+        && validName(request.resource.data.displayName)
+        && validPairCode()
+        && (coupleUnchanged() || joiningCouple());
+
+      // My partner-to-be: only links me to our new couple and clears my code.
+      allow update: if signedIn() && me() != userId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['coupleId', 'pairCode'])
+        && request.resource.data.get('pairCode', null) == null
+        && joiningCouple();
+
+      allow delete: if false;
+    }
+
+    // ---------- pairCodes ----------
+    match /pairCodes/{code} {
+      // Knowing the code is the secret. Single reads only, never listing.
+      allow get: if signedIn();
+      allow list: if false;
+
+      allow create: if signedIn()
+        && code.matches('^[A-HJKMNP-Z2-9]{6}$')
+        && request.resource.data.keys().hasOnly(['ownerUid', 'createdAt'])
+        && request.resource.data.ownerUid == me()
+        && request.resource.data.createdAt == request.time
+        && isUnpaired(me())
+        && !exists(couplePath(code));
+
+      allow update: if false;
+
+      // The owner can retire it; the partner deletes it while creating the couple.
+      allow delete: if signedIn() && (
+        resource == null
+        || resource.data.ownerUid == me()
+        || (existsAfter(couplePath(code)) && me() in getAfter(couplePath(code)).data.members)
+      );
+    }
+
+    // ---------- couples ----------
+    match /couples/{coupleId} {
+      function isMember() { return signedIn() && me() in resource.data.members; }
+
+      function validNewCouple() {
+        let d = request.resource.data;
+        let codeDoc = get(codePath(coupleId));
+        let owner = codeDoc.data.ownerUid;
+        return d.keys().hasOnly(['members', 'createdAt', 'startDate'])
+          && d.members is list && d.members.size() == 2
+          && d.members[0] == owner
+          && d.members[1] == me()
+          && owner != me()
+          && request.time < codeDoc.data.createdAt + duration.value(24, 'h')
+          && d.createdAt == request.time
+          && d.get('startDate', null) == null
+          && isUnpaired(owner) && isUnpaired(me())
+          && !existsAfter(codePath(coupleId))
+          && getAfter(userPath(owner)).data.coupleId == coupleId
+          && getAfter(userPath(me())).data.coupleId == coupleId;
+      }
+
+      allow get, list: if isMember();
+      allow create: if signedIn() && validNewCouple();
+      allow update: if isMember()
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['members', 'createdAt'])
+        && request.resource.data.keys().hasOnly(['members', 'createdAt', 'startDate'])
+        && (request.resource.data.get('startDate', null) == null || request.resource.data.startDate is timestamp);
+      allow delete: if false;
+
+      // Everything the couple shares (cat, notes, moods...): only the two of them.
+      // ({sub}/ is required: a bare {document=**} would also match the couple doc itself.)
+      match /{sub}/{document=**} {
+        allow read, write: if signedIn() && me() in get(couplePath(coupleId)).data.members;
+      }
+    }
+  }
+}
