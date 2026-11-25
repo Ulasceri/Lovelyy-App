@@ -54,6 +54,7 @@ import androidx.compose.material.icons.filled.SportsBaseball
 import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -758,10 +759,10 @@ internal fun NameCatDialog(initial: String, canDismiss: Boolean, onDismiss: () -
             }
         },
         confirmButton = {
-            TextButton(onClick = { onSave(text.trim()) }, enabled = text.isNotBlank()) { Text(stringResource(R.string.action_save)) }
+            TextButton(onClick = { onSave(text.trim()) }, enabled = text.isNotBlank(), colors = ButtonDefaults.textButtonColors(contentColor = Brown)) { Text(stringResource(R.string.action_save)) }
         },
         dismissButton = if (canDismiss) {
-            { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } }
+            { TextButton(onClick = onDismiss, colors = ButtonDefaults.textButtonColors(contentColor = Brown)) { Text(stringResource(R.string.action_cancel)) } }
         } else null,
         shape = MaterialTheme.shapes.extraLarge,
         containerColor = MaterialTheme.colorScheme.background,

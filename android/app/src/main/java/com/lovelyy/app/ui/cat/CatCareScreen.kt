@@ -193,7 +193,7 @@ fun CatCareScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBac
             RoundSvgButton(SHIRT_D, stringResource(R.string.cc_accessories), onAccessories)
         }
 
-        // Hero: the living cat, cropped a little low like the design (object-position 60%).
+        // Hero: the living cat. The stage is short, so keep the head and ears in view.
         val heroShape = RoundedCornerShape(28.dp)
         Box(
             Modifier
@@ -221,7 +221,7 @@ fun CatCareScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBac
                 onStroke = { view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK) },
                 onPetDone = { strokes -> if (strokes > 0) vm.act(me, members, CatActionType.Pet, strokes) },
                 stageModifier = Modifier.height(196.dp),
-                cropBias = 0.6f,
+                cropBias = 0.3f,
                 showChips = false,
                 bubbleTop = 16.dp,
                 bubbleEnd = 16.dp,
