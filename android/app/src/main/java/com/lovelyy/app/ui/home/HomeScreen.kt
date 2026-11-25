@@ -516,7 +516,6 @@ private fun MoodTile(who: String, entry: MoodEntry?, bg: Color, labelColor: Colo
     }
 }
 
-@Composable
 private class CornerItem(val icon: ImageVector, @androidx.annotation.StringRes val title: Int, val tint: Color, val route: String? = null)
 
 @Composable
