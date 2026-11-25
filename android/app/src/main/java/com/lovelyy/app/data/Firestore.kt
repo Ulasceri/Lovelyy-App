@@ -7,6 +7,8 @@ object Paths {
     const val USERS = "users"
     const val COUPLES = "couples"
     const val PAIR_CODES = "pairCodes"
+    const val CAT = "cat"
+    const val CAT_DOC = "main"
 }
 
 internal fun DocumentSnapshot.toUserProfile(): UserProfile? =

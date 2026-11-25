@@ -55,6 +55,10 @@ android {
     buildFeatures {
         compose = true
     }
+    androidResources {
+        // The cat videos are already compressed; storing them uncompressed lets them stream from the APK.
+        noCompress += "mp4"
+    }
 }
 
 dependencies {
@@ -80,4 +84,10 @@ dependencies {
     implementation(libs.androidx.credentials)
     implementation(libs.androidx.credentials.play.services)
     implementation(libs.googleid)
+
+    // The cat: video clips (assets/cat) and the home-screen widget's background refresh.
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.work.runtime)
+
+    testImplementation(libs.junit)
 }

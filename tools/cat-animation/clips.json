@@ -1,0 +1,21 @@
+{
+  "model": "fal-ai/kling-video/v2.5-turbo/pro/image-to-video",
+  "negative_prompt": "camera movement, zoom, pan, blur, distortion, extra limbs, extra tail, morphing, flicker, text",
+  "suffix": " Static camera, no camera movement, background and lighting unchanged, smooth natural cute motion, ends in exactly the starting pose.",
+  "clips": {
+    "idle":       {"start": "base",  "end": "base",  "prompt": "The cute cat sits calmly and breathes gently, blinks slowly once, one ear twitches, tail swishes softly, then returns to the exact starting pose."},
+    "happy":      {"start": "base",  "end": "base",  "prompt": "The cat is very happy: it closes its eyes into happy smiling crescents, sways its head side to side contentedly and purrs, tail swaying cheerfully, then opens its eyes and returns to the starting pose."},
+    "hungry":     {"start": "base",  "end": "base",  "prompt": "The cat is hungry: it looks down sadly at the empty rug, licks its lips, ears droop a little, looks up at the viewer with pleading eyes and meows softly, then returns to the starting pose."},
+    "thirsty":    {"start": "base",  "end": "base",  "prompt": "The cat is thirsty: its tongue pokes out a little, it licks its nose and lips repeatedly, looks to the side searching, gives a small tired sigh, then returns to the starting pose."},
+    "wants_love": {"start": "base",  "end": "base",  "prompt": "The cat wants affection: it tilts its head with big shiny pleading eyes, lifts one front paw gently toward the viewer asking to be petted, gives a soft meow, then puts the paw down and returns to the starting pose."},
+    "petted":     {"start": "base",  "end": "base",  "prompt": "The cat is being petted and loves it: eyes close blissfully, it leans and rubs its cheek to one side, then the other side, purring with a happy relaxed face, ears relaxed, then returns to the starting pose."},
+    "surprised":  {"start": "base",  "end": "base",  "prompt": "The cat gets surprised: its eyes go wide, ears perk straight up, it makes a small startled hop in place with fur slightly puffed, then calms down, blinks and settles back into the starting pose."},
+    "sleepy":     {"start": "base",  "end": "base",  "prompt": "The cat is sleepy: eyelids droop heavily, it does a big wide yawn showing its tiny pink tongue, head nods down drowsily, then it slowly lifts its head back to the starting pose with sleepy eyes."},
+    "lie_down":   {"start": "base",  "end": "sleep", "prompt": "The sleepy cat yawns, turns around once and slowly lies down, curling up on the rug, tucks its head on its paws, wraps its tail around and closes its eyes to fall asleep."},
+    "sleeping":   {"start": "sleep", "end": "sleep", "prompt": "The cat sleeps peacefully curled up, its body rises and falls with slow gentle breathing, one ear twitches slightly in its sleep, tail tip moves softly. Eyes stay closed the whole time."},
+    "wake_up":    {"start": "sleep", "end": "base",  "prompt": "The sleeping cat slowly wakes up, opens its eyes, stretches its front paws forward with a little yawn, then sits up and settles into an upright sitting pose."},
+    "eating":     {"start": "food",  "end": "food",  "prompt": "The cat happily lowers its head into the food bowl and eats the kibble with munching motions, chewing contentedly, then lifts its head licking its lips with a satisfied face and returns to the starting pose."},
+    "drinking":   {"start": "water", "end": "water", "prompt": "The cat lowers its head to the water bowl and laps the water with its little tongue, small ripples appear in the water, then it lifts its head, licks its lips and returns to the starting pose."},
+    "playing":    {"start": "toy",   "end": "toy",   "prompt": "The cat playfully bats the yarn ball with its front paw, the ball rolls a little and the cat pounces on it excitedly and pats it with both paws, then sits back up proudly with the ball in front of it in the starting pose."}
+  }
+}
