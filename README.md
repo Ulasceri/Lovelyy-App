@@ -2,21 +2,70 @@
 
 Çiftler için, ortak bir kediyi birlikte büyüttüğünüz mobil uygulama. Önce Android.
 
-> **Şu anki adım (1):** Giriş (Google + e-posta), partnerle kodla eşleşme ve ana sayfa iskeleti.
-> Kedi ve diğer özellikler sonraki adımlarda gelecek.
+Android uygulaması Kotlin + Jetpack Compose + Material 3 ile yazılır, arka uç tamamen Firebase'dir
+(Auth + Firestore). Tek repoda (monorepo) Android, Firebase kuralları, ortak dosyalar ve araçlar bir arada durur.
+
+## Özellikler ve durum
+
+| Özellik | Durum |
+|---|---|
+| Karşılama, Giriş (Google + e-posta/şifre), isim belirleme | Hazır |
+| Partnerle 6 haneli kodla eşleşme | Hazır |
+| Anasayfa (Yuva / Anılar / Planlar / Biz) ve alt gezinme çubuğu | Hazır (onaylı tasarım aktarıldı) |
+| Ortak animasyonlu kedi: besle, su ver, oyna, sev, uyut | Hazır (kısa videolar `assets/cat/` içinde, ExoPlayer ile oynar) |
+| Ana ekran widget'ı (kedinin anlık durumu) | Hazır |
+| Analytics, Crashlytics, Performance, Timber katmanı | Hazır, bkz. [docs/analytics.md](docs/analytics.md) |
+| Sayaç, kalp atışı, ruh hali, notlar vb. diğer özellikler | Henüz yapılmadı: arayüzde **"Yakında"** olarak görünür. Her biri önce tasarlanıp onaylanır, sonra yapılır. Anılar ve Planlar sekmeleri de şimdilik "Yakında" yer tutucusudur. |
+
+## Teknoloji
+
+- Kotlin 2.1, Android Gradle Plugin 8.10, `minSdk 26`, `compileSdk/targetSdk 35`, Java 17
+- Jetpack Compose (BOM 2025.06) + Material 3, Quicksand yazı tipi
+- Firebase: Authentication, Firestore, Analytics, Crashlytics, Performance Monitoring
+- Credential Manager + Google ile giriş, Media3 ExoPlayer (kedi videoları), WorkManager (widget yenileme), Timber
+- Sürümlerin tamamı: [`android/gradle/libs.versions.toml`](android/gradle/libs.versions.toml)
 
 ## Klasör yapısı (monorepo)
 
 | Klasör | İçerik |
 |---|---|
-| `android/` | Android uygulaması (Kotlin + Jetpack Compose + Material 3) |
-| `firebase/` | Firestore / Realtime Database güvenlik kuralları, Cloud Functions (TypeScript), kural testleri |
-| `assets/` | Ortak dosyalar: font, ileride kedi animasyonları |
-| `docs/` | Ürün özeti, tasarım prensipleri, mimari |
-| `ios/` | İleride iOS uygulaması |
-| `tools/` | Yardımcı scriptler (şimdilik boş) |
+| `android/` | Android uygulaması (Gradle projesi, Android Studio'da bu klasörü aç) |
+| `firebase/` | Firestore / Realtime Database güvenlik kuralları, kural testleri (`tests/`), Cloud Functions iskeleti (`functions/`) |
+| `assets/` | Ortak dosyalar: Quicksand fontu, `animations/` ve `images/` (şimdilik boş, ileri için ayrıldı) |
+| `docs/` | Ürün özeti, tasarım prensipleri, mimari, analytics |
+| `tools/` | Yardımcı araçlar: `tools/cat-animation/` kedi kliplerini fal.ai ile üretir (bkz. [tools/README.md](tools/README.md)) |
+| `ios/` | İleride iOS uygulaması (şimdilik sadece not) |
 
-Tasarım: [docs/design-principles.md](docs/design-principles.md) · Mimari: [docs/architecture.md](docs/architecture.md)
+Android paket düzeni (`android/app/src/main/java/com/lovelyy/app/`):
+
+| Paket | Ne var |
+|---|---|
+| `ui/` | `LovelyyRoot`, `AppViewModel` ve ekranlar: `auth/` (Karşılama + Giriş), `profile/`, `pairing/`, `home/`, `cat/`, `setup/`, `theme/`, `components/` |
+| `data/` | Firebase erişimi ve modeller: Auth, User, Pairing, Cat ve diğer depolar |
+| `analytics/` | Tipli analytics olayları ve ekran görüntüleme takibi |
+| `telemetry/` | Crashlytics, Performance, Timber ağacı, onay anahtarı |
+| `signals/`, `widget/` | Sinyal metinleri ve ana ekran widget'ı |
+
+Kedi videoları: `android/app/src/main/assets/cat/*.mp4`. Debug'a özel kodlar: `android/app/src/debug/`.
+Testler: `android/app/src/test/`.
+
+## Belgeler
+
+- Rehber ve kurallar: [CLAUDE.md](CLAUDE.md) · Tasarım dili: [DESIGN.md](DESIGN.md)
+- Ürün: [docs/product.md](docs/product.md) · Tasarım prensipleri: [docs/design-principles.md](docs/design-principles.md)
+- Mimari: [docs/architecture.md](docs/architecture.md) · Analytics ve hata raporlama: [docs/analytics.md](docs/analytics.md)
+
+## Derleme, çalıştırma, test
+
+- Android Studio'da `android/` klasörünü aç, **▶ Run** (ayrıntılar aşağıda).
+- Komut satırında (`android/` içinden): `./gradlew assembleDebug` (Windows'ta `gradlew.bat assembleDebug`),
+  birim testleri için `./gradlew testDebugUnitTest`.
+- Android SDK bulut konteynerinde derlenemez; derleme ve testler kullanıcının kendi bilgisayarında yapılır.
+- **Windows, kullanıcı yolunda ASCII olmayan karakter varsa (ör. ş, ı, ö):** `JAVA_HOME` değerini Android Studio'nun
+  `jbr` klasörüne ayarla ve `TEMP`/`TMP` değişkenlerini ASCII bir klasöre al (ör. `C:\gtmp`), yoksa Gradle hata verebilir.
+- Birim testlerinde bellek hatası olursa: `./gradlew testDebugUnitTest -Dorg.gradle.jvmargs=-Xmx2048m`
+- Telemetri (analytics/Crashlytics/Performance) debug'da varsayılan olarak kapalıdır; açmak için
+  `./gradlew assembleDebug -Ptelemetry.debug=true` ya da [docs/analytics.md](docs/analytics.md).
 
 ---
 
@@ -46,7 +95,8 @@ Tasarımı Firebase olmadan da görebilirsin: `HomeScreen.kt` veya `LoginScreen.
 ### 3. Firebase projesini oluştur
 
 1. [console.firebase.google.com](https://console.firebase.google.com) → **Proje oluştur** → adı `Lovelyy`.
-   Google Analytics'i şimdilik kapatabilirsin.
+   Google Analytics'i **açık** bırak: Analytics, Crashlytics ve Performance için gerekir
+   (kapalı bırakırsan sonradan Proje ayarları → Entegrasyonlar'dan açıp google-services.json'u yeniden indirmen gerekir).
 2. Proje ana sayfasında **Android simgesine** tıkla (Uygulama ekle):
    - **Android paket adı:** `com.lovelyy.app` (birebir aynı olmalı)
    - **Uygulama takma adı:** Lovelyy
@@ -110,7 +160,7 @@ firebase use --add          # projeni seç
 firebase deploy --only firestore,database
 ```
 
-Kural testleri (Firestore emülatörü, Java 11+ gerekir):
+Kural testleri (Firestore emülatörü, Java 11+ gerekir; `firebase/tests/firestore.rules.test.mjs`):
 
 ```
 cd firebase/tests
@@ -118,5 +168,5 @@ npm install
 npm test
 ```
 
-Cloud Functions bu adımda kullanılmıyor (`firebase/functions` sadece iskelet). Deploy etmek Blaze (kullandıkça öde)
+Cloud Functions şu an kullanılmıyor (`firebase/functions` sadece iskelet). Deploy etmek Blaze (kullandıkça öde)
 planı gerektirir; bildirimler gibi özellikler geldiğinde lazım olacak.
