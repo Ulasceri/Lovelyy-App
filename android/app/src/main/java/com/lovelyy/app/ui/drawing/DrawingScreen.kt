@@ -52,6 +52,8 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
@@ -377,7 +379,7 @@ private fun DrawingCanvas(
 }
 
 /** Draws a normalized stroke into this canvas. Also used for the small previews. */
-fun DrawScope.drawNormalized(points: List<Float>, color: Color, width: Float) {
+fun DrawScope.drawNormalized(points: List<Float>, color: Color, width: Float, blendMode: BlendMode = BlendMode.SrcOver) {
     if (points.size < 2) return
     val path = Path()
     path.moveTo(points[0] * size.width, points[1] * size.height)
@@ -386,11 +388,16 @@ fun DrawScope.drawNormalized(points: List<Float>, color: Color, width: Float) {
         path.lineTo(points[i] * size.width, points[i + 1] * size.height)
         i += 2
     }
-    drawPath(path, color, style = Stroke(width * size.width, cap = StrokeCap.Round, join = StrokeJoin.Round))
+    drawPath(path, color, style = Stroke(width * size.width, cap = StrokeCap.Round, join = StrokeJoin.Round), blendMode = blendMode)
 }
 
 /** A small read-only preview of a drawing (Anılar card). */
 @Composable
 fun DrawingPreview(strokes: List<LineStroke>, modifier: Modifier) {
-    Canvas(modifier) { strokes.forEach { drawNormalized(it.points, Color(it.color), it.width) } }
+    // Eraser strokes are white on the white canvas; here the card behind is tinted, so clear them instead.
+    Canvas(modifier.graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)) {
+        strokes.forEach {
+            drawNormalized(it.points, Color(it.color), it.width, if (it.color == ERASER) BlendMode.Clear else BlendMode.SrcOver)
+        }
+    }
 }
