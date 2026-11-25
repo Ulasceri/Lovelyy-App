@@ -6,6 +6,9 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.lovelyy.app.data.AuthRepository
 import com.lovelyy.app.data.CatRepository
+import com.lovelyy.app.data.MoodRepository
+import com.lovelyy.app.data.SignalRepository
+import com.lovelyy.app.signals.SignalCenter
 import com.lovelyy.app.data.PairingRepository
 import com.lovelyy.app.data.UserRepository
 
@@ -19,4 +22,7 @@ class LovelyyApplication : Application() {
     val userRepository by lazy { UserRepository(FirebaseFirestore.getInstance()) }
     val pairingRepository by lazy { PairingRepository(FirebaseFirestore.getInstance()) }
     val catRepository by lazy { CatRepository(FirebaseFirestore.getInstance()) }
+    val signalRepository by lazy { SignalRepository(FirebaseFirestore.getInstance()) }
+    val moodRepository by lazy { MoodRepository(FirebaseFirestore.getInstance()) }
+    val signalCenter by lazy { SignalCenter(this) }
 }

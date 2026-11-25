@@ -81,3 +81,41 @@ refills it), love 8h. The streak grows by one for each day on which both partner
 
 RemoteViews widget with one picture per mood. The app saves the cat whenever it changes; the
 widget computes the mood itself (time-based), and WorkManager refreshes from Firestore every 30 min.
+
+# Step 3: redesigned screens + first three features
+
+## Navigation
+
+`AppState` still picks the big screen (login → name → pairing → home). Inside Home,
+`ui/home/HomeScreen.kt` adds a bottom nav (Yuva · Anılar · ♥ · Planlar · Biz) and a tiny string
+back stack for inner screens (`counter`, `mood`, `heartbeat[:emotion]`). The center heart opens
+the heartbeat screen. Shared building blocks of the approved design are in `ui/components/Design.kt`.
+
+Pairing codes are now 6 digits (2-9, so they still match the existing rules regex) and the app
+treats them as valid for 30 minutes (the rules still allow up to 24h).
+
+## Data
+
+| Path | Fields | Notes |
+|---|---|---|
+| `couples/{id}.startDate` | timestamp | day counter; start of the chosen day in the phone's zone |
+| `couples/{id}/signals/{auto}` | kind (heartbeat/nudge/mood), emotion, mood, from, fromName, to, at, createdAt | heartbeats, nudges, mood notices |
+| `couples/{id}/moods/{uid}` | kind, note, at | each partner's current mood |
+
+All of these are covered by the existing "members only" rule for `couples/{id}/**`; no rules
+deploy was needed.
+
+## Partner notifications on the free Spark plan
+
+Real push (FCM) needs a trusted sender (a Cloud Function), and functions need the Blaze plan.
+So `signals/SignalCenter.kt` does the best possible without a server:
+
+- While the app process is alive (open or recently backgrounded) a Firestore listener sees a new
+  signal within about a second: on screen it plays a full-screen animation with a heartbeat
+  vibration; in the background it posts a local notification.
+- When the app is closed, `SignalWorker` (WorkManager) checks every ~15 minutes, Android's
+  minimum, and posts what was missed.
+
+With Blaze: add `firebase-messaging`, store each user's FCM token, and a function on
+`couples/{id}/signals/{sid}` create that sends to the partner's token. Then delivery is instant
+even when the app is closed. The client side above stays as the in-app experience.

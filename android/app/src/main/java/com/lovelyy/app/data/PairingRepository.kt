@@ -13,7 +13,7 @@ import java.security.SecureRandom
  * Partner pairing, done entirely on the client and protected by firestore.rules
  * (works on the free Spark plan, no Cloud Functions needed).
  *
- *  1. Partner A creates pairCodes/{CODE} and shares the 6-letter CODE.
+ *  1. Partner A creates pairCodes/{CODE} and shares the 6-digit CODE.
  *  2. Partner B enters it. In ONE transaction B:
  *       - creates couples/{CODE} with members [A, B]
  *       - sets coupleId on both users/A and users/B
@@ -88,7 +88,12 @@ class PairingRepository(private val db: FirebaseFirestore) {
     private fun codeRef(code: String) = db.collection(Paths.PAIR_CODES).document(code)
 
     private fun randomCode() = buildString {
-        repeat(CODE_LENGTH) { append(ALPHABET[random.nextInt(ALPHABET.length)]) }
+        repeat(CODE_LENGTH) { append(DIGITS[random.nextInt(DIGITS.length)]) }
+    }
+
+    /** When [code] was created (server time, millis), or null if it no longer exists. */
+    suspend fun codeCreatedAt(code: String): Long? = wrap {
+        codeRef(code).get().await().takeIf { it.exists() }?.getTimestamp("createdAt")?.toDate()?.time
     }
 
     private fun isExpired(createdAt: Timestamp): Boolean =
@@ -115,9 +120,12 @@ class PairingRepository(private val db: FirebaseFirestore) {
 
     companion object {
         const val CODE_LENGTH = 6
-        /** No 0/O or 1/I/L, so codes are easy to read aloud. Must match firestore.rules. */
+        /** Characters a code may contain. No 0/O or 1/I/L. Must match firestore.rules. */
         const val ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
-        const val CODE_TTL_MS = 24L * 60 * 60 * 1000
+        /** New codes are digits only (typed on the app's own number pad), 2-9 so they fit the rules above. */
+        const val DIGITS = "23456789"
+        /** The app treats a code as valid for 30 minutes (the rules allow at most 24h). */
+        const val CODE_TTL_MS = 30L * 60 * 1000
 
         fun normalize(raw: String) = raw.uppercase().filter { it in ALPHABET }
     }

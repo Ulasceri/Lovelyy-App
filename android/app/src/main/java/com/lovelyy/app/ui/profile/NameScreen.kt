@@ -28,8 +28,9 @@ import com.lovelyy.app.data.UserProfile
 import com.lovelyy.app.data.UserRepository
 import com.lovelyy.app.ui.components.BeatingHeart
 import com.lovelyy.app.ui.components.ErrorText
-import com.lovelyy.app.ui.components.LovelyyTextField
-import com.lovelyy.app.ui.components.PrimaryButton
+import com.lovelyy.app.ui.components.DesignField
+import androidx.compose.material.icons.rounded.PersonOutline
+import com.lovelyy.app.ui.components.PeachButton
 import com.lovelyy.app.ui.lovelyyApp
 import kotlinx.coroutines.launch
 
@@ -58,14 +59,15 @@ fun NameScreen(me: UserProfile) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(Modifier.height(8.dp))
-        LovelyyTextField(
+        DesignField(
             value = name,
             onValueChange = { name = it.take(UserRepository.MAX_NAME) },
-            label = stringResource(R.string.field_name),
+            placeholder = stringResource(R.string.field_name),
+            leadingIcon = androidx.compose.material.icons.Icons.Rounded.PersonOutline,
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words, imeAction = ImeAction.Done),
         )
         ErrorText(error)
-        PrimaryButton(
+        PeachButton(
             text = stringResource(R.string.action_continue),
             enabled = name.isNotBlank(),
             loading = loading,

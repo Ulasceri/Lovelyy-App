@@ -22,7 +22,11 @@ class PairingViewModel(private val pairing: PairingRepository) : ViewModel() {
         private set
     var error by mutableStateOf<AppError?>(null)
         private set
+    /** When the code I'm sharing stops working (millis), once known. */
+    var expiresAt by mutableStateOf<Long?>(null)
+        private set
     private var autoCreated = false
+    private var expiryFor: String? = null
 
     fun selectTab(t: Tab) {
         tab = t
@@ -34,14 +38,41 @@ class PairingViewModel(private val pairing: PairingRepository) : ViewModel() {
         error = null
     }
 
-    /** Creates a code automatically the first time the Share tab is shown. */
-    fun ensureCode(me: UserProfile) {
-        if (autoCreated || me.pairCode != null) return
-        autoCreated = true
-        newCode(me)
+    fun press(digit: Char) {
+        if (input.length < PairingRepository.CODE_LENGTH) onInput(input + digit)
     }
 
-    fun newCode(me: UserProfile) = launchAction { pairing.createCode(me) }
+    fun backspace() {
+        input = input.dropLast(1)
+        error = null
+    }
+
+    /** Creates a code the first time the Share page is shown, and learns when it expires. */
+    fun ensureCode(me: UserProfile) {
+        val code = me.pairCode
+        if (code == null) {
+            if (!autoCreated) {
+                autoCreated = true
+                newCode(me)
+            }
+            return
+        }
+        if (expiryFor == code) return
+        expiryFor = code
+        viewModelScope.launch {
+            val created = runCatching { pairing.codeCreatedAt(code) }.getOrNull()
+            if (created == null || System.currentTimeMillis() - created > PairingRepository.CODE_TTL_MS) {
+                newCode(me) // gone or too old: quietly make a fresh one
+            } else {
+                expiresAt = created + PairingRepository.CODE_TTL_MS
+            }
+        }
+    }
+
+    fun newCode(me: UserProfile) {
+        expiresAt = null
+        launchAction { pairing.createCode(me) }
+    }
 
     // On success, users/{me}.coupleId is set and AppViewModel switches to Home by itself.
     fun join(me: UserProfile) = launchAction { pairing.joinWithCode(me, input) }

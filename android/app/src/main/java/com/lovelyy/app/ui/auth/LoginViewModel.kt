@@ -17,9 +17,10 @@ class LoginViewModel(
     private val users: UserRepository,
 ) : ViewModel() {
 
-    enum class Mode { Choose, SignIn, SignUp }
+    /** Welcome (Karşılama) → SignIn (Giriş) ⇄ SignUp (Kayıt). */
+    enum class Mode { Welcome, SignIn, SignUp }
 
-    var mode by mutableStateOf(Mode.Choose)
+    var mode by mutableStateOf(Mode.Welcome)
     var name by mutableStateOf("")
     var email by mutableStateOf("")
     var password by mutableStateOf("")
@@ -27,10 +28,14 @@ class LoginViewModel(
         private set
     var error by mutableStateOf<AppError?>(null)
         private set
+    /** Shown after "Şifremi unuttum" worked. */
+    var resetSent by mutableStateOf(false)
+        private set
 
     fun switchMode(newMode: Mode) {
         mode = newMode
         error = null
+        resetSent = false
     }
 
     fun google(activityContext: Context) = launchAction { auth.signInWithGoogle(activityContext) }
@@ -50,11 +55,20 @@ class LoginViewModel(
         }
     }
 
+    fun forgotPassword() {
+        if (email.isBlank()) { error = AppError.InvalidEmail; return }
+        launchAction {
+            auth.sendPasswordReset(email)
+            resetSent = true
+        }
+    }
+
     // On success there's nothing to do here: AppViewModel sees the new auth state and moves on.
     private fun launchAction(block: suspend () -> Unit) {
         if (loading) return
         loading = true
         error = null
+        resetSent = false
         viewModelScope.launch {
             try {
                 block()

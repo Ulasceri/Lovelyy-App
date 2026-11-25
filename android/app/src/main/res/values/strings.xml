@@ -3,54 +3,38 @@
     <string name="app_name">Lovelyy</string>
 
     <!-- Login -->
-    <string name="login_tagline">İkimizin küçük dünyası</string>
-    <string name="login_subtitle">Kedinizi birlikte büyütün, her gün birbirinize biraz daha yakın olun.</string>
     <string name="login_google">Google ile devam et</string>
-    <string name="login_email">E-posta ile devam et</string>
-    <string name="login_title_signin">Tekrar hoş geldin</string>
-    <string name="login_title_signup">Hesap oluştur</string>
+    <string name="login_title_signin">Hoş geldin</string>
+    <string name="login_title_signup">Hesabını oluştur</string>
     <string name="field_name">Adın</string>
-    <string name="field_email">E-posta</string>
-    <string name="field_password">Şifre</string>
     <string name="action_signin">Giriş yap</string>
     <string name="action_signup">Kayıt ol</string>
-    <string name="switch_to_signup">Hesabın yok mu? Kayıt ol</string>
-    <string name="switch_to_signin">Zaten hesabın var mı? Giriş yap</string>
-    <string name="action_back">Geri</string>
 
     <!-- Name -->
     <string name="name_title">Sana ne diyelim?</string>
-    <string name="name_subtitle">Partnerin seni bu isimle görecek.</string>
+    <string name="name_subtitle">Sevgilin seni bu isimle görecek.</string>
     <string name="action_continue">Devam et</string>
 
     <!-- Pairing -->
-    <string name="pair_title">Partnerinle eşleş</string>
-    <string name="pair_subtitle">Biriniz kodu paylaşsın, diğeriniz girsin. Hepsi bu kadar.</string>
-    <string name="pair_tab_share">Kodumu paylaş</string>
-    <string name="pair_tab_enter">Kod gir</string>
-    <string name="pair_your_code">Senin kodun</string>
-    <string name="pair_waiting">Partnerinin kodu girmesi bekleniyor…</string>
-    <string name="pair_code_valid">Kod 24 saat geçerli ve tek kullanımlık.</string>
+    <string name="pair_title">Sevgilini davet et</string>
+    <string name="pair_subtitle">Bu kodu sevgiline gönder. Kodu girdiği an ikiniz eşleşirsiniz ve kediniz sizi bekliyor olur.</string>
+    <string name="pair_your_code">EŞLEŞME KODUN</string>
+    <string name="pair_waiting">Sevgilin bekleniyor…</string>
+    <string name="pair_code_valid">30 dakika geçerli, tek kullanımlık</string>
     <string name="pair_create_code">Kod oluştur</string>
-    <string name="pair_new_code">Yeni kod</string>
     <string name="pair_share">Kodu paylaş</string>
-    <string name="pair_share_text">Lovelyy\'de benimle eşleş! Kodum: %1$s</string>
-    <string name="pair_enter_hint">6 haneli kod</string>
+    <string name="pair_share_text">Lovelyy\'de benimle eşleş 💛 Kodum: %1$s</string>
     <string name="pair_join">Eşleş</string>
     <string name="sign_out">Çıkış yap</string>
 
     <!-- Home -->
     <string name="home_us">%1$s &amp; %2$s</string>
-    <string name="home_partner_fallback">Partnerin</string>
-    <string name="home_soon">Yakında</string>
-    <string name="home_main_action">Seni düşünüyorum</string>
-    <string name="home_main_action_soon">Bu özellik bir sonraki adımda geliyor 💛</string>
+    <string name="home_partner_fallback">Sevgilin</string>
     <string name="feature_days">Gün sayacı</string>
     <string name="feature_heartbeat">Kalp atışı</string>
     <string name="feature_drawing">Canlı çizim</string>
     <string name="feature_question">Günün sorusu</string>
     <string name="feature_mood">Ruh hali</string>
-    <string name="feature_piggy">Kumbara</string>
     <string name="feature_distance">Mesafe</string>
     <string name="feature_notes">Notlar</string>
 
@@ -67,10 +51,6 @@
     <string name="need_thirst">Su</string>
     <string name="need_energy">Enerji</string>
     <string name="need_love">Sevgi</string>
-    <string name="cat_streak_short">%1$d gün</string>
-    <string name="cat_streak_title">%1$d günlük ortak bakım serisi</string>
-    <string name="cat_streak_none">Ortak bakım serisi başlasın</string>
-    <string name="cat_streak_hint">İkiniz de her gün ilgilenince seri büyür. Seriler yakında aksesuarların kilidini açacak.</string>
     <string name="cat_name_title">Kedinize bir isim verin</string>
     <string name="cat_name_body">İsmi ikiniz de göreceksiniz, istediğiniz zaman değiştirebilirsiniz.</string>
     <string name="cat_name_hint">Örn. Mırmır</string>
@@ -115,6 +95,168 @@
     <string name="widget_description">Ortak kedinizin şu an nasıl olduğunu gösterir.</string>
     <string name="widget_open_app">Uygulamayı aç</string>
 
+    <!-- Welcome (Karşılama) -->
+    <string name="welcome_title">İkinizin minik dünyası</string>
+    <string name="welcome_body">Birlikte bir kedi sahiplenin, anlarınızı paylaşın ve her gün biraz daha yakın olun.</string>
+    <string name="welcome_start">Başlayalım</string>
+    <string name="welcome_have_account">Zaten hesabım var · </string>
+    <string name="welcome_cat_desc">Ortak kediniz, oturmuş şeftali renkli tekir kedi</string>
+
+    <!-- Login (Giriş) -->
+    <string name="login_body_signin">Önce hesabınla giriş yap, sonra sevgilinle eşleşelim.</string>
+    <string name="login_body_signup">Birkaç saniye sürer. Sonra sevgilinle eşleşip kedinizi tanıyacaksınız.</string>
+    <string name="login_or_email">ya da e-postayla</string>
+    <string name="field_name_ph">Adın</string>
+    <string name="field_email_ph">E-posta adresin</string>
+    <string name="field_password_ph">Şifren</string>
+    <string name="login_show_password">Şifreyi göster</string>
+    <string name="login_forgot">Şifremi unuttum</string>
+    <string name="login_reset_sent">Sıfırlama e-postası gönderildi ✓</string>
+    <string name="action_signin_email">E-postayla giriş yap</string>
+    <string name="action_signup_email">E-postayla kayıt ol</string>
+    <string name="switch_no_account">Hesabın yok mu? </string>
+    <string name="switch_have_account">Zaten hesabın var mı? </string>
+
+    <!-- Pairing (Eşleşme) -->
+    <string name="pair_last_step">Son adım</string>
+    <string name="pair_code_renews">%1$s sonra yenilenir</string>
+    <string name="pair_code_a11y">Eşleşme kodu %1$s</string>
+    <string name="pair_copy">Kopyala</string>
+    <string name="pair_copied">Kopyalandı</string>
+    <string name="pair_have_code">Sevgilimin kodu var, onu gireceğim</string>
+    <string name="pair_enter_title">Kodu gir</string>
+    <string name="pair_enter_body">Sevgilinin ekranındaki 6 haneli kodu yaz.</string>
+    <string name="pair_enter_hint_ttl">Kod 30 dakika geçerli, sadece bir kez kullanılır.</string>
+    <string name="pair_delete">Sil</string>
+
+    <!-- Home (Yuva) + navigation -->
+    <string name="tab_home">Yuva</string>
+    <string name="tab_memories">Anılar</string>
+    <string name="tab_plans">Planlar</string>
+    <string name="tab_us">Biz</string>
+    <string name="tab_memories_soon">Fotoğraflarınız ve anılarınız burada birikecek. Sonraki adımlarda geliyor.</string>
+    <string name="tab_plans_soon">Takvim, özel günler ve hayaller listesi burada olacak. Sonraki adımlarda geliyor.</string>
+    <string name="nav_send_heartbeat">Kalp atışı gönder</string>
+    <string name="home_day_number">Birlikte %1$d. gününüz</string>
+    <string name="home_set_date">Tanıştığınız günü ekleyin</string>
+    <string name="home_inbox">Kalp atışları</string>
+    <string name="home_soon">Yakında</string>
+    <string name="home_soon_toast">Bu köşe sonraki adımlarda geliyor 💛</string>
+    <string name="home_corner">Bizim köşemiz</string>
+    <string name="home_hb_last">%1$s sana “%2$s” gönderdi · %3$s</string>
+    <string name="home_hb_none">Basılı tut, %1$s kalbinin atışını hissetsin.</string>
+    <string name="home_hb_reply">Karşılık ver</string>
+    <string name="home_hb_send">Gönder</string>
+    <string name="home_mood_title">Bugün nasılsınız?</string>
+    <string name="home_mood_share">Paylaş</string>
+    <string name="home_mood_change">Değiştir</string>
+    <string name="feature_calendar">Takvim</string>
+    <string name="feature_food">Ne yesek?</string>
+    <string name="feature_capsule">Zaman kapsülü</string>
+    <string name="feature_bucket">Hayaller</string>
+    <string name="feature_wardrobe">Kedi dolabı</string>
+    <string name="biz_since">%1$s tarihinden beri</string>
+    <string name="biz_notifications">Bildirim ayarları</string>
+    <string name="biz_profile_soon">Profil fotoğrafı ve ayarlar sonraki adımlarda geliyor.</string>
+
+    <!-- Cat on home -->
+    <string name="cat_streak_chip">%1$d gün seri</string>
+    <string name="cat_both_cared">Bugün ikiniz de ilgilendiniz, seri büyüdü ✓</string>
+    <string name="cat_waiting_partner">Sen bugün ilgilendin, %1$s bekleniyor</string>
+    <string name="cat_your_turn">Bugün henüz ilgilenmedin</string>
+    <string name="bubble_sleeping">Zzz…</string>
+    <string name="bubble_hungry">Karnım acıktı…</string>
+    <string name="bubble_thirsty">Susadım…</string>
+    <string name="bubble_sleepy">Uykum geldi…</string>
+    <string name="bubble_love">Beni sever misin?</string>
+    <string name="bubble_happy">Sizi çok seviyorum!</string>
+    <string name="bubble_idle">Keyfim yerinde</string>
+
+    <!-- Day counter (Gün sayacı) -->
+    <string name="counter_together">Birlikte</string>
+    <string name="counter_together_long">Birlikte geçen zaman</string>
+    <string name="counter_days">%1$d gün</string>
+    <string name="counter_day_word">gün</string>
+    <string name="counter_set_cta">Sayacı başlatın</string>
+    <string name="counter_set_short">Tarih seç</string>
+    <string name="counter_since">%1$s tarihinden beri</string>
+    <string name="counter_hours">saat</string>
+    <string name="counter_minutes">dakika</string>
+    <string name="counter_seconds">saniye</string>
+    <string name="counter_millis">milisaniye</string>
+    <string name="counter_weeks">hafta</string>
+    <string name="counter_empty_title">Ne zamandır birliktesiniz?</string>
+    <string name="counter_empty_body">Tanıştığınız ya da sevgili olduğunuz günü seçin. Sayaç ikinizin telefonunda aynı anda başlasın.</string>
+    <string name="counter_pick">Tarihi seç</string>
+    <string name="counter_picker_title">Birlikte olduğunuz ilk gün</string>
+    <string name="counter_change">Tarihi değiştir</string>
+    <string name="counter_next">Sıradaki: %1$s</string>
+    <string name="counter_left">%1$d gün kaldı</string>
+    <string name="counter_facts_title">Birlikte geçirdiğiniz</string>
+    <string name="counter_heartbeats">Bu sürede kalbiniz yaklaşık %1$s kez attı 💓</string>
+    <string name="counter_milestones">Kutlama günleri</string>
+    <string name="milestone_day">%1$d. gün</string>
+    <string name="milestone_year">%1$d. yıl dönümü</string>
+
+    <!-- Heartbeat (Kalp atışı) + nudge -->
+    <string name="hb_title">Kalp atışı</string>
+    <string name="hb_body">Bir duygu seç ve kalbe basılı tut. %1$s telefonunda hemen hissetsin.</string>
+    <string name="hb_hold">Basılı tut</string>
+    <string name="hb_holding">Kalbin atıyor…</string>
+    <string name="hb_sending">Gönderiliyor…</string>
+    <string name="hb_sent">Kalbin yola çıktı 💛</string>
+    <string name="hb_no_partner">Önce sevgilinle eşleşmelisin</string>
+    <string name="hb_pick">Ne hissediyorsun?</string>
+    <string name="hb_preview">%1$s şunu görecek: “%2$s”</string>
+    <string name="hb_recent">Son kalp atışları</string>
+    <string name="hb_sent_row">Sen “%1$s” gönderdin</string>
+    <string name="hb_got_row">%1$s “%2$s” gönderdi</string>
+    <string name="hb_nudge_label">Aklımdasın</string>
+    <string name="hb_reply">Karşılık ver</string>
+    <string name="emotion_ozlem">Özlem</string>
+    <string name="emotion_sevgi">Sevgi</string>
+    <string name="emotion_ask">Aşk</string>
+    <string name="emotion_sarilma">Sarılma</string>
+    <string name="emotion_opucuk">Öpücük</string>
+    <string name="emotion_huzur">Huzur</string>
+    <string name="emotion_ozlem_msg">%1$s seni çok özledi…</string>
+    <string name="emotion_sevgi_msg">%1$s seni çok seviyor…</string>
+    <string name="emotion_ask_msg">%1$s sana deli gibi âşık…</string>
+    <string name="emotion_sarilma_msg">%1$s sana sımsıkı sarılmak istiyor…</string>
+    <string name="emotion_opucuk_msg">%1$s sana kocaman bir öpücük gönderdi…</string>
+    <string name="emotion_huzur_msg">%1$s seninle çok huzurlu…</string>
+    <string name="nudge_title">Aklımdasın</string>
+    <string name="nudge_body">Tek dokunuşla dürt, %1$s seni düşündüğünü bilsin.</string>
+    <string name="nudge_sent">Dürttün! %1$s şimdi bunu görüyor 💭</string>
+    <string name="nudge_action">Dürt</string>
+    <string name="nudge_done">Gönderildi ✓</string>
+    <string name="signal_nudge_msg">%1$s seni düşünüyor 💭</string>
+    <string name="signal_mood_msg">%1$s şu an %2$s hissediyor %3$s</string>
+    <string name="signal_channel">Sevgilinden gelenler</string>
+    <string name="signal_channel_desc">Kalp atışları, dürtmeler ve ruh hali paylaşımları</string>
+
+    <!-- Mood (Ruh hali) -->
+    <string name="mood_partner_now">%1$s şu an</string>
+    <string name="mood_partner_none">henüz paylaşmadı</string>
+    <string name="mood_you_title">Sen nasılsın?</string>
+    <string name="mood_note_hint">Bir not ekle (isteğe bağlı)</string>
+    <string name="mood_share">%1$s ile paylaş</string>
+    <string name="mood_shared">Paylaşıldı ✓</string>
+    <string name="mood_unknown">Henüz yok</string>
+    <string name="mood_yours_now">Şu an: %1$s %2$s · %3$s</string>
+    <string name="mood_kind_mutlu">Mutlu</string>
+    <string name="mood_kind_asik">Âşık</string>
+    <string name="mood_kind_huzurlu">Huzurlu</string>
+    <string name="mood_kind_heyecanli">Heyecanlı</string>
+    <string name="mood_kind_enerjik">Enerjik</string>
+    <string name="mood_kind_ozlemli">Özlemli</string>
+    <string name="mood_kind_yorgun">Yorgun</string>
+    <string name="mood_kind_uzgun">Üzgün</string>
+    <string name="mood_kind_stresli">Stresli</string>
+    <string name="mood_kind_sinirli">Sinirli</string>
+    <string name="mood_kind_sikkin">Keyifsiz</string>
+    <string name="mood_kind_hasta">Hasta</string>
+
     <!-- Setup / errors -->
     <string name="setup_title">Firebase kurulumu gerekiyor</string>
     <string name="setup_body">Uygulama çalışıyor ama henüz Firebase\'e bağlı değil. README dosyasındaki adımları takip et, google-services.json dosyasını android/app klasörüne koy ve uygulamayı yeniden çalıştır.</string>
@@ -128,10 +270,10 @@
     <string name="err_invalid_email">Geçerli bir e-posta gir.</string>
     <string name="err_google_not_configured">Google girişi henüz ayarlanmadı. README\'deki Google adımını yap.</string>
     <string name="err_google_cancelled">Google girişi iptal edildi.</string>
-    <string name="err_code_not_found">Bu kod bulunamadı. Harfleri kontrol et.</string>
-    <string name="err_code_expired">Bu kodun süresi dolmuş. Partnerinden yeni kod iste.</string>
-    <string name="err_own_code">Bu senin kendi kodun. 🙂 Partnerinin kodunu gir.</string>
-    <string name="err_already_paired">Zaten bir partnerle eşleşmişsin.</string>
+    <string name="err_code_not_found">Bu kod bulunamadı. Rakamları kontrol et.</string>
+    <string name="err_code_expired">Bu kodun süresi dolmuş. Sevgilinden yeni kod iste.</string>
+    <string name="err_own_code">Bu senin kendi kodun 🙂 Sevgilinin kodunu gir.</string>
+    <string name="err_already_paired">Zaten biriyle eşleşmişsin.</string>
     <string name="err_permission">İzin hatası. Kod geçersiz olabilir ya da Firestore kuralları yüklenmemiş.</string>
     <string name="err_unknown">Beklenmeyen bir hata oldu. Tekrar dener misin?</string>
 </resources>

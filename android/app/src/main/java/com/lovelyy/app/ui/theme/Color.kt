@@ -2,15 +2,26 @@ package com.lovelyy.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Lovelyy palette (decided with the team, see docs/design-principles.md)
+// Lovelyy palette (decided with the team, see docs/design-principles.md).
+// Tints and text shades come from the approved screen designs (login + home canvas).
 val Peach = Color(0xFFFFB38A)       // primary: warm, loving
 val PeachDeep = Color(0xFFE8895C)   // pressed / emphasis
-val PeachSoft = Color(0xFFFFE3D3)   // tinted surfaces
+val PeachSoft = Color(0xFFFFE6D6)   // tinted surfaces, selected nav pill
+val PeachTint = Color(0xFFFFF1E8)   // code boxes, icon circles
+val PeachCard = Color(0xFFFFE9DB)   // the "together" card
 val Mint = Color(0xFF9ED9C8)        // secondary: calm, fresh
 val MintSoft = Color(0xFFDDF2EC)
+val MintTint = Color(0xFFE4F5F0)
+val MintInk = Color(0xFF2F5A4E)     // text on mint
+val MintInkSoft = Color(0xFF4F6B63)
 val Brown = Color(0xFF4A3B35)       // text
-val BrownSoft = Color(0xFF8A7A72)   // secondary text
+val BrownSoft = Color(0xFF75655E)   // secondary text (4.5:1 on cream)
+val BrownHint = Color(0xFF8A7A73)   // icons, placeholders
 val Cream = Color(0xFFFFF8F2)       // background
 val CreamCard = Color(0xFFFFFFFF)   // cards on cream
-val Outline = Color(0xFFEADBD0)
+val CatBg = Color(0xFFFAE2C0)       // behind the cat
+val Outline = Color(0xFFEADFD6)
+val Sand = Color(0xFFF3ECE6)        // empty avatar, track
+val NeedLow = Color(0xFFF07B45)
+val NeedOk = Color(0xFF5DB89E)
 val ErrorRose = Color(0xFFD9534F)

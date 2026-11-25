@@ -107,6 +107,17 @@ import com.lovelyy.app.data.CareStreak
 import com.lovelyy.app.data.Couple
 import com.lovelyy.app.data.UserProfile
 import com.lovelyy.app.ui.lovelyyApp
+import com.lovelyy.app.ui.components.softShadow
+import com.lovelyy.app.ui.theme.Brown
+import com.lovelyy.app.ui.theme.BrownSoft
+import com.lovelyy.app.ui.theme.CatBg
+import com.lovelyy.app.ui.theme.CreamCard
+import com.lovelyy.app.ui.theme.NeedLow
+import com.lovelyy.app.ui.theme.NeedOk
+import com.lovelyy.app.ui.theme.Peach
+import com.lovelyy.app.ui.theme.Quicksand
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -187,45 +198,57 @@ fun CatSection(me: UserProfile, couple: Couple?, partner: UserProfile?, modifier
         vm.act(me, members, type, strokes)
     }
 
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        CatStage(
-            animator = animator,
-            sleepingPoster = ui?.levels?.sleeping == true,
-            name = ui?.doc?.name,
-            streak = ui?.doc?.streak?.current(LocalDate.now()) ?: 0,
-            banner = banner,
-            onNameClick = { naming = true },
-            onTap = {
-                val clip = animator.currentClip
-                if (ui?.levels?.sleeping != true && clip?.isBridge != true) {
-                    animator.play(CatClip.Surprised)
-                    view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
-                }
-            },
-            onPetting = { animator.setPetting(it) },
-            onStroke = { view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK) },
-            onPetDone = { strokes -> if (strokes > 0) vm.act(me, members, CatActionType.Pet, strokes) },
-        )
-
-        ui?.let { NeedsRow(it.levels) }
+    Column(modifier) {
+        val heroShape = RoundedCornerShape(28.dp)
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .softShadow(heroShape, 14.dp)
+                .clip(heroShape)
+                .background(CatBg),
+        ) {
+            CatStage(
+                animator = animator,
+                sleepingPoster = ui?.levels?.sleeping == true,
+                name = ui?.doc?.name,
+                streak = ui?.doc?.streak?.current(LocalDate.now()) ?: 0,
+                bubble = mood?.let { stringResource(it.bubbleRes()) },
+                banner = banner,
+                onNameClick = { naming = true },
+                onTap = {
+                    val clip = animator.currentClip
+                    if (ui?.levels?.sleeping != true && clip?.isBridge != true) {
+                        animator.play(CatClip.Surprised)
+                        view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                    }
+                },
+                onPetting = { animator.setPetting(it) },
+                onStroke = { view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK) },
+                onPetDone = { strokes -> if (strokes > 0) vm.act(me, members, CatActionType.Pet, strokes) },
+            )
+            NeedsRow(ui?.levels)
+        }
 
         CareButtons(
             sleeping = ui?.levels?.sleeping == true,
             enabled = ui != null,
+            highlight = ui?.levels?.let(::mostNeeded),
             onFeed = { act(CatActionType.Feed) },
             onWater = { act(CatActionType.Water) },
             onPlay = { act(CatActionType.Play) },
             onSleepToggle = { act(if (ui?.levels?.sleeping == true) CatActionType.Wake else CatActionType.Sleep) },
+            modifier = Modifier.padding(top = 18.dp),
         )
 
         ui?.let { u ->
-            StreakCard(
+            StatusLine(
                 streak = u.doc.streak,
                 lastAction = u.doc.lastAction,
                 me = me,
                 partnerUid = partner?.uid,
                 partnerName = partnerName,
                 describe = texts,
+                modifier = Modifier.padding(top = 14.dp),
             )
         }
     }
@@ -269,6 +292,7 @@ private fun CatStage(
     sleepingPoster: Boolean,
     name: String?,
     streak: Int,
+    bubble: String?,
     banner: String?,
     onNameClick: () -> Unit,
     onTap: () -> Unit,
@@ -289,8 +313,8 @@ private fun CatStage(
         Modifier
             .fillMaxWidth()
             .aspectRatio(STAGE_RATIO)
-            .clip(MaterialTheme.shapes.extraLarge)
-            .background(MaterialTheme.colorScheme.primaryContainer)
+            .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
+            .background(CatBg)
             // Tap = surprise. Stroke = petting (hearts + purring + love).
             .pointerInput(Unit) {
                 awaitEachGesture {
@@ -366,18 +390,39 @@ private fun CatStage(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Chip(onClick = onNameClick) {
-                Text(name?.takeIf { it.isNotBlank() } ?: stringResource(R.string.cat_unnamed), style = MaterialTheme.typography.titleSmall)
+                Text(
+                    name?.takeIf { it.isNotBlank() } ?: stringResource(R.string.cat_unnamed),
+                    fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Brown,
+                )
                 Spacer(Modifier.width(6.dp))
-                Icon(Icons.Filled.Edit, null, Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                Icon(Icons.Filled.Edit, null, Modifier.size(14.dp), tint = BrownSoft)
             }
             Spacer(Modifier.weight(1f))
-            if (streak > 0) {
-                Chip {
-                    Icon(Icons.Filled.LocalFireDepartment, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.tertiary)
-                    Spacer(Modifier.width(4.dp))
-                    Text(stringResource(R.string.cat_streak_short, streak), style = MaterialTheme.typography.titleSmall)
-                }
+            Chip(solid = true) {
+                Icon(Icons.Filled.LocalFireDepartment, null, Modifier.size(16.dp), tint = Color(0xFFE07A45))
+                Spacer(Modifier.width(4.dp))
+                Text(stringResource(R.string.cat_streak_chip, streak), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Brown)
             }
+        }
+
+        // What the cat "says", gently bobbing (from its mood).
+        if (bubble != null && banner == null) {
+            val bob by rememberInfiniteTransition(label = "bob").animateFloat(
+                0f, -4f, infiniteRepeatable(tween(1500, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "y",
+            )
+            Text(
+                bubble,
+                fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Brown,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = 64.dp, end = 18.dp)
+                    .zIndex(3f)
+                    .graphicsLayer { translationY = bob * density }
+                    .softShadow(RoundedCornerShape(16.dp, 16.dp, 4.dp, 16.dp), 4.dp)
+                    .clip(RoundedCornerShape(16.dp, 16.dp, 4.dp, 16.dp))
+                    .background(CreamCard)
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+            )
         }
 
         // Bottom: what just happened ("Deniz besledi 💛").
@@ -441,11 +486,11 @@ private fun FloatingHeart(h: Heart, onDone: () -> Unit) {
 }
 
 @Composable
-private fun Chip(onClick: (() -> Unit)? = null, content: @Composable () -> Unit) {
+private fun Chip(onClick: (() -> Unit)? = null, solid: Boolean = false, content: @Composable () -> Unit) {
     Row(
         Modifier
             .clip(RoundedCornerShape(50))
-            .background(MaterialTheme.colorScheme.surfaceContainerLowest.copy(alpha = 0.88f))
+            .background(CreamCard.copy(alpha = if (solid) 1f else 0.85f))
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
             .padding(horizontal = 12.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -455,56 +500,73 @@ private fun Chip(onClick: (() -> Unit)? = null, content: @Composable () -> Unit)
 // ---------- needs ----------
 
 @Composable
-private fun NeedsRow(levels: CatLevels) {
-    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        NeedMeter(Icons.Filled.Restaurant, stringResource(R.string.need_hunger), levels.hunger, MaterialTheme.colorScheme.primary, Modifier.weight(1f))
-        NeedMeter(Icons.Filled.WaterDrop, stringResource(R.string.need_thirst), levels.thirst, MaterialTheme.colorScheme.secondary, Modifier.weight(1f))
-        NeedMeter(Icons.Filled.Bolt, stringResource(R.string.need_energy), levels.energy, MaterialTheme.colorScheme.primary, Modifier.weight(1f))
-        NeedMeter(Icons.Filled.Favorite, stringResource(R.string.need_love), levels.love, MaterialTheme.colorScheme.secondary, Modifier.weight(1f))
+private fun NeedsRow(levels: CatLevels?) {
+    Row(
+        Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        NeedMeter(stringResource(R.string.need_hunger), levels?.hunger, Modifier.weight(1f))
+        NeedMeter(stringResource(R.string.need_thirst), levels?.thirst, Modifier.weight(1f))
+        NeedMeter(stringResource(R.string.need_energy), levels?.energy, Modifier.weight(1f))
+        NeedMeter(stringResource(R.string.need_love), levels?.love, Modifier.weight(1f))
     }
 }
 
 @Composable
-private fun NeedMeter(icon: ImageVector, label: String, value: Double, color: Color, modifier: Modifier) {
+private fun NeedMeter(label: String, value: Double?, modifier: Modifier) {
     val fraction by animateFloatAsState(
-        (value / 100.0).toFloat().coerceIn(0f, 1f),
+        ((value ?: 0.0) / 100.0).toFloat().coerceIn(0f, 1f),
         spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessLow),
         label = "need",
     )
-    val low = value < CatRules.LOW
+    val low = value != null && value < CatRules.LOW
     // A low need gently pulses so it's noticed without being alarming.
     val pulse by rememberInfiniteTransition(label = "pulse").animateFloat(
-        1f, if (low) 0.45f else 1f,
+        1f, if (low) 0.5f else 1f,
         infiniteRepeatable(tween(700, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "p",
     )
-    val barColor = if (low) MaterialTheme.colorScheme.error.copy(alpha = 0.75f) else color
-    Column(
-        modifier
-            .clip(MaterialTheme.shapes.large)
-            .background(MaterialTheme.colorScheme.surfaceContainerLowest)
-            .border(1.dp, MaterialTheme.colorScheme.outline, MaterialTheme.shapes.large)
-            .padding(horizontal = 10.dp, vertical = 10.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        Icon(icon, null, Modifier.size(18.dp).graphicsLayer { alpha = pulse }, tint = if (low) barColor else MaterialTheme.colorScheme.tertiary)
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(label, fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Brown, maxLines = 1)
         Box(
             Modifier
                 .fillMaxWidth()
                 .height(8.dp)
                 .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .background(Color.White.copy(alpha = 0.75f))
         ) {
             Box(
                 Modifier
                     .fillMaxWidth(fraction)
                     .height(8.dp)
+                    .graphicsLayer { alpha = pulse }
                     .clip(CircleShape)
-                    .background(barColor)
+                    .background(if (low) NeedLow else NeedOk)
             )
         }
-        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
     }
+}
+
+/** The care button to highlight: the need that is lowest (if it's getting low). */
+private fun mostNeeded(l: CatLevels): CatActionType? {
+    if (l.sleeping) return null
+    val needs = listOf(
+        CatActionType.Feed to l.hunger,
+        CatActionType.Water to l.thirst,
+        CatActionType.Play to l.love,
+        CatActionType.Sleep to l.energy,
+    )
+    val (type, v) = needs.minBy { it.second }
+    return if (v < CatRules.HAPPY) type else null
+}
+
+private fun CatMood.bubbleRes(): Int = when (this) {
+    CatMood.Sleeping -> R.string.bubble_sleeping
+    CatMood.Hungry -> R.string.bubble_hungry
+    CatMood.Thirsty -> R.string.bubble_thirsty
+    CatMood.Sleepy -> R.string.bubble_sleepy
+    CatMood.WantsLove -> R.string.bubble_love
+    CatMood.Happy -> R.string.bubble_happy
+    CatMood.Idle -> R.string.bubble_idle
 }
 
 // ---------- care buttons ----------
@@ -513,124 +575,86 @@ private fun NeedMeter(icon: ImageVector, label: String, value: Double, color: Co
 private fun CareButtons(
     sleeping: Boolean,
     enabled: Boolean,
+    highlight: CatActionType?,
     onFeed: () -> Unit,
     onWater: () -> Unit,
     onPlay: () -> Unit,
     onSleepToggle: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        CareButton(Icons.Filled.Restaurant, stringResource(R.string.cat_feed), enabled && !sleeping, MaterialTheme.colorScheme.primaryContainer, onFeed, Modifier.weight(1f))
-        CareButton(Icons.Filled.WaterDrop, stringResource(R.string.cat_water), enabled && !sleeping, MaterialTheme.colorScheme.secondaryContainer, onWater, Modifier.weight(1f))
-        CareButton(Icons.Filled.SportsBaseball, stringResource(R.string.cat_play), enabled && !sleeping, MaterialTheme.colorScheme.primaryContainer, onPlay, Modifier.weight(1f))
+    Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+        CareButton(Icons.Filled.Restaurant, stringResource(R.string.cat_feed), enabled && !sleeping, highlight == CatActionType.Feed, onFeed, Modifier.weight(1f))
+        CareButton(Icons.Filled.WaterDrop, stringResource(R.string.cat_water), enabled && !sleeping, highlight == CatActionType.Water, onWater, Modifier.weight(1f))
+        CareButton(Icons.Filled.SportsBaseball, stringResource(R.string.cat_play), enabled && !sleeping, highlight == CatActionType.Play, onPlay, Modifier.weight(1f))
         CareButton(
             if (sleeping) Icons.Filled.WbSunny else Icons.Filled.Bedtime,
             stringResource(if (sleeping) R.string.cat_wake else R.string.cat_sleep),
-            enabled, MaterialTheme.colorScheme.secondaryContainer, onSleepToggle, Modifier.weight(1f),
+            enabled, highlight == CatActionType.Sleep, onSleepToggle, Modifier.weight(1f),
         )
     }
 }
 
 @Composable
-private fun CareButton(icon: ImageVector, label: String, enabled: Boolean, container: Color, onClick: () -> Unit, modifier: Modifier) {
+private fun CareButton(icon: ImageVector, label: String, enabled: Boolean, highlighted: Boolean, onClick: () -> Unit, modifier: Modifier) {
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
     val scale by animateFloatAsState(
-        if (pressed) 0.9f else 1f,
+        if (pressed) 0.88f else 1f,
         spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium), label = "press",
     )
     val alpha by animateFloatAsState(if (enabled) 1f else 0.45f, label = "enabled")
+    val bg by androidx.compose.animation.animateColorAsState(if (highlighted) Peach else CreamCard, label = "bg")
     Column(
         modifier
-            .scale(scale)
             .graphicsLayer { this.alpha = alpha }
-            .clip(MaterialTheme.shapes.large)
-            .background(container)
-            .clickable(interactionSource = interaction, indication = null, enabled = enabled, onClick = onClick)
-            .padding(vertical = 14.dp),
+            .clickable(interactionSource = interaction, indication = null, enabled = enabled, onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Box(
             Modifier
-                .size(40.dp)
+                .size(64.dp)
+                .scale(scale)
+                .softShadow(CircleShape, if (highlighted) 12.dp else 6.dp, if (highlighted) Peach else Brown)
                 .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surfaceContainerLowest),
+                .background(bg),
             contentAlignment = Alignment.Center,
-        ) { Icon(icon, null, Modifier.size(22.dp), tint = MaterialTheme.colorScheme.tertiary) }
-        Text(label, style = MaterialTheme.typography.labelLarge, maxLines = 1)
+        ) { Icon(icon, null, Modifier.size(28.dp), tint = Brown) }
+        Text(label, fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Brown, maxLines = 1)
     }
 }
 
-// ---------- streak + last action ----------
+// ---------- last action + streak ----------
 
+/** "Elif 2 sa önce su verdi · Sen bugün ilgilendin ✓" */
 @Composable
-private fun StreakCard(
+private fun StatusLine(
     streak: CareStreak,
     lastAction: CatAction?,
     me: UserProfile,
     partnerUid: String?,
     partnerName: String,
     describe: (CatAction) -> String,
+    modifier: Modifier = Modifier,
 ) {
     val today = LocalDate.now()
-    val count = streak.current(today)
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .clip(MaterialTheme.shapes.large)
-            .background(MaterialTheme.colorScheme.surfaceContainerLowest)
-            .border(1.dp, MaterialTheme.colorScheme.outline, MaterialTheme.shapes.large)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                Modifier
-                    .size(40.dp)
-                    .clip(MaterialTheme.shapes.small)
-                    .background(MaterialTheme.colorScheme.primaryContainer),
-                contentAlignment = Alignment.Center,
-            ) { Icon(Icons.Filled.LocalFireDepartment, null, tint = MaterialTheme.colorScheme.tertiary) }
-            Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f)) {
-                Text(
-                    if (count > 0) stringResource(R.string.cat_streak_title, count) else stringResource(R.string.cat_streak_none),
-                    style = MaterialTheme.typography.titleSmall,
-                )
-                Text(
-                    stringResource(R.string.cat_streak_hint),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            CareTick(stringResource(R.string.cat_you), streak.caredToday(me.uid, today))
-            CareTick(partnerName, partnerUid != null && streak.caredToday(partnerUid, today))
-        }
-        if (lastAction != null) {
-            Text(
-                describe(lastAction) + " · " + relativeTime(lastAction.at),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+    val parts = buildList {
+        if (lastAction != null) add(describe(lastAction).trimEnd() + " · " + relativeTime(lastAction.at))
+        val meDone = streak.caredToday(me.uid, today)
+        val partnerDone = partnerUid != null && streak.caredToday(partnerUid, today)
+        add(
+            when {
+                meDone && partnerDone -> stringResource(R.string.cat_both_cared)
+                meDone -> stringResource(R.string.cat_waiting_partner, partnerName)
+                else -> stringResource(R.string.cat_your_turn)
+            },
+        )
     }
-}
-
-@Composable
-private fun CareTick(name: String, done: Boolean) {
-    val bg by androidx.compose.animation.animateColorAsState(
-        if (done) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceVariant, label = "tick",
-    )
     Text(
-        (if (done) "✓ " else "○ ") + name,
-        style = MaterialTheme.typography.labelLarge,
-        maxLines = 1,
-        modifier = Modifier
-            .clip(RoundedCornerShape(50))
-            .background(bg)
-            .padding(horizontal = 12.dp, vertical = 6.dp),
+        parts.joinToString("\n"),
+        fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, lineHeight = 19.sp, color = BrownSoft,
+        textAlign = TextAlign.Center,
+        modifier = modifier.fillMaxWidth(),
     )
 }
 
