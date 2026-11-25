@@ -162,6 +162,18 @@ fun PlansScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBucke
     val month = YearMonth.parse(monthKey)
     var editing by remember { mutableStateOf<Editing?>(null) }
 
+    // "Emin misin?" before deleting.
+    var askDelete by remember { mutableStateOf<(() -> Unit)?>(null) }
+    askDelete?.let { act ->
+        com.lovelyy.app.ui.components.ConfirmDialog(
+            title = stringResource(R.string.del_plan_title),
+            body = stringResource(R.string.del_plan_body),
+            confirm = stringResource(R.string.del_confirm),
+            onConfirm = { act(); askDelete = null },
+            onDismiss = { askDelete = null; editing = null },
+        )
+    }
+
     Column(
         Modifier
             .fillMaxSize()
@@ -278,7 +290,7 @@ fun PlansScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBucke
             initialDate = ed.date,
             onDismiss = { editing = null },
             onSave = { title, date, yearly -> vm.save(me, partner, ed.event?.id, title, date, yearly); editing = null },
-            onDelete = ed.event?.let { e -> { vm.delete(e.id); editing = null } },
+            onDelete = ed.event?.let { e -> { askDelete = { vm.delete(e.id); editing = null } } },
         )
     }
 }

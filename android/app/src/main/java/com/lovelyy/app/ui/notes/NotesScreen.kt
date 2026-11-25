@@ -140,6 +140,18 @@ fun NotesScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onSe
     val partnerName = partner?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.home_partner_fallback)
     var tabSel by rememberSaveable { mutableIntStateOf(0) } // 0 all, 1 mine, 2 theirs
     var editing by remember { mutableStateOf<Note?>(null) }
+
+    // "Emin misin?" before deleting.
+    var askDelete by remember { mutableStateOf<(() -> Unit)?>(null) }
+    askDelete?.let { act ->
+        com.lovelyy.app.ui.components.ConfirmDialog(
+            title = stringResource(R.string.del_note_title),
+            body = stringResource(R.string.del_note_body),
+            confirm = stringResource(R.string.del_confirm),
+            onConfirm = { act(); askDelete = null },
+            onDismiss = { askDelete = null; editing = null },
+        )
+    }
     var creating by rememberSaveable { mutableStateOf(false) }
 
     val shown = notes.orEmpty().filter {
@@ -228,7 +240,7 @@ fun NotesScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onSe
                 vm.save(me, partner, n?.id, text, color, pinned, n?.pinned == true)
                 creating = false; editing = null
             },
-            onDelete = n?.let { { vm.delete(it.id); editing = null } },
+            onDelete = n?.let { note -> { askDelete = { vm.delete(note.id); editing = null } } },
         )
     }
 }

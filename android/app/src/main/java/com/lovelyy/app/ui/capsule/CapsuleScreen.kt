@@ -129,6 +129,18 @@ fun CapsuleScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, on
     var writing by remember { mutableStateOf(false) }
     var viewing by remember { mutableStateOf<Capsule?>(null) }
 
+    // "Emin misin?" before deleting.
+    var askDelete by remember { mutableStateOf<(() -> Unit)?>(null) }
+    askDelete?.let { act ->
+        com.lovelyy.app.ui.components.ConfirmDialog(
+            title = stringResource(R.string.del_letter_title),
+            body = stringResource(R.string.del_letter_body),
+            confirm = stringResource(R.string.del_confirm),
+            onConfirm = { act(); askDelete = null },
+            onDismiss = { askDelete = null },
+        )
+    }
+
     val all = capsules.orEmpty()
     val sealed = all.filter { !it.isOpen(today) }.sortedBy { it.openOn }
     val opened = all.filter { it.isOpen(today) }.sortedByDescending { it.openOn }
@@ -208,7 +220,7 @@ fun CapsuleScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, on
         LetterSheet(
             c, today, mine = c.by == me.uid,
             onDismiss = { viewing = null },
-            onDelete = { vm.delete(c.id); viewing = null },
+            onDelete = { askDelete = { vm.delete(c.id); viewing = null } },
         )
     }
 }
@@ -260,13 +272,24 @@ private fun Envelope() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun WriteSheet(onDismiss: () -> Unit, onSeal: (String, String, LocalDate) -> Unit) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     val sheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    var title by rememberSaveable { mutableStateOf("") }
-    var text by rememberSaveable { mutableStateOf("") }
-    var dateText by rememberSaveable { mutableStateOf(LocalDate.now().plusMonths(3).toString()) }
+    // The letter is a draft on the phone until it is sealed: closing the sheet (or Back) never loses it.
+    val draft = remember { CapsuleDraft.load(context) }
+    var title by rememberSaveable { mutableStateOf(draft.first) }
+    var text by rememberSaveable { mutableStateOf(draft.second) }
+    var dateText by rememberSaveable {
+        mutableStateOf(draft.third?.takeIf { runCatching { LocalDate.parse(it).isAfter(LocalDate.now()) }.getOrDefault(false) } ?: LocalDate.now().plusMonths(3).toString())
+    }
+    androidx.compose.runtime.LaunchedEffect(title, text, dateText) { CapsuleDraft.save(context, title, text, dateText) }
+    val keptText = stringResource(R.string.tc_draft_kept)
+    val closeKeepingDraft: () -> Unit = {
+        if (title.isNotBlank() || text.isNotBlank()) android.widget.Toast.makeText(context, keptText, android.widget.Toast.LENGTH_SHORT).show()
+        onDismiss()
+    }
     var picking by remember { mutableStateOf(false) }
     val date = LocalDate.parse(dateText)
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheet, containerColor = Cream) {
+    ModalBottomSheet(onDismissRequest = closeKeepingDraft, sheetState = sheet, containerColor = Cream) {
         Column(
             Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 20.dp).padding(bottom = 20.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -283,7 +306,7 @@ private fun WriteSheet(onDismiss: () -> Unit, onSeal: (String, String, LocalDate
                 SvgStrokeIcon(Kit.LOCK_D, Brown, Modifier.size(18.dp))
                 Text(stringResource(R.string.tc_editor_date, date.format(DATE)), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Brown)
             }
-            MainAction(stringResource(R.string.tc_seal), Kit.LOCK_D, { onSeal(title.trim(), text, date) }, enabled = title.isNotBlank() && text.isNotBlank())
+            MainAction(stringResource(R.string.tc_seal), Kit.LOCK_D, { CapsuleDraft.clear(context); onSeal(title.trim(), text, date) }, enabled = title.isNotBlank() && text.isNotBlank())
         }
     }
     if (picking) {
@@ -324,5 +347,24 @@ private fun LetterSheet(c: Capsule, today: LocalDate, mine: Boolean, onDismiss: 
                 )
             }
         }
+    }
+}
+
+/** The unsealed letter, kept on this phone only (SharedPreferences). */
+private object CapsuleDraft {
+    private const val PREFS = "capsule_draft"
+
+    fun load(context: android.content.Context): Triple<String, String, String?> {
+        val p = context.getSharedPreferences(PREFS, android.content.Context.MODE_PRIVATE)
+        return Triple(p.getString("title", "").orEmpty(), p.getString("text", "").orEmpty(), p.getString("date", null))
+    }
+
+    fun save(context: android.content.Context, title: String, text: String, date: String) {
+        context.getSharedPreferences(PREFS, android.content.Context.MODE_PRIVATE).edit()
+            .putString("title", title).putString("text", text).putString("date", date).apply()
+    }
+
+    fun clear(context: android.content.Context) {
+        context.getSharedPreferences(PREFS, android.content.Context.MODE_PRIVATE).edit().clear().apply()
     }
 }

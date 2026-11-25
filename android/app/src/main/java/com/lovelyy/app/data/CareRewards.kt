@@ -11,6 +11,10 @@ object CareRewards {
     /** An accessory stays unlocked once the best streak reached it. */
     fun unlocked(a: Accessory, best: Int): Boolean = best >= a.day
 
+    /** What the cat shows: the chosen accessory, only while it is unlocked. */
+    fun worn(wearing: String?, best: Int): Accessory? =
+        Accessory.entries.firstOrNull { it.name == wearing }?.takeIf { unlocked(it, best) }
+
     /** The next accessory to work towards, or null when all are unlocked. */
     fun next(current: Int, best: Int): Accessory? =
         Accessory.entries.firstOrNull { it.day > current && !unlocked(it, best) }

@@ -34,7 +34,9 @@ enum class SignalKind(val key: String) {
     /** "I left a note." */
     Note("note"),
     /** "I added something to our calendar" ([Signal.text] = title). */
-    Event("event");
+    Event("event"),
+    /** "I spun the decision wheel" ([Signal.text] = "wheel: result"). */
+    Wheel("wheel");
 
     companion object {
         fun of(key: String?) = entries.firstOrNull { it.key == key }

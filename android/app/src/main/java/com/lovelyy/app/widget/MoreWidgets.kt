@@ -17,6 +17,7 @@ import android.widget.RemoteViews
 import android.widget.Toast
 import androidx.core.content.edit
 import com.google.firebase.auth.FirebaseAuth
+import com.lovelyy.app.DeepLink
 import com.lovelyy.app.LovelyyApplication
 import com.lovelyy.app.R
 import com.lovelyy.app.analytics.AnalyticsEvent
@@ -104,7 +105,7 @@ object DaysWidget {
     private fun render(context: Context): RemoteViews {
         val views = RemoteViews(context.packageName, R.layout.widget_days)
         val c = WidgetData.couple(context)
-        views.setOnClickPendingIntent(R.id.days_root, CatWidget.openApp(context))
+        views.setOnClickPendingIntent(R.id.days_root, CatWidget.openApp(context, DeepLink.COUNTER))
         views.setTextViewText(R.id.days_me, c?.myName?.trim()?.firstOrNull()?.uppercase() ?: "")
         views.setTextViewText(R.id.days_partner, c?.partnerName?.trim()?.firstOrNull()?.uppercase() ?: "")
         views.setTextViewText(
@@ -209,7 +210,7 @@ object DrawingWidget {
         if (ids.isEmpty()) return
         val p = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val views = RemoteViews(context.packageName, R.layout.widget_drawing)
-        views.setOnClickPendingIntent(R.id.drawing_root, CatWidget.openApp(context))
+        views.setOnClickPendingIntent(R.id.drawing_root, CatWidget.openApp(context, DeepLink.DRAWING))
         val file = File(context.filesDir, FILE)
         val show = isEnabled(context) && !p.getBoolean("empty", true) && file.exists()
         if (show) {

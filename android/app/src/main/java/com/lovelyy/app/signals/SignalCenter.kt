@@ -25,7 +25,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.google.firebase.auth.FirebaseAuth
 import com.lovelyy.app.LovelyyApplication
-import com.lovelyy.app.MainActivity
+import com.lovelyy.app.DeepLink
 import com.lovelyy.app.R
 import com.lovelyy.app.data.Emotion
 import com.lovelyy.app.data.MoodKind
@@ -146,6 +146,7 @@ class SignalCenter(private val app: LovelyyApplication) {
                 SignalKind.Question -> context.getString(R.string.signal_question_msg, who)
                 SignalKind.Note -> context.getString(R.string.signal_note_msg, who)
                 SignalKind.Event -> context.getString(R.string.signal_event_msg, who, s.text.orEmpty())
+                SignalKind.Wheel -> context.getString(R.string.signal_wheel_msg, who, s.text.orEmpty())
             }
         }
 
@@ -170,11 +171,16 @@ class SignalCenter(private val app: LovelyyApplication) {
         fun notify(context: Context, s: Signal) {
             ensureChannel(context)
             if (!canNotify(context)) return
-            val open = PendingIntent.getActivity(
-                context, 1,
-                Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
-                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
-            )
+            // A tap opens the screen the signal is about.
+            val route = when (s.kind) {
+                SignalKind.Heartbeat, SignalKind.Nudge -> DeepLink.HEARTBEAT
+                SignalKind.Mood -> DeepLink.MOOD
+                SignalKind.Question -> DeepLink.QUESTION
+                SignalKind.Note -> DeepLink.NOTES
+                SignalKind.Event -> DeepLink.PLANS
+                SignalKind.Wheel -> DeepLink.WHEEL
+            }
+            val open = DeepLink.intent(context, route, requestCode = 1000 + s.kind.ordinal)
             val n = NotificationCompat.Builder(context, CHANNEL)
                 .setSmallIcon(R.drawable.ic_stat_heart)
                 .setColor(0xFFFFB38A.toInt())

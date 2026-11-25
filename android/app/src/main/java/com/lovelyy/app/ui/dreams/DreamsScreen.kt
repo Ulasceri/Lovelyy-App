@@ -124,6 +124,18 @@ fun DreamsScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onS
     val haptic = LocalHapticFeedback.current
     var editing by remember { mutableStateOf<Editing?>(null) }
 
+    // "Emin misin?" before deleting.
+    var askDelete by remember { mutableStateOf<(() -> Unit)?>(null) }
+    askDelete?.let { act ->
+        com.lovelyy.app.ui.components.ConfirmDialog(
+            title = stringResource(R.string.del_dream_title),
+            body = stringResource(R.string.del_dream_body),
+            confirm = stringResource(R.string.del_confirm),
+            onConfirm = { act(); askDelete = null },
+            onDismiss = { askDelete = null },
+        )
+    }
+
     val all = dreams.orEmpty()
     val open = all.filter { it.doneAt == null }.sortedByDescending { it.at }
     val done = all.filter { it.doneAt != null }.sortedByDescending { it.doneAt }
@@ -177,7 +189,7 @@ fun DreamsScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onS
             dream = e.dream,
             onDismiss = { editing = null },
             onSave = { title, cat, goal -> vm.save(me, e.dream?.id, title, cat, goal); editing = null },
-            onDelete = e.dream?.let { d -> { vm.delete(d.id); editing = null } },
+            onDelete = e.dream?.let { d -> { askDelete = { vm.delete(d.id); editing = null } } },
         )
     }
 }

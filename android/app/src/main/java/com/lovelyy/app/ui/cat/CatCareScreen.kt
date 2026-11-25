@@ -7,6 +7,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -223,6 +224,7 @@ fun CatCareScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBac
                 stageModifier = Modifier.height(196.dp),
                 cropBias = 0.3f,
                 showChips = false,
+                wearing = ui?.doc?.let { CareRewards.worn(it.wearing, it.streak.best) },
                 bubbleTop = 16.dp,
                 bubbleEnd = 16.dp,
                 footer = todayLine,
@@ -248,7 +250,12 @@ fun CatCareScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBac
         }
 
         val streak = ui?.doc?.streak
-        StreakCard(current = streak?.current(today) ?: 0, best = streak?.best ?: 0)
+        StreakCard(
+            current = streak?.current(today) ?: 0,
+            best = streak?.best ?: 0,
+            wearing = ui?.doc?.let { CareRewards.worn(it.wearing, it.streak.best) },
+            onWear = { a -> vm.wear(a) },
+        )
     }
 
     if (naming) {
@@ -338,7 +345,7 @@ private fun NeedCard(
 }
 
 @Composable
-private fun StreakCard(current: Int, best: Int) {
+private fun StreakCard(current: Int, best: Int, wearing: Accessory?, onWear: (Accessory?) -> Unit) {
     val shape = RoundedCornerShape(24.dp)
     val next = CareRewards.next(current, best)
     Column(
@@ -372,24 +379,33 @@ private fun StreakCard(current: Int, best: Int) {
         Box(Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)).background(Track)) {
             Box(Modifier.fillMaxWidth(progress).height(8.dp).clip(RoundedCornerShape(4.dp)).background(StreakGreen))
         }
+        if (Accessory.entries.any { CareRewards.unlocked(it, best) }) {
+            Text(stringResource(R.string.cc_wear_hint), fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, color = BrownSoft)
+        }
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            Accessory.entries.forEach { a -> AccessoryBadge(a, CareRewards.unlocked(a, best), Modifier.weight(1f)) }
+            Accessory.entries.forEach { a ->
+                AccessoryBadge(a, CareRewards.unlocked(a, best), a == wearing, Modifier.weight(1f)) { onWear(if (a == wearing) null else a) }
+            }
         }
     }
 }
 
 @Composable
-private fun AccessoryBadge(a: Accessory, unlocked: Boolean, modifier: Modifier) {
+private fun AccessoryBadge(a: Accessory, unlocked: Boolean, worn: Boolean, modifier: Modifier, onClick: () -> Unit) {
     val name = accessoryName(a)
-    val label = stringResource(if (unlocked) R.string.cc_unlocked else R.string.cc_locked, name) + ", " + stringResource(R.string.cc_day, a.day)
+    val label = stringResource(if (worn) R.string.cc_worn else if (unlocked) R.string.cc_unlocked else R.string.cc_locked, name) + ", " + stringResource(R.string.cc_day, a.day)
     Column(
-        modifier.clearAndSetSemantics { contentDescription = label },
+        modifier.clearAndSetSemantics { contentDescription = label }.bounceClick(enabled = unlocked, onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         if (unlocked) {
-            Box(Modifier.size(48.dp).clip(CircleShape).background(Mint), contentAlignment = Alignment.Center) {
-                SvgStrokeIcon(GIFT_D, Brown, Modifier.size(22.dp))
+            Box(
+                Modifier.size(48.dp).clip(CircleShape).background(if (worn) Peach else Mint)
+                    .then(if (worn) Modifier.border(3.dp, Brown, CircleShape) else Modifier),
+                contentAlignment = Alignment.Center,
+            ) {
+                SvgStrokeIcon(if (worn) com.lovelyy.app.ui.components.Kit.CHECK_D else GIFT_D, Brown, Modifier.size(22.dp))
             }
         } else {
             Box(contentAlignment = Alignment.Center) {

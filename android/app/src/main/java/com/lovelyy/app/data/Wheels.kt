@@ -38,7 +38,46 @@ object WheelMath {
     }
 }
 
+/** The last result of one wheel, shared by both partners (couples/{id}/wheelSpins/{wheelId}). */
+data class WheelSpin(val wheelId: String, val label: String, val result: String, val by: String, val byName: String, val at: Long)
+
 class WheelRepository(private val db: FirebaseFirestore) {
+
+    private fun spins(coupleId: String) =
+        db.collection(Paths.COUPLES).document(coupleId).collection(Paths.WHEEL_SPINS)
+
+    /** Saves the decision before the wheel stops, so the partner sees the same result. */
+    suspend fun saveSpin(coupleId: String, me: UserProfile, wheelId: String, label: String, result: String) {
+        spins(coupleId).document(wheelId).set(
+            mapOf(
+                "label" to label.take(MAX_LABEL),
+                "result" to result.take(MAX_ITEM),
+                "by" to me.uid,
+                "byName" to me.displayName,
+                "at" to System.currentTimeMillis(),
+            ),
+        ).await()
+    }
+
+    /** The last result of every wheel, by wheel id. */
+    fun observeSpins(coupleId: String): Flow<Map<String, WheelSpin>> = callbackFlow {
+        val reg = spins(coupleId).limit(40).addSnapshotListener { snap, err ->
+            if (err != null) {
+                close(err)
+            } else if (snap != null) {
+                trySend(
+                    snap.documents.associate { d ->
+                        d.id to WheelSpin(
+                            d.id, d.getString("label").orEmpty(), d.getString("result").orEmpty(),
+                            d.getString("by").orEmpty(), d.getString("byName").orEmpty(), d.getLong("at") ?: 0L,
+                        )
+                    },
+                )
+            }
+        }
+        awaitClose { reg.remove() }
+    }
+
 
     private fun wheels(coupleId: String) =
         db.collection(Paths.COUPLES).document(coupleId).collection(Paths.WHEELS)

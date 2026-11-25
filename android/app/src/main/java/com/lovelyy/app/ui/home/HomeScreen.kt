@@ -176,6 +176,15 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
     }
     fun pop() { if (stack.isNotEmpty()) stack.removeAt(stack.lastIndex) }
     BackHandler(enabled = stack.isNotEmpty()) { pop() }
+
+    // Widget and notification taps open their screen (DeepLink routes match Routes).
+    val pendingRoute by app.pendingRoute.collectAsState()
+    LaunchedEffect(pendingRoute) {
+        val r = pendingRoute ?: return@LaunchedEffect
+        app.pendingRoute.value = null
+        stack.clear()
+        if (r == PLANS_TAB) tab = Tab.Planlar else push(r)
+    }
     BackHandler(enabled = stack.isEmpty() && tab != Tab.Yuva) { tab = Tab.Yuva }
 
     // screen_view for inner screens (the tabs themselves count as "home").
@@ -279,7 +288,7 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
                     Routes.CAT -> CatCareScreen(me, couple, partner, onBack = ::pop, onAccessories = soon)
                     Routes.DISTANCE -> DistanceScreen(me, partner, onBack = ::pop)
                     Routes.DREAMS -> DreamsScreen(me, partner, onBack = ::pop, onSearch = soon)
-                    Routes.WHEEL -> WheelScreen(me, onBack = ::pop, onHistory = soon)
+                    Routes.WHEEL -> WheelScreen(me, partner, onBack = ::pop, onHistory = soon)
                     Routes.CAPSULE -> CapsuleScreen(me, partner, onBack = ::pop, onOpenedList = soon)
                     Routes.DRAWING -> DrawingScreen(me, partner, onBack = ::pop, onOld = soon)
                     Routes.WIDGETS -> WidgetsScreen(me, couple, partner)
@@ -596,16 +605,13 @@ private class CornerItem(val icon: ImageVector, @androidx.annotation.StringRes v
 private fun CornerTile(icon: ImageVector, title: String, tint: Color, modifier: Modifier, ready: Boolean, onClick: () -> Unit) {
     SoftCard(modifier, radius = 20.dp, padding = 0.dp, onClick = onClick) {
         Column(
-            Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 14.dp),
+            Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             IconCircle(icon, tint, size = 48.dp, iconSize = 24.dp)
             Text(title, fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Brown, textAlign = TextAlign.Center, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            // Built tiles keep an invisible pill so every tile in a row stays the same height.
-            Box(Modifier.alpha(if (ready) 0f else 1f)) {
-                Pill(stringResource(R.string.home_soon), background = Color(0xFFF6EEE8), color = BrownSoft, fontSize = 11)
-            }
+            if (!ready) Pill(stringResource(R.string.home_soon), background = Color(0xFFF6EEE8), color = BrownSoft, fontSize = 11)
         }
     }
 }

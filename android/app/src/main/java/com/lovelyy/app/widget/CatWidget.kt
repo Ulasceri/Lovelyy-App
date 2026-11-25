@@ -17,7 +17,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.google.firebase.auth.FirebaseAuth
 import com.lovelyy.app.LovelyyApplication
-import com.lovelyy.app.MainActivity
+import com.lovelyy.app.DeepLink
 import com.lovelyy.app.R
 import com.lovelyy.app.data.CareStreak
 import com.lovelyy.app.data.CatDoc
@@ -96,7 +96,7 @@ object CatWidget {
     private fun renderWide(context: Context): RemoteViews {
         val doc = load(context)
         val views = RemoteViews(context.packageName, R.layout.widget_cat_wide)
-        views.setOnClickPendingIntent(R.id.wide_root, openApp(context))
+        views.setOnClickPendingIntent(R.id.wide_root, openApp(context, DeepLink.CAT))
         val couple = WidgetData.couple(context)
         views.setTextViewText(
             R.id.wide_couple,
@@ -128,21 +128,12 @@ object CatWidget {
         return views
     }
 
-    internal fun openApp(context: Context): PendingIntent = PendingIntent.getActivity(
-        context, 0,
-        Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
-        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
-    )
+    internal fun openApp(context: Context, route: String? = null): PendingIntent = DeepLink.intent(context, route)
 
     private fun render(context: Context): RemoteViews {
         val doc = load(context)
         val views = RemoteViews(context.packageName, R.layout.widget_cat)
-        val open = PendingIntent.getActivity(
-            context, 0,
-            Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
-        )
-        views.setOnClickPendingIntent(R.id.widget_root, open)
+        views.setOnClickPendingIntent(R.id.widget_root, openApp(context, DeepLink.CAT))
         if (doc == null) {
             views.setImageViewResource(R.id.widget_cat, R.drawable.cat_w_idle)
             views.setTextViewText(R.id.widget_name, context.getString(R.string.app_name))

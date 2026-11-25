@@ -228,6 +228,7 @@ fun CatSection(me: UserProfile, couple: Couple?, partner: UserProfile?, modifier
                 onStroke = { view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK) },
                 onPetDone = { strokes -> if (strokes > 0) vm.act(me, members, CatActionType.Pet, strokes) },
                 onStreakClick = onOpenCare,
+                wearing = ui?.doc?.let { com.lovelyy.app.data.CareRewards.worn(it.wearing, it.streak.best) },
             )
             NeedsRow(ui?.levels)
         }
@@ -311,6 +312,8 @@ internal fun CatStage(
     /** A small line pinned bottom-left ("Bugün: sen sevdin"), hidden while a banner shows. */
     footer: String? = null,
     onStreakClick: (() -> Unit)? = null,
+    /** The accessory the cat wears; drawn while the cat sits still (the idle clip or the poster). */
+    wearing: com.lovelyy.app.data.CareRewards.Accessory? = null,
 ) {
     val hearts = remember { mutableStateListOf<Heart>() }
     val density = LocalDensity.current
@@ -389,6 +392,12 @@ internal fun CatStage(
                         .fillMaxSize()
                         .zIndex(animator.z(layer)),
                 )
+            }
+            if (wearing != null) {
+                // The accessory is a drawing on top of the video, so it only shows while the cat sits still.
+                val still = if (animator.started) animator.currentClip == CatClip.Idle else !sleepingPoster
+                val alpha by androidx.compose.animation.core.animateFloatAsState(if (still) 1f else 0f, label = "accessory")
+                CatAccessoryLayer(wearing, Modifier.fillMaxSize().zIndex(2f).graphicsLayer { this.alpha = alpha })
             }
         }
 

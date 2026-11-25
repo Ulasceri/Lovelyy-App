@@ -68,7 +68,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lovelyy.app.LovelyyApplication
 import com.lovelyy.app.R
 import com.lovelyy.app.analytics.AnalyticsEvent
+import com.lovelyy.app.data.SignalKind
 import com.lovelyy.app.data.UserProfile
+import com.lovelyy.app.data.WheelSpin
+import com.lovelyy.app.ui.home.relativeTime
 import com.lovelyy.app.data.Wheel
 import com.lovelyy.app.data.WheelMath
 import com.lovelyy.app.data.WheelRepository
@@ -121,6 +124,22 @@ class WheelViewModel(private val app: LovelyyApplication, private val coupleId: 
         }
     }
 
+    val spins: StateFlow<Map<String, WheelSpin>> = app.wheelRepository.observeSpins(coupleId)
+        .catch { Timber.w(it, "Wheel results unavailable") }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
+
+    /** Shares the result with the partner: stored for both screens, plus a notification. */
+    fun shareSpin(me: UserProfile, partner: UserProfile?, wheel: Wheel, result: String) {
+        viewModelScope.launch {
+            runCatching { app.wheelRepository.saveSpin(coupleId, me, wheel.id, wheel.label, result) }
+                .onFailure { Timber.w(it, "Saving the wheel result failed") }
+            if (partner != null) {
+                runCatching { app.signalRepository.send(coupleId, me, partner.uid, SignalKind.Wheel, text = "${wheel.label} → $result") }
+                    .onFailure { Timber.w(it, "Wheel signal failed") }
+            }
+        }
+    }
+
     fun delete(id: String) {
         viewModelScope.launch { runCatching { app.wheelRepository.delete(coupleId, id) }.onFailure { Timber.w(it, "Deleting the wheel failed") } }
     }
@@ -129,11 +148,12 @@ class WheelViewModel(private val app: LovelyyApplication, private val coupleId: 
 /** Karar çarkı (approved design 13): pick a wheel, spin, edit its options. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun WheelScreen(me: UserProfile, onBack: () -> Unit, onHistory: () -> Unit) {
+fun WheelScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onHistory: () -> Unit) {
     val coupleId = me.coupleId ?: return
     val app = lovelyyApp()
     val vm: WheelViewModel = viewModel(key = "wheel-$coupleId") { WheelViewModel(app, coupleId) }
     val stored by vm.stored.collectAsStateWithLifecycle()
+    val spins by vm.spins.collectAsStateWithLifecycle()
     val haptic = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
 
@@ -153,11 +173,28 @@ fun WheelScreen(me: UserProfile, onBack: () -> Unit, onHistory: () -> Unit) {
 
     val rotation = remember { Animatable(0f) }
     var spinning by remember { mutableStateOf(false) }
-    // No result until this wheel has been spun once.
-    var spun by remember(selectedId) { mutableStateOf(false) }
+    // The shared result of this wheel (whoever spun it last). The wheel rests on it for both partners.
+    val lastSpin = spins[wheel.id]?.takeIf { it.result in items }
+    androidx.compose.runtime.LaunchedEffect(wheel.id, lastSpin?.at, items) {
+        if (!spinning && lastSpin != null) {
+            rotation.snapTo(WheelMath.spinTo(0f, items.indexOf(lastSpin.result), items.size, turns = 0))
+        }
+    }
     var showAll by remember { mutableStateOf(false) }
     var adding by remember { mutableStateOf(false) }
     var creating by remember { mutableStateOf(false) }
+
+    // "Emin misin?" before deleting.
+    var askDelete by remember { mutableStateOf<(() -> Unit)?>(null) }
+    askDelete?.let { act ->
+        com.lovelyy.app.ui.components.ConfirmDialog(
+            title = stringResource(R.string.del_wheel_title),
+            body = stringResource(R.string.del_wheel_body),
+            confirm = stringResource(R.string.del_confirm),
+            onConfirm = { act(); askDelete = null },
+            onDismiss = { askDelete = null },
+        )
+    }
     var selectNewest by remember { mutableStateOf(false) }
     androidx.compose.runtime.LaunchedEffect(stored) {
         val newest = stored.orEmpty().filter { !it.builtIn }.maxByOrNull { it.at }
@@ -170,11 +207,11 @@ fun WheelScreen(me: UserProfile, onBack: () -> Unit, onHistory: () -> Unit) {
         val target = Random.nextInt(items.size)
         val to = WheelMath.spinTo(rotation.value, target, items.size, turns = 4, jitter = Random.nextFloat() * 2f - 1f)
         Telemetry.track(AnalyticsEvent.WheelSpun(wheel.builtIn, items.size))
+        vm.shareSpin(me, partner, wheel, items[target])
         scope.launch {
             rotation.animateTo(to, tween(3200, easing = SpinEasing))
             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
             spinning = false
-            spun = true
         }
     }
 
@@ -194,8 +231,9 @@ fun WheelScreen(me: UserProfile, onBack: () -> Unit, onHistory: () -> Unit) {
         }
 
         // Wheel picker + "new wheel".
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            Row(Modifier.weight(1f).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        // Wraps onto a second line instead of hiding wheels past the screen edge.
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            run {
                 wheels.forEach { w ->
                     val sel = w.id == wheel.id
                     Box(
@@ -236,11 +274,19 @@ fun WheelScreen(me: UserProfile, onBack: () -> Unit, onHistory: () -> Unit) {
         // Result.
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
-                stringResource(if (spinning) R.string.wh_spinning else if (spun) R.string.wh_result else R.string.wh_not_spun),
+                stringResource(if (spinning) R.string.wh_spinning else if (lastSpin != null) R.string.wh_result else R.string.wh_not_spun),
                 fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = BrownSoft,
             )
-            val result = if (spinning || items.isEmpty()) "…" else if (!spun) "?" else items[WheelMath.indexAt(rotation.value, items.size)]
+            val result = if (spinning || items.isEmpty()) "…" else lastSpin?.result ?: "?"
             Text(result, fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 26.sp, color = Brown, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            if (!spinning && lastSpin != null) {
+                val ago = relativeTime(lastSpin.at)
+                Text(
+                    if (lastSpin.by == me.uid) stringResource(R.string.wh_by_me, ago)
+                    else stringResource(R.string.wh_by, lastSpin.byName.ifBlank { partner?.displayName.orEmpty() }, ago),
+                    fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, color = BrownSoft,
+                )
+            }
         }
 
         MainAction(stringResource(R.string.wh_spin), WHEEL_D, ::spin, enabled = !spinning && items.size >= WheelMath.MIN_ITEMS)
@@ -273,7 +319,7 @@ fun WheelScreen(me: UserProfile, onBack: () -> Unit, onHistory: () -> Unit) {
             if (wheel.builtIn && saved.containsKey(wheel.id)) {
                 LinkText(stringResource(R.string.wh_reset)) { vm.delete(wheel.id) }
             } else if (!wheel.builtIn) {
-                LinkText(stringResource(R.string.wh_delete_wheel), Color(0xFFA8401C)) { vm.delete(wheel.id); selectedId = "yemek" }
+                LinkText(stringResource(R.string.wh_delete_wheel), Color(0xFFA8401C)) { val id = wheel.id; askDelete = { vm.delete(id); selectedId = "yemek" } }
             }
         }
     }

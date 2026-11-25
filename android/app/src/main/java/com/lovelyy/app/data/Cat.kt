@@ -23,6 +23,8 @@ data class CatDoc(
     val lastAction: CatAction? = null,
     val recent: List<CatAction> = emptyList(),
     val streak: CareStreak = CareStreak(),
+    /** The accessory the cat wears ([CareRewards.Accessory] name), chosen on Kedi bakımı. */
+    val wearing: String? = null,
 )
 
 /** A need's level (0..100) at the time [at] (epoch millis). */

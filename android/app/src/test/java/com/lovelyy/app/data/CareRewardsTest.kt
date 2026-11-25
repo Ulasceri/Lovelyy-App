@@ -41,4 +41,12 @@ class CareRewardsTest {
         val out = CareRewards.todayLatest(recent, "me", today, ZoneOffset.UTC)
         assertEquals(listOf(CatActionType.Pet, CatActionType.Water), out.map { it.type })
     }
+
+    @Test
+    fun wornAccessoryMustBeUnlocked() {
+        org.junit.Assert.assertEquals(CareRewards.Accessory.Kurdele, CareRewards.worn("Kurdele", best = 7))
+        org.junit.Assert.assertNull(CareRewards.worn("Sapka", best = 7))
+        org.junit.Assert.assertNull(CareRewards.worn(null, best = 99))
+        org.junit.Assert.assertNull(CareRewards.worn("Bilinmeyen", best = 99))
+    }
 }

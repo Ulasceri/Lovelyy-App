@@ -8,7 +8,8 @@
     android:targetCellHeight="1"
     android:minResizeWidth="250dp"
     android:minResizeHeight="40dp"
-    android:previewImage="@drawable/cat_w_love"
+    android:previewImage="@drawable/widget_days_sample"
+    android:previewLayout="@layout/widget_days_preview"
     android:resizeMode="horizontal|vertical"
     android:updatePeriodMillis="1800000"
     android:widgetCategory="home_screen" />

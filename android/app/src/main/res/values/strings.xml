@@ -309,6 +309,9 @@
 
     <string name="signal_question_msg">%1$s günün sorusunu cevapladı 💌</string>
     <string name="signal_note_msg">%1$s yeni bir not bıraktı 📝</string>
+    <string name="signal_wheel_msg">%1$s çarkı çevirdi. %2$s 🎡</string>
+    <string name="wh_by">%1$s çevirdi · %2$s</string>
+    <string name="wh_by_me">Sen çevirdin · %1$s</string>
     <string name="signal_event_msg">%1$s takvime ekledi: %2$s 📅</string>
 
     <!-- Setup / errors -->
@@ -481,6 +484,8 @@
     <string name="cc_acc_gozluk">Gözlük</string>
     <string name="cc_locked">%1$s, kilitli</string>
     <string name="cc_unlocked">%1$s, açıldı</string>
+    <string name="cc_worn">%1$s, kedinin üstünde</string>
+    <string name="cc_wear_hint">Açılan bir aksesuara dokun, kedin onu taksın.</string>
 
     <!-- Biz: profil ve ayarlar (approved design 10) -->
     <string name="pf_title">Biz</string>
@@ -634,6 +639,7 @@
     <string name="lv_you">Sen</string>
     <string name="lv_color">Renk %1$d</string>
     <string name="lv_brush">Fırça kalınlığı</string>
+    <string name="lv_brush_size">Fırça kalınlığı: %1$d / 3</string>
     <string name="lv_eraser">Silgi</string>
     <string name="lv_undo">Geri al</string>
     <string name="lv_widget">Ana ekran widget\'ında göster</string>
@@ -686,4 +692,18 @@
     <string name="wg_days">Gün sayacı + tek dokunuşla kalp</string>
     <string name="wg_hint">Ana ekrana eklemek için bir widget\'a dokun</string>
     <string name="wg_pin_failed">Bu telefon widget eklemeyi desteklemiyor. Ana ekrana uzun basıp Widget\'lar\'dan ekleyebilirsin.</string>
+    <string name="widget_days_sample">412 gün</string>
+    <string name="widget_drawing_sample_live">Elif çiziyor</string>
+    <string name="del_confirm">Sil</string>
+    <string name="del_dream_title">Bu hayal silinsin mi?</string>
+    <string name="del_dream_body">İkinizin listesinden de kalkar. Geri alınamaz.</string>
+    <string name="del_letter_title">Bu mektup silinsin mi?</string>
+    <string name="del_letter_body">Mektup zaman kapsülünden kalıcı olarak silinir. Geri alınamaz.</string>
+    <string name="del_note_title">Bu not silinsin mi?</string>
+    <string name="del_note_body">Not ikinizin panosundan da kalkar. Geri alınamaz.</string>
+    <string name="del_plan_title">Bu plan silinsin mi?</string>
+    <string name="del_plan_body">Plan ikinizin takviminden de kalkar. Geri alınamaz.</string>
+    <string name="del_wheel_title">Bu çark silinsin mi?</string>
+    <string name="del_wheel_body">Çark ve seçenekleri ikinizde de silinir. Geri alınamaz.</string>
+    <string name="tc_draft_kept">Mektubun taslak olarak saklandı</string>
 </resources>

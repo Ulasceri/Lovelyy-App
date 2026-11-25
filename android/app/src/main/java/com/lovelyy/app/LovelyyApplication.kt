@@ -48,4 +48,7 @@ class LovelyyApplication : Application() {
     val capsuleRepository by lazy { CapsuleRepository(FirebaseFirestore.getInstance()) }
     val drawingRepository by lazy { DrawingRepository(FirebaseFirestore.getInstance()) }
     val signalCenter by lazy { SignalCenter(this) }
+
+    /** A screen asked for by a widget or notification tap; Home opens it and clears it. */
+    val pendingRoute = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
 }

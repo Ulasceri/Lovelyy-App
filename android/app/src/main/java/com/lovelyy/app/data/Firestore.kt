@@ -17,6 +17,7 @@ object Paths {
     const val LOCATIONS = "locations"
     const val DREAMS = "dreams"
     const val WHEELS = "wheels"
+    const val WHEEL_SPINS = "wheelSpins"
     const val CAPSULES = "capsules"
     const val STROKES = "strokes"
     const val DRAWING = "drawing"

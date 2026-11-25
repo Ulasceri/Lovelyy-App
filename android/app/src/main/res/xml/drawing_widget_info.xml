@@ -8,7 +8,8 @@
     android:targetCellHeight="2"
     android:minResizeWidth="110dp"
     android:minResizeHeight="110dp"
-    android:previewImage="@drawable/cat_w_idle"
+    android:previewImage="@drawable/widget_drawing_sample"
+    android:previewLayout="@layout/widget_drawing_preview"
     android:resizeMode="horizontal|vertical"
     android:updatePeriodMillis="1800000"
     android:widgetCategory="home_screen" />

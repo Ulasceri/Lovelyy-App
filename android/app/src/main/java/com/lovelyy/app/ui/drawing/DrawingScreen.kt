@@ -268,7 +268,16 @@ fun DrawingScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, on
                         )
                     }
                 }
-                ToolButton(BRUSH_D, stringResource(R.string.lv_brush), false) { widthIndex = (widthIndex + 1) % BrushWidths.size }
+                // The pen cycles thin → medium → thick; the dot on it shows the current size and color.
+                Box {
+                    ToolButton(BRUSH_D, stringResource(R.string.lv_brush_size, widthIndex + 1), false) { widthIndex = (widthIndex + 1) % BrushWidths.size }
+                    Box(
+                        Modifier.align(Alignment.BottomEnd).size(16.dp).clip(CircleShape).background(Color.White),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Box(Modifier.size(listOf(4.dp, 7.dp, 11.dp)[widthIndex]).clip(CircleShape).background(Color(PenColors[colorIndex])))
+                    }
+                }
                 ToolButton(ERASER_D, stringResource(R.string.lv_eraser), eraser) { eraser = !eraser }
                 ToolButton(UNDO_D, stringResource(R.string.lv_undo), false, vm::undo)
             }

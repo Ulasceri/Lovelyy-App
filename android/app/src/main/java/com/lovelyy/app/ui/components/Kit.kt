@@ -233,3 +233,27 @@ fun ChoicePill(text: String, selected: Boolean, onClick: () -> Unit, modifier: M
         )
     }
 }
+
+/** "Emin misin?" before something is deleted or thrown away. [confirm] is red: the action can't be undone. */
+@Composable
+fun ConfirmDialog(title: String, body: String, confirm: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title, fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Brown) },
+        text = { Text(body, fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = BrownSoft) },
+        confirmButton = {
+            androidx.compose.material3.TextButton(
+                onClick = onConfirm,
+                colors = androidx.compose.material3.ButtonDefaults.textButtonColors(contentColor = Color(0xFFA8401C)),
+            ) { Text(confirm, fontFamily = Quicksand, fontWeight = FontWeight.Bold) }
+        },
+        dismissButton = {
+            androidx.compose.material3.TextButton(
+                onClick = onDismiss,
+                colors = androidx.compose.material3.ButtonDefaults.textButtonColors(contentColor = Brown),
+            ) { Text(androidx.compose.ui.res.stringResource(com.lovelyy.app.R.string.action_cancel), fontFamily = Quicksand, fontWeight = FontWeight.Bold) }
+        },
+        shape = RoundedCornerShape(28.dp),
+        containerColor = Cream,
+    )
+}

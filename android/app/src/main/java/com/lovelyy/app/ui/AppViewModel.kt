@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 /** Which big screen the app should show. Decided only from auth + Firestore state. */
@@ -67,7 +68,10 @@ class AppViewModel(private val app: LovelyyApplication) : ViewModel() {
             }
             flow<AppState> {
                 emit(AppState.Loading)
-                users.ensureUserDoc(firebaseUser)
+                // Don't wait for the network before listening: the cached profile shows the home screen at once.
+                viewModelScope.launch {
+                    runCatching { users.ensureUserDoc(firebaseUser) }.onFailure { Timber.e(it, "Creating the user doc failed") }
+                }
                 emitAll(
                     users.observeUser(firebaseUser.uid).flatMapLatest { me ->
                         when {
