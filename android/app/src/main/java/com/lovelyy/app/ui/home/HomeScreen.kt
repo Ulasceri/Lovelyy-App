@@ -382,7 +382,7 @@ private fun Header(me: UserProfile, partnerName: String, startMillis: Long?, onD
                 maxLines = 1, overflow = TextOverflow.Ellipsis,
             )
             Text(
-                if (startMillis != null) stringResource(R.string.home_day_number, DayCounter.dayNumber(startMillis, System.currentTimeMillis()))
+                if (startMillis != null) stringResource(R.string.home_day_number, DayCounter.together(startMillis, System.currentTimeMillis()).days)
                 else stringResource(R.string.home_set_date),
                 fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = BrownSoft,
             )

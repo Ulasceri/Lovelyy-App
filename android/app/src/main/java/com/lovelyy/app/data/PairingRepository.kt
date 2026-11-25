@@ -93,7 +93,7 @@ class PairingRepository(private val db: FirebaseFirestore) {
 
     /** When [code] was created (server time, millis), or null if it no longer exists. */
     suspend fun codeCreatedAt(code: String): Long? = wrap {
-        codeRef(code).get().await().takeIf { it.exists() }?.getTimestamp("createdAt")?.toDate()?.time
+        codeRef(code).get(com.google.firebase.firestore.Source.SERVER).await().takeIf { it.exists() }?.getTimestamp("createdAt")?.toDate()?.time
     }
 
     private fun isExpired(createdAt: Timestamp): Boolean =

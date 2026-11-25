@@ -137,7 +137,7 @@
     <string name="tab_memories_soon">Fotoğraflarınız ve anılarınız burada birikecek. Sonraki adımlarda geliyor.</string>
     <string name="tab_plans_soon">Takvim, özel günler ve hayaller listesi burada olacak. Sonraki adımlarda geliyor.</string>
     <string name="nav_send_heartbeat">Kalp atışı gönder</string>
-    <string name="home_day_number">Birlikte %1$d. gününüz</string>
+    <string name="home_day_number">%1$d gündür birliktesiniz</string>
     <string name="home_set_date">Tanıştığınız günü ekleyin</string>
     <string name="home_inbox">Kalp atışları</string>
     <string name="home_soon">Yakında</string>
