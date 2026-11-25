@@ -40,7 +40,10 @@ class AppViewModel(private val app: LovelyyApplication) : ViewModel() {
         val users = app.userRepository
 
         return auth.authState.flatMapLatest { firebaseUser ->
-            if (firebaseUser == null) return@flatMapLatest flowOf<AppState>(AppState.SignedOut)
+            if (firebaseUser == null) {
+                app.signalCenter.reset()
+                return@flatMapLatest flowOf<AppState>(AppState.SignedOut)
+            }
             flow<AppState> {
                 emit(AppState.Loading)
                 users.ensureUserDoc(firebaseUser)

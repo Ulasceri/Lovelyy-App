@@ -39,6 +39,10 @@ class AuthRepository(private val auth: FirebaseAuth) {
         auth.signInWithEmailAndPassword(email.trim(), password).await()
     }
 
+    suspend fun sendPasswordReset(email: String) = wrap {
+        auth.sendPasswordResetEmail(email.trim()).await()
+    }
+
     suspend fun signUpWithEmail(name: String, email: String, password: String) = wrap {
         val result = auth.createUserWithEmailAndPassword(email.trim(), password).await()
         result.user?.updateProfile(userProfileChangeRequest { displayName = name.trim() })?.await()

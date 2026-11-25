@@ -9,6 +9,11 @@ object Paths {
     const val PAIR_CODES = "pairCodes"
     const val CAT = "cat"
     const val CAT_DOC = "main"
+    const val SIGNALS = "signals"
+    const val MOODS = "moods"
+    const val QUESTIONS = "questions"
+    const val NOTES = "notes"
+    const val EVENTS = "events"
 }
 
 internal fun DocumentSnapshot.toUserProfile(): UserProfile? =

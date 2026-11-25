@@ -69,6 +69,11 @@ class UserRepository(private val db: FirebaseFirestore) {
         awaitClose { reg.remove() }
     }
 
+    /** The day the couple got together (day counter). Either partner can set or change it. */
+    suspend fun setStartDate(coupleId: String, startMillis: Long) {
+        coupleRef(coupleId).update("startDate", com.google.firebase.Timestamp(java.util.Date(startMillis))).await()
+    }
+
     companion object {
         const val MAX_NAME = 40
     }

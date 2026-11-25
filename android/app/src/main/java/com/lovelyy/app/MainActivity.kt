@@ -11,6 +11,16 @@ import com.lovelyy.app.ui.LovelyyRoot
 import com.lovelyy.app.ui.theme.LovelyyTheme
 
 class MainActivity : ComponentActivity() {
+    override fun onStart() {
+        super.onStart()
+        (application as LovelyyApplication).signalCenter.appVisible = true
+    }
+
+    override fun onStop() {
+        (application as LovelyyApplication).signalCenter.appVisible = false
+        super.onStop()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
