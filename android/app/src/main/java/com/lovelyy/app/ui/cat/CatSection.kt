@@ -319,7 +319,7 @@ private fun CatStage(
                                 hearts += Heart(
                                     System.nanoTime(), change.position,
                                     drift = Random.nextFloat() * 2f - 1f,
-                                    size = 18f + Random.nextFloat() * 14f,
+                                    size = 28f + Random.nextFloat() * 16f,
                                 )
                             }
                         }
@@ -415,13 +415,13 @@ private fun FloatingHeart(h: Heart, onDone: () -> Unit) {
         onDone()
     }
     val density = LocalDensity.current
-    val rise = with(density) { 90.dp.toPx() }
+    val rise = with(density) { 120.dp.toPx() }
     val sway = with(density) { 24.dp.toPx() }
     val sizePx = with(density) { h.size.dp.toPx() }
     Icon(
         Icons.Filled.Favorite,
         contentDescription = null,
-        tint = Color(0xFFFF8FA3),
+        tint = Color(0xFFFF6F91),
         modifier = Modifier
             .zIndex(2f)
             .offset {
