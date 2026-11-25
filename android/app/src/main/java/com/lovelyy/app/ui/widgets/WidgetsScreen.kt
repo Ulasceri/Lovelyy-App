@@ -182,8 +182,8 @@ fun WidgetsScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
                 Row(Modifier.fillMaxSize()) {
                     Box(Modifier.width(150.dp).fillMaxHeight().background(CatBg)) { CatPicture(levels?.sleeping == true, Modifier.fillMaxSize()) }
                     Column(
-                        Modifier.weight(1f).fillMaxHeight().padding(horizontal = 14.dp, vertical = 12.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
+                        Modifier.weight(1f).fillMaxHeight().padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(5.dp, Alignment.CenterVertically),
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(catName, fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Brown, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))

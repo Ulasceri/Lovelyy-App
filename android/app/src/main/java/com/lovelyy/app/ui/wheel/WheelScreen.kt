@@ -153,6 +153,8 @@ fun WheelScreen(me: UserProfile, onBack: () -> Unit, onHistory: () -> Unit) {
 
     val rotation = remember { Animatable(0f) }
     var spinning by remember { mutableStateOf(false) }
+    // No result until this wheel has been spun once.
+    var spun by remember(selectedId) { mutableStateOf(false) }
     var showAll by remember { mutableStateOf(false) }
     var adding by remember { mutableStateOf(false) }
     var creating by remember { mutableStateOf(false) }
@@ -172,6 +174,7 @@ fun WheelScreen(me: UserProfile, onBack: () -> Unit, onHistory: () -> Unit) {
             rotation.animateTo(to, tween(3200, easing = SpinEasing))
             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
             spinning = false
+            spun = true
         }
     }
 
@@ -233,10 +236,10 @@ fun WheelScreen(me: UserProfile, onBack: () -> Unit, onHistory: () -> Unit) {
         // Result.
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
-                stringResource(if (spinning) R.string.wh_spinning else R.string.wh_result),
+                stringResource(if (spinning) R.string.wh_spinning else if (spun) R.string.wh_result else R.string.wh_not_spun),
                 fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = BrownSoft,
             )
-            val result = if (spinning || items.isEmpty()) "…" else items[WheelMath.indexAt(rotation.value, items.size)]
+            val result = if (spinning || items.isEmpty()) "…" else if (!spun) "?" else items[WheelMath.indexAt(rotation.value, items.size)]
             Text(result, fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 26.sp, color = Brown, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
 
@@ -318,7 +321,12 @@ private fun WheelFace(items: List<String>, rotation: Float, label: String, modif
                     // SVG: text-anchor middle at x=224, baseline at y=145 (center is 140,140).
                     val x = c.x + 84f * s - layout.size.width / 2f
                     val y = c.y + 5f * s - layout.firstBaseline
-                    drawText(layout, topLeft = Offset(x, y))
+                    // Labels on the left half would read upside down: turn them around their own center.
+                    val screen = (((mid + rotation) % 360f) + 360f) % 360f
+                    val flip = screen > 90f && screen < 270f
+                    rotate(if (flip) 180f else 0f, Offset(c.x + 84f * s, c.y)) {
+                        drawText(layout, topLeft = Offset(x, y))
+                    }
                 }
             }
         }

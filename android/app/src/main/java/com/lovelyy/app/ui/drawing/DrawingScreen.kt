@@ -285,6 +285,7 @@ fun DrawingScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, on
 
         val savedText = stringResource(R.string.lv_saved)
         MainAction(stringResource(R.string.lv_save), Kit.PHOTO_D, {
+            eraser = false
             vm.save(me) { Toast.makeText(context, savedText, Toast.LENGTH_SHORT).show() }
         }, enabled = list.isNotEmpty())
     }

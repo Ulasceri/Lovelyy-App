@@ -543,6 +543,7 @@
     <string name="dr_done">Gerçekleşenler</string>
     <string name="dr_add">Hayal ekle</string>
     <string name="dr_empty">Henüz hayal yok. Birlikte yapmak istediklerinizi ekleyin.</string>
+    <string name="dr_empty_next">Hepsini gerçekleştirdiniz! Sıradaki hayalinizi ekleyin.</string>
     <string name="dr_none_done">İlk hayalinizi gerçekleştirince burada görünecek.</string>
     <string name="dr_cat_seyahat">Seyahat</string>
     <string name="dr_cat_deneyim">Deneyim</string>
@@ -573,7 +574,8 @@
     <string name="wh_add">Ekle</string>
     <string name="wh_remove">%1$s çıkar</string>
     <string name="wh_add_title">Seçenek ekle</string>
-    <string name="wh_add_hint">Örn. Kumpir</string>
+    <string name="wh_add_hint">Yeni seçenek</string>
+    <string name="wh_not_spun">Çevir, çark karar versin</string>
     <string name="wh_new_title">Yeni çark</string>
     <string name="wh_new_name">Çarkın adı, örn. Hafta sonu ne yapsak?</string>
     <string name="wh_new_items">Seçenekler (her satıra bir tane)</string>

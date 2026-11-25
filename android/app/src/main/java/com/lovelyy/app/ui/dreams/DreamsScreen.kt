@@ -160,7 +160,7 @@ fun DreamsScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onS
             }
         }
 
-        DreamList(stringResource(R.string.dr_next), open, stringResource(R.string.dr_empty), me, partnerName,
+        DreamList(stringResource(R.string.dr_next), open, stringResource(if (done.isEmpty()) R.string.dr_empty else R.string.dr_empty_next), me, partnerName,
             onToggle = { d -> haptic.performHapticFeedback(HapticFeedbackType.LongPress); vm.setDone(d.id, true) },
             onOpen = { editing = Editing(it) })
         if (done.isNotEmpty() || all.isNotEmpty()) {
