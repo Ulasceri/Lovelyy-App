@@ -6,6 +6,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -58,6 +59,8 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush as GradientBrush
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -65,6 +68,7 @@ import androidx.compose.ui.unit.dp
 import com.lovelyy.app.R
 import com.lovelyy.app.data.Couple
 import com.lovelyy.app.data.UserProfile
+import com.lovelyy.app.ui.cat.CatSection
 import com.lovelyy.app.ui.components.InitialAvatar
 import com.lovelyy.app.ui.components.PrimaryButton
 import com.lovelyy.app.ui.lovelyyApp
@@ -93,11 +97,17 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
         me = me,
         partner = partner,
         onSignOut = { scope.launch { app.authRepository.signOut(context) } },
+        cat = { CatSection(me, couple, partner) },
     )
 }
 
 @Composable
-private fun HomeContent(me: UserProfile, partner: UserProfile?, onSignOut: () -> Unit) {
+private fun HomeContent(
+    me: UserProfile,
+    partner: UserProfile?,
+    onSignOut: () -> Unit,
+    cat: @Composable () -> Unit,
+) {
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val soonText = stringResource(R.string.home_main_action_soon)
@@ -128,7 +138,7 @@ private fun HomeContent(me: UserProfile, partner: UserProfile?, onSignOut: () ->
                 .padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            CatHero()
+            cat()
             Text(
                 stringResource(R.string.home_soon),
                 style = MaterialTheme.typography.titleMedium,
@@ -188,48 +198,18 @@ private fun CoupleHeader(me: UserProfile, partner: UserProfile?, onSignOut: () -
     }
 }
 
-/** The heart of Home. The real animated cat (Lottie/Rive) replaces this in step 2. */
+/** Stand-in for the live cat in previews (the real one needs Firebase and video playback). */
 @Composable
-private fun CatHero() {
-    val breathe by rememberInfiniteTransition(label = "cat").animateFloat(
-        initialValue = 1f,
-        targetValue = 1.06f,
-        animationSpec = infiniteRepeatable(tween(1600, easing = FastOutSlowInEasing), RepeatMode.Reverse),
-        label = "breathe",
-    )
-    Column(
+private fun CatPreviewImage() {
+    Image(
+        painter = painterResource(R.drawable.cat_base),
+        contentDescription = null,
+        contentScale = ContentScale.Crop,
         modifier = Modifier
             .fillMaxWidth()
-            .height(300.dp)
-            .clip(MaterialTheme.shapes.extraLarge)
-            .background(
-                GradientBrush.verticalGradient(
-                    listOf(MaterialTheme.colorScheme.secondaryContainer, MaterialTheme.colorScheme.primaryContainer)
-                )
-            )
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Box(
-            Modifier
-                .size(140.dp)
-                .scale(breathe)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surfaceContainerLowest),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(Icons.Filled.Pets, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(64.dp))
-        }
-        Spacer(Modifier.height(16.dp))
-        Text(stringResource(R.string.home_cat_soon), style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
-        Text(
-            stringResource(R.string.home_cat_soon_sub),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
-    }
+            .height(320.dp)
+            .clip(MaterialTheme.shapes.extraLarge),
+    )
 }
 
 @Composable
@@ -272,6 +252,7 @@ private fun HomePreview() {
             me = UserProfile(uid = "a", displayName = "Ulaş"),
             partner = UserProfile(uid = "b", displayName = "Deniz"),
             onSignOut = {},
+            cat = { CatPreviewImage() },
         )
     }
 }

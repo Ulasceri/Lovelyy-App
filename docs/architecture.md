@@ -45,3 +45,39 @@ Firestore emulator.
 
 `firebase/database.rules.json` is locked (deny all) until live features (drawing, heartbeat)
 arrive.
+
+# Step 2: the shared cat
+
+## Data: `couples/{coupleId}/cat/main`
+
+| Field | Meaning |
+|---|---|
+| `name` | given by the couple (either partner, editable) |
+| `hunger`, `thirst`, `energy`, `love` | `{level 0..100, at}`: the level at time `at` |
+| `sleepingSince` | set while asleep; energy refills, the cat wakes up by itself when full |
+| `lastAction`, `recent` | who did what ("Deniz besledi"), last 10 |
+| `streak` | shared care streak: `count`, `best`, `lastCompleteDay`, `careDay`, `careBy` |
+
+No server code: needs decay with time, so every phone computes the current levels from the
+stored snapshot and the clock (`data/Cat.kt`, `CatRules`). Actions run in a Firestore transaction
+that snapshots all needs at "now" and applies the change, so two partners acting at the same
+moment never lose an update. Rates: hunger empties in 12h, thirst 10h, energy 16h (1h of sleep
+refills it), love 8h. The streak grows by one for each day on which both partners cared.
+
+## Animation (`ui/cat/`)
+
+- 14 video clips in `assets/cat/` (720×720 H.264, 24 fps, ~5 MB total) generated with fal
+  (`tools/cat-animation/`). Every clip starts and ends on one of five key poses
+  (sitting, sleeping, with food bowl, water bowl, yarn ball).
+- `CatAnimator` plays them on two ExoPlayer/TextureView layers. The next clip is always preloaded
+  and paused on its first frame. Same pose at the boundary → instant cut (identical frames, so
+  invisible); different pose or an interruption (touch, feeding) → 280 ms cross-fade with the new
+  layer on top. Lying down / waking up are bridge clips that are never interrupted.
+- Mood (from needs) picks the loop: hungry, thirsty, sleepy, wants love, happy, idle, sleeping.
+  Actions play eating / drinking / playing; tap = surprised; stroking = petted + hearts + haptics.
+- The partner's actions arrive through the Firestore listener and play the same animation.
+
+## Widget (`widget/CatWidget.kt`)
+
+RemoteViews widget with one picture per mood. The app saves the cat whenever it changes; the
+widget computes the mood itself (time-based), and WorkManager refreshes from Firestore every 30 min.

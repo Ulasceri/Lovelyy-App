@@ -42,8 +42,6 @@
     <!-- Home -->
     <string name="home_us">%1$s &amp; %2$s</string>
     <string name="home_partner_fallback">Partnerin</string>
-    <string name="home_cat_soon">Kediniz yakında burada olacak</string>
-    <string name="home_cat_soon_sub">Birlikte isim verip besleyeceksiniz.</string>
     <string name="home_soon">Yakında</string>
     <string name="home_main_action">Seni düşünüyorum</string>
     <string name="home_main_action_soon">Bu özellik bir sonraki adımda geliyor 💛</string>
@@ -55,6 +53,67 @@
     <string name="feature_piggy">Kumbara</string>
     <string name="feature_distance">Mesafe</string>
     <string name="feature_notes">Notlar</string>
+
+    <!-- Cat -->
+    <string name="cat_generic">Kediniz</string>
+    <string name="cat_unnamed">İsim ver</string>
+    <string name="cat_you">Sen</string>
+    <string name="cat_feed">Besle</string>
+    <string name="cat_water">Su ver</string>
+    <string name="cat_play">Oyna</string>
+    <string name="cat_sleep">Uyut</string>
+    <string name="cat_wake">Uyandır</string>
+    <string name="need_hunger">Tokluk</string>
+    <string name="need_thirst">Su</string>
+    <string name="need_energy">Enerji</string>
+    <string name="need_love">Sevgi</string>
+    <string name="cat_streak_short">%1$d gün</string>
+    <string name="cat_streak_title">%1$d günlük ortak bakım serisi</string>
+    <string name="cat_streak_none">Ortak bakım serisi başlasın</string>
+    <string name="cat_streak_hint">İkiniz de her gün ilgilenince seri büyür. Seriler yakında aksesuarların kilidini açacak.</string>
+    <string name="cat_name_title">Kedinize bir isim verin</string>
+    <string name="cat_name_body">İsmi ikiniz de göreceksiniz, istediğiniz zaman değiştirebilirsiniz.</string>
+    <string name="cat_name_hint">Örn. Mırmır</string>
+    <string name="cat_error">Bağlantı sorunu oldu, tekrar dener misin?</string>
+    <string name="action_save">Kaydet</string>
+    <string name="action_cancel">Vazgeç</string>
+
+    <string name="act_feed">%1$s besledi 💛</string>
+    <string name="act_feed_me">%1$s besledin</string>
+    <string name="act_water">%1$s su verdi 💧</string>
+    <string name="act_water_me">%1$s su verdin</string>
+    <string name="act_play">%1$s oynadı 🧶</string>
+    <string name="act_play_me">%1$s oynadın</string>
+    <string name="act_pet">%1$s sevdi 🥰</string>
+    <string name="act_pet_me">%1$s sevdin</string>
+    <string name="act_sleep">%1$s uyuttu 🌙</string>
+    <string name="act_sleep_me">%1$s uyuttun</string>
+    <string name="act_wake">%1$s uyandırdı ☀️</string>
+    <string name="act_wake_me">%1$s uyandırdın</string>
+    <string name="act_name">%1$s isim verdi ✨</string>
+    <string name="act_name_me">%1$s isim verdin</string>
+
+    <string name="refuse_asleep">%1$s uyuyor. Önce uyandırmalısın 💤</string>
+    <string name="refuse_tired">%1$s oynamak için çok yorgun. Biraz uyusun mu?</string>
+    <string name="refuse_not_sleepy">%1$s şu an hiç uykulu değil 😺</string>
+    <string name="refuse_awake">%1$s zaten uyanık.</string>
+
+    <string name="time_now">az önce</string>
+    <string name="time_minutes">%1$d dk önce</string>
+    <string name="time_hours">%1$d sa önce</string>
+    <string name="time_days">%1$d gün önce</string>
+
+    <string name="mood_sleeping">Uyuyor 💤</string>
+    <string name="mood_hungry">Acıktı 🍗</string>
+    <string name="mood_thirsty">Susadı 💧</string>
+    <string name="mood_sleepy">Uykusu geldi 🥱</string>
+    <string name="mood_love">Sevgi istiyor 🥺</string>
+    <string name="mood_happy">Çok mutlu 💛</string>
+    <string name="mood_idle">Keyfi yerinde</string>
+
+    <string name="widget_name">Lovelyy kedisi</string>
+    <string name="widget_description">Ortak kedinizin şu an nasıl olduğunu gösterir.</string>
+    <string name="widget_open_app">Uygulamayı aç</string>
 
     <!-- Setup / errors -->
     <string name="setup_title">Firebase kurulumu gerekiyor</string>
