@@ -89,8 +89,13 @@ class SignalCenter(private val app: LovelyyApplication) {
                     if (fresh.isEmpty()) return@collect
                     save(app) { putLong(K_LAST, fresh.last().at) }
                     if (appVisible) {
-                        fresh.takeLast(1).forEach { _incoming.tryEmit(it) }
-                        vibrate(app, fresh.last().kind)
+                        // Heartbeats and nudges play big on screen; quieter news stays a notification.
+                        val (big, small) = fresh.partition { it.kind == SignalKind.Heartbeat || it.kind == SignalKind.Nudge }
+                        big.lastOrNull()?.let {
+                            _incoming.tryEmit(it)
+                            vibrate(app, it.kind)
+                        }
+                        small.takeLast(MAX_NOTIFY).forEach { notify(app, it) }
                     } else {
                         fresh.takeLast(MAX_NOTIFY).forEach { notify(app, it) }
                     }
@@ -146,6 +151,9 @@ class SignalCenter(private val app: LovelyyApplication) {
                     val m = s.mood ?: MoodKind.Mutlu
                     context.getString(R.string.signal_mood_msg, who, context.getString(m.labelRes()).lowercase(), m.emoji)
                 }
+                SignalKind.Question -> context.getString(R.string.signal_question_msg, who)
+                SignalKind.Note -> context.getString(R.string.signal_note_msg, who)
+                SignalKind.Event -> context.getString(R.string.signal_event_msg, who, s.text.orEmpty())
             }
         }
 

@@ -28,7 +28,13 @@ enum class SignalKind(val key: String) {
     /** One-tap "aklımdasın" nudge. */
     Nudge("nudge"),
     /** "My mood changed" notice. */
-    Mood("mood");
+    Mood("mood"),
+    /** "I answered today's question." */
+    Question("question"),
+    /** "I left a note." */
+    Note("note"),
+    /** "I added something to our calendar" ([Signal.text] = title). */
+    Event("event");
 
     companion object {
         fun of(key: String?) = entries.firstOrNull { it.key == key }
@@ -44,6 +50,8 @@ data class Signal(
     val from: String,
     val fromName: String,
     val to: String,
+    /** Extra text (e.g. the calendar entry's title). */
+    val text: String? = null,
     /** Sender's clock, millis. Used for ordering and "is this new?". */
     val at: Long,
 )
@@ -60,6 +68,7 @@ class SignalRepository(private val db: FirebaseFirestore) {
         kind: SignalKind,
         emotion: Emotion? = null,
         mood: MoodKind? = null,
+        text: String? = null,
     ) {
         signals(coupleId).add(
             mapOf(
@@ -69,6 +78,7 @@ class SignalRepository(private val db: FirebaseFirestore) {
                 "from" to me.uid,
                 "fromName" to me.displayName,
                 "to" to partnerUid,
+                "text" to text,
                 "at" to System.currentTimeMillis(),
                 "createdAt" to FieldValue.serverTimestamp(),
             ),
@@ -101,6 +111,7 @@ class SignalRepository(private val db: FirebaseFirestore) {
             from = getString("from") ?: return null,
             fromName = getString("fromName").orEmpty(),
             to = getString("to") ?: return null,
+            text = getString("text"),
             at = getLong("at") ?: return null,
         )
     }

@@ -257,6 +257,61 @@
     <string name="mood_kind_sikkin">Keyifsiz</string>
     <string name="mood_kind_hasta">Hasta</string>
 
+    <!-- Günün sorusu -->
+    <string name="q_answer">Cevapla</string>
+    <string name="q_answer_and_see">Cevapla ve onunkini gör</string>
+    <string name="q_waiting">%1$s cevaplayınca iki cevap da açılacak 🔒</string>
+    <string name="q_edit">Cevabımı düzenle</string>
+    <string name="q_past">Önceki sorular</string>
+    <string name="q_partner_answered">%1$s cevapladı, sıra sende 💌</string>
+    <string name="q_partner_not_yet">%1$s henüz cevaplamadı</string>
+    <string name="q_hint">İçinden geldiği gibi yaz…</string>
+    <string name="q_partner_skipped">%1$s bu soruyu cevaplamamış.</string>
+    <string name="q_locked_past">Bu soruyu cevaplamadın. %1$s cevabını görmek için o gün cevaplaman gerekirdi 🔒</string>
+    <string name="q_you_answered">Cevapladın ✓</string>
+    <string name="q_your_turn">Sıra sende</string>
+    <string name="q_partner_answered_short">%1$s ✓</string>
+    <string name="q_partner_not_yet_short">%1$s bekleniyor</string>
+    <string name="q_cta_see">Cevapla, onunkini gör</string>
+    <string name="q_cta_open">Cevapları gör</string>
+
+    <!-- Notlar -->
+    <string name="notes_empty_title">Henüz not yok</string>
+    <string name="notes_empty_body">Alışveriş listesi, tatlı bir mesaj ya da unutulmaması gereken bir şey. İlk notu sen bırak 💛</string>
+    <string name="notes_count">%1$d not</string>
+    <string name="notes_add">Not ekle</string>
+    <string name="notes_new">Yeni not</string>
+    <string name="notes_edit">Notu düzenle</string>
+    <string name="notes_pin">Sabitle</string>
+    <string name="notes_delete">Sil</string>
+    <string name="notes_delete_confirm">Silmek için bir kez daha dokun</string>
+    <string name="notes_hint">Bir şeyler yaz…</string>
+
+    <!-- Takvim -->
+    <string name="cal_anniversary">Yıldönümümüz</string>
+    <string name="cal_special">Özel günler</string>
+    <string name="cal_special_empty">Doğum günleri ve yıldönümleri burada geri sayımla görünür. Aşağıdan ekleyebilirsin.</string>
+    <string name="cal_prev">Önceki ay</string>
+    <string name="cal_next">Sonraki ay</string>
+    <string name="cal_day_empty">Bu gün için plan yok.</string>
+    <string name="cal_upcoming">Yaklaşan planlar</string>
+    <string name="cal_add">Plan ya da özel gün ekle</string>
+    <string name="cal_years">%1$d. yıl</string>
+    <string name="cal_today">Bugün! 🎉</string>
+    <string name="cal_yearly_badge">Her yıl</string>
+    <string name="cal_added_by_you">Sen ekledin</string>
+    <string name="cal_added_by">Ekleyen: %1$s</string>
+    <string name="cal_new">Yeni plan</string>
+    <string name="cal_edit">Planı düzenle</string>
+    <string name="cal_title_hint">Ne yapıyoruz?</string>
+    <string name="cal_yearly">Her yıl tekrarla</string>
+    <string name="cal_yearly_hint">Doğum günü ve yıldönümleri için</string>
+    <string name="cal_pick_date">Tarih seç</string>
+
+    <string name="signal_question_msg">%1$s günün sorusunu cevapladı. Sıra sende 💌</string>
+    <string name="signal_note_msg">%1$s yeni bir not bıraktı 📝</string>
+    <string name="signal_event_msg">%1$s takvime ekledi: %2$s 📅</string>
+
     <!-- Setup / errors -->
     <string name="setup_title">Firebase kurulumu gerekiyor</string>
     <string name="setup_body">Uygulama çalışıyor ama henüz Firebase\'e bağlı değil. README dosyasındaki adımları takip et, google-services.json dosyasını android/app klasörüne koy ve uygulamayı yeniden çalıştır.</string>

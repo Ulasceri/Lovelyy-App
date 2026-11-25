@@ -99,8 +99,16 @@ treats them as valid for 30 minutes (the rules still allow up to 24h).
 | Path | Fields | Notes |
 |---|---|---|
 | `couples/{id}.startDate` | timestamp | day counter; start of the chosen day in the phone's zone |
-| `couples/{id}/signals/{auto}` | kind (heartbeat/nudge/mood), emotion, mood, from, fromName, to, at, createdAt | heartbeats, nudges, mood notices |
+| `couples/{id}/signals/{auto}` | kind (heartbeat/nudge/mood/question/note/event), emotion, mood, text, from, fromName, to, at, createdAt | heartbeats, nudges and notices for the partner |
 | `couples/{id}/moods/{uid}` | kind, note, at | each partner's current mood |
+| `couples/{id}/questions/{yyyy-MM-dd}` | day, question, answers.{uid} = {name, text, at} | günün sorusu; question text comes from `QuestionBank.forDay` so both phones agree without a server |
+| `couples/{id}/notes/{auto}` | text, color (0-4), pinned, by, byName, at | shared sticky notes |
+| `couples/{id}/events/{auto}` | title, date (yyyy-MM-dd), emoji, yearly, by, byName, at | plans and special days; the anniversary is built in from `startDate`, not stored |
+
+Günün sorusu hides the partner's answer until you answer, but only in the app: Firestore rules
+can't hide one field of a document from a member, and both partners are members. That's fine for
+a couple's own data. Calendar date math (yearly repeats, 29 Feb, countdowns) is in
+`CalendarMath` and covered by `CalendarMathTest`.
 
 All of these are covered by the existing "members only" rule for `couples/{id}/**`; no rules
 deploy was needed.

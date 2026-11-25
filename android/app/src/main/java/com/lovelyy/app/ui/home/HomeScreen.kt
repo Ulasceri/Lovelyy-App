@@ -76,6 +76,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
@@ -106,7 +107,11 @@ import com.lovelyy.app.ui.components.SoftCard
 import com.lovelyy.app.ui.components.bounceClick
 import com.lovelyy.app.ui.components.softShadow
 import com.lovelyy.app.ui.counter.CounterScreen
+import com.lovelyy.app.ui.calendar.CalendarScreen
 import com.lovelyy.app.ui.heartbeat.EmotionVisual
+import com.lovelyy.app.ui.notes.NotesScreen
+import com.lovelyy.app.ui.question.QuestionHomeCard
+import com.lovelyy.app.ui.question.QuestionScreen
 import com.lovelyy.app.ui.heartbeat.HeartbeatScreen
 import com.lovelyy.app.ui.heartbeat.IncomingSignalOverlay
 import com.lovelyy.app.ui.lovelyyApp
@@ -137,6 +142,9 @@ private object Routes {
     const val COUNTER = "counter"
     const val MOOD = "mood"
     const val HEARTBEAT = "heartbeat" // "heartbeat" or "heartbeat:<emotion key>"
+    const val QUESTION = "question"
+    const val NOTES = "notes"
+    const val CALENDAR = "calendar"
 }
 
 /** Everything after pairing: tabs + inner screens + incoming heartbeats. */
@@ -194,12 +202,15 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
                                 open = ::push,
                             )
                             Tab.Anilar -> ComingSoon(stringResource(R.string.tab_memories), stringResource(R.string.tab_memories_soon), Icons.Rounded.Photo, Modifier.padding(top = 40.dp))
-                            Tab.Planlar -> ComingSoon(stringResource(R.string.tab_plans), stringResource(R.string.tab_plans_soon), Icons.Rounded.CalendarMonth, Modifier.padding(top = 40.dp))
+                            Tab.Planlar -> CalendarScreen(me, couple, partner, onBack = null)
                             Tab.Biz -> BizTab(me, couple, partner, open = ::push)
                         }
                     }
                     route == Routes.COUNTER -> CounterScreen(me, couple, partner, onBack = ::pop)
                     route == Routes.MOOD -> MoodScreen(me, partner, moods, onBack = ::pop)
+                    route == Routes.QUESTION -> QuestionScreen(me, partner, onBack = ::pop)
+                    route == Routes.NOTES -> NotesScreen(me, partner, onBack = ::pop)
+                    route == Routes.CALENDAR -> CalendarScreen(me, couple, partner, onBack = ::pop)
                     route.startsWith(Routes.HEARTBEAT) -> HeartbeatScreen(
                         me, partner, Emotion.of(route.substringAfter(':', "")), onBack = ::pop,
                     )
@@ -338,6 +349,8 @@ private fun YuvaTab(
             NudgeCard(me, partner, Modifier.weight(1f), compact = true)
         }
 
+        QuestionHomeCard(me, partner, Modifier.padding(top = 14.dp)) { open(Routes.QUESTION) }
+
         MoodCard(me, partnerName, moods[me.uid], partner?.uid?.let { moods[it] }, Modifier.padding(top = 14.dp)) { open(Routes.MOOD) }
 
         Text(
@@ -345,22 +358,23 @@ private fun YuvaTab(
             fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Brown,
             modifier = Modifier.padding(top = 24.dp, bottom = 12.dp),
         )
+        // Route = null means "not built yet": shows the "Yakında" pill and a toast.
         val corner = listOf(
-            Triple(Icons.Rounded.QuestionAnswer, R.string.feature_question, PeachTint),
-            Triple(Icons.Rounded.Brush, R.string.feature_drawing, MintTint),
-            Triple(Icons.Rounded.EditNote, R.string.feature_notes, PeachTint),
-            Triple(Icons.Rounded.Event, R.string.feature_calendar, MintTint),
-            Triple(Icons.Rounded.Restaurant, R.string.feature_food, PeachTint),
-            Triple(Icons.Rounded.Place, R.string.feature_distance, MintTint),
-            Triple(Icons.Rounded.HourglassTop, R.string.feature_capsule, PeachTint),
-            Triple(Icons.Rounded.Star, R.string.feature_bucket, MintTint),
-            Triple(Icons.Rounded.Checkroom, R.string.feature_wardrobe, PeachTint),
+            CornerItem(Icons.Rounded.QuestionAnswer, R.string.feature_question, PeachTint, Routes.QUESTION),
+            CornerItem(Icons.Rounded.Brush, R.string.feature_drawing, MintTint),
+            CornerItem(Icons.Rounded.EditNote, R.string.feature_notes, PeachTint, Routes.NOTES),
+            CornerItem(Icons.Rounded.Event, R.string.feature_calendar, MintTint, Routes.CALENDAR),
+            CornerItem(Icons.Rounded.Restaurant, R.string.feature_food, PeachTint),
+            CornerItem(Icons.Rounded.Place, R.string.feature_distance, MintTint),
+            CornerItem(Icons.Rounded.HourglassTop, R.string.feature_capsule, PeachTint),
+            CornerItem(Icons.Rounded.Star, R.string.feature_bucket, MintTint),
+            CornerItem(Icons.Rounded.Checkroom, R.string.feature_wardrobe, PeachTint),
         )
         corner.chunked(3).forEach { row ->
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(bottom = 10.dp)) {
-                row.forEach { (icon, title, tint) ->
-                    CornerTile(icon, stringResource(title), tint, Modifier.weight(1f)) {
-                        Toast.makeText(context, soon, Toast.LENGTH_SHORT).show()
+                row.forEach { item ->
+                    CornerTile(item.icon, stringResource(item.title), item.tint, Modifier.weight(1f), ready = item.route != null) {
+                        if (item.route != null) open(item.route) else Toast.makeText(context, soon, Toast.LENGTH_SHORT).show()
                     }
                 }
             }
@@ -503,7 +517,10 @@ private fun MoodTile(who: String, entry: MoodEntry?, bg: Color, labelColor: Colo
 }
 
 @Composable
-private fun CornerTile(icon: ImageVector, title: String, tint: Color, modifier: Modifier, onClick: () -> Unit) {
+private class CornerItem(val icon: ImageVector, @androidx.annotation.StringRes val title: Int, val tint: Color, val route: String? = null)
+
+@Composable
+private fun CornerTile(icon: ImageVector, title: String, tint: Color, modifier: Modifier, ready: Boolean, onClick: () -> Unit) {
     SoftCard(modifier, radius = 20.dp, padding = 0.dp, onClick = onClick) {
         Column(
             Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 14.dp),
@@ -512,7 +529,10 @@ private fun CornerTile(icon: ImageVector, title: String, tint: Color, modifier: 
         ) {
             IconCircle(icon, tint, size = 48.dp, iconSize = 24.dp)
             Text(title, fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Brown, textAlign = TextAlign.Center, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Pill(stringResource(R.string.home_soon), background = Color(0xFFF6EEE8), color = BrownSoft, fontSize = 11)
+            // Built tiles keep an invisible pill so every tile in a row stays the same height.
+            Box(Modifier.alpha(if (ready) 0f else 1f)) {
+                Pill(stringResource(R.string.home_soon), background = Color(0xFFF6EEE8), color = BrownSoft, fontSize = 11)
+            }
         }
     }
 }

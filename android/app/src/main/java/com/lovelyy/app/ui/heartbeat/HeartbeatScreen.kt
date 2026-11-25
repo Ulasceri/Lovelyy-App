@@ -229,7 +229,7 @@ fun HeartbeatScreen(me: UserProfile, partner: UserProfile?, initial: Emotion?, o
         NudgeCard(me, partner, Modifier.padding(top = 20.dp))
 
         // History.
-        val mine = recent.filter { it.kind != SignalKind.Mood }.take(6)
+        val mine = recent.filter { it.kind == SignalKind.Heartbeat || it.kind == SignalKind.Nudge }.take(6)
         if (mine.isNotEmpty()) {
             Text(
                 stringResource(R.string.hb_recent),
@@ -270,7 +270,7 @@ private fun HistoryRow(s: Signal, myUid: String, partnerName: String) {
     val what = when (s.kind) {
         SignalKind.Heartbeat -> stringResource((s.emotion ?: Emotion.Sevgi).labelRes())
         SignalKind.Nudge -> stringResource(R.string.hb_nudge_label)
-        SignalKind.Mood -> ""
+        else -> ""
     }
     Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
         val st = (s.emotion ?: Emotion.Sevgi).style()
