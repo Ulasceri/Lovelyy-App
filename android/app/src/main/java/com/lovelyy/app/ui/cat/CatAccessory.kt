@@ -30,8 +30,8 @@ fun CatAccessoryLayer(accessory: Accessory, modifier: Modifier) {
     Canvas(modifier) {
         val k = size.width / 720f
         when (accessory) {
-            Accessory.Kurdele -> bow(Offset(440f * k, 170f * k), 34f * k, Rose, RoseDeep, tilt = -18f)
-            Accessory.Papyon -> bow(Offset(360f * k, 370f * k), 40f * k, Orange, OrangeDeep, tilt = 0f)
+            Accessory.Kurdele -> bow(Offset(352f * k, 176f * k), 32f * k, Rose, RoseDeep, tilt = -10f)
+            Accessory.Papyon -> bow(Offset(360f * k, 352f * k), 40f * k, Orange, OrangeDeep, tilt = 0f)
             Accessory.Sapka -> hat(k)
             Accessory.Gozluk -> glasses(k)
         }
@@ -63,18 +63,21 @@ private fun DrawScope.bow(c: Offset, s: Float, color: Color, deep: Color, tilt: 
 
 /** A small brown hat with a peach band, sitting between the ears. */
 private fun DrawScope.hat(k: Float) {
+    // Brim rests on the top of the head (y ≈ 180); 15% smaller than the first try, which floated above it.
     val cx = 360f * k
-    drawOval(Ink, Offset(cx - 92f * k, 150f * k), Size(184f * k, 34f * k))
-    drawRoundRect(Ink, Offset(cx - 56f * k, 78f * k), Size(112f * k, 86f * k), CornerRadius(18f * k))
-    drawRect(PeachBand, Offset(cx - 56f * k, 136f * k), Size(112f * k, 18f * k))
+    val s = 0.85f * k
+    val brimTop = 178f * k
+    drawOval(Ink, Offset(cx - 92f * s, brimTop), Size(184f * s, 34f * s))
+    drawRoundRect(Ink, Offset(cx - 56f * s, brimTop - 72f * s), Size(112f * s, 86f * s), CornerRadius(18f * s))
+    drawRect(PeachBand, Offset(cx - 56f * s, brimTop - 14f * s), Size(112f * s, 18f * s))
 }
 
 /** Round glasses over the eyes. */
 private fun DrawScope.glasses(k: Float) {
     val r = 40f * k
     val w = 7f * k
-    val l = Offset(305f * k, 260f * k)
-    val rt = Offset(413f * k, 260f * k)
+    val l = Offset(305f * k, 264f * k)
+    val rt = Offset(413f * k, 264f * k)
     drawCircle(Color.White.copy(alpha = 0.18f), r, l)
     drawCircle(Color.White.copy(alpha = 0.18f), r, rt)
     drawCircle(Ink, r, l, style = Stroke(w))

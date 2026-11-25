@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -67,7 +68,10 @@ class AppViewModel(private val app: LovelyyApplication) : ViewModel() {
                 return@flatMapLatest flowOf<AppState>(AppState.SignedOut)
             }
             flow<AppState> {
-                emit(AppState.Loading)
+                // Cold start: show Home at once from what the phone saved last time (names, couple, start date).
+                // The live Firestore state replaces it a moment later; the spinner only shows on a first sign-in.
+                val cached = cachedHome(firebaseUser.uid)
+                emit(cached ?: AppState.Loading)
                 // Don't wait for the network before listening: the cached profile shows the home screen at once.
                 viewModelScope.launch {
                     runCatching { users.ensureUserDoc(firebaseUser) }.onFailure { Timber.e(it, "Creating the user doc failed") }
@@ -75,7 +79,7 @@ class AppViewModel(private val app: LovelyyApplication) : ViewModel() {
                 emitAll(
                     users.observeUser(firebaseUser.uid).flatMapLatest { me ->
                         when {
-                            me == null -> flowOf<AppState>(AppState.Loading)
+                            me == null -> if (cached != null) emptyFlow() else flowOf<AppState>(AppState.Loading)
                             me.displayName.isBlank() -> flowOf<AppState>(AppState.NeedsName(me))
                             me.coupleId == null -> flowOf<AppState>(AppState.Pairing(me))
                             else -> homeState(me, me.coupleId)
@@ -87,6 +91,19 @@ class AppViewModel(private val app: LovelyyApplication) : ViewModel() {
                 emit(AppState.Failed(it.message))
             }
         }
+    }
+
+    private fun cachedHome(uid: String): AppState.Home? {
+        val c = com.lovelyy.app.widget.WidgetData.couple(app) ?: return null
+        if (c.myUid != uid || c.myName.isBlank()) return null
+        val me = UserProfile(uid = uid, displayName = c.myName, coupleId = c.coupleId)
+        val couple = Couple(
+            id = c.coupleId,
+            members = listOfNotNull(uid, c.partnerUid),
+            startDate = c.startMillis?.let { com.google.firebase.Timestamp(java.util.Date(it)) },
+        )
+        val partner = c.partnerUid?.let { UserProfile(uid = it, displayName = c.partnerName, coupleId = c.coupleId) }
+        return AppState.Home(me, couple, partner)
     }
 
     private fun homeState(me: UserProfile, coupleId: String): Flow<AppState> =
