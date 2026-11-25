@@ -31,7 +31,8 @@ class AnalyticsEventTest {
 
     @Test
     fun eventNamesAreUnique() {
-        val names = all.map { it.name }
+        // One name per event type: ScreenView appears twice above (different screens), same name by design.
+        val names = all.distinctBy { it::class }.map { it.name }
         assertEquals(names.size, names.toSet().size)
     }
 
