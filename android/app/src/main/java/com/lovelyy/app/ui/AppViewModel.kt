@@ -44,7 +44,7 @@ class AppViewModel(private val app: LovelyyApplication) : ViewModel() {
 
     val state: StateFlow<AppState> = buildState()
         .onEach(::track)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AppState.Loading)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), initialState())
 
     private fun track(s: AppState) {
         // Pairing -> Home means the couple was just formed (both phones see this once).
@@ -91,6 +91,13 @@ class AppViewModel(private val app: LovelyyApplication) : ViewModel() {
                 emit(AppState.Failed(it.message))
             }
         }
+    }
+
+    /** The first frame: the saved Home if the signed-in user is known on this phone, so no spinner on cold start. */
+    private fun initialState(): AppState {
+        if (!app.isFirebaseConfigured) return AppState.Loading
+        val uid = runCatching { app.authRepository.currentUser?.uid }.getOrNull() ?: return AppState.Loading
+        return cachedHome(uid) ?: AppState.Loading
     }
 
     private fun cachedHome(uid: String): AppState.Home? {

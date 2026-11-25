@@ -30,7 +30,7 @@ fun CatAccessoryLayer(accessory: Accessory, modifier: Modifier) {
     Canvas(modifier) {
         val k = size.width / 720f
         when (accessory) {
-            Accessory.Kurdele -> bow(Offset(352f * k, 176f * k), 32f * k, Rose, RoseDeep, tilt = -10f)
+            Accessory.Kurdele -> bow(Offset(338f * k, 176f * k), 29f * k, Rose, RoseDeep, tilt = -10f)
             Accessory.Papyon -> bow(Offset(360f * k, 352f * k), 40f * k, Orange, OrangeDeep, tilt = 0f)
             Accessory.Sapka -> hat(k)
             Accessory.Gozluk -> glasses(k)
@@ -64,7 +64,7 @@ private fun DrawScope.bow(c: Offset, s: Float, color: Color, deep: Color, tilt: 
 /** A small brown hat with a peach band, sitting between the ears. */
 private fun DrawScope.hat(k: Float) {
     // Brim rests on the top of the head (y ≈ 180); 15% smaller than the first try, which floated above it.
-    val cx = 360f * k
+    val cx = 348f * k
     val s = 0.85f * k
     val brimTop = 178f * k
     drawOval(Ink, Offset(cx - 92f * s, brimTop), Size(184f * s, 34f * s))
