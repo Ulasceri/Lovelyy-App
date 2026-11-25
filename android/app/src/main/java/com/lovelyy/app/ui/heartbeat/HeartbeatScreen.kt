@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -170,7 +171,8 @@ fun HeartbeatScreen(me: UserProfile, partner: UserProfile?, initial: Emotion?, o
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp)
-            .padding(top = 20.dp, bottom = 120.dp),
+            .navigationBarsPadding()
+                .padding(top = 20.dp, bottom = 140.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         // Header: both of you, who to send to, the last heart you got.
