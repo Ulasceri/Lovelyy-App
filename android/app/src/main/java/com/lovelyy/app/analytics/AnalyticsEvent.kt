@@ -65,6 +65,20 @@ sealed interface AnalyticsEvent {
         override val params: Map<String, Any> get() = mapOf("mood" to mood, "has_note" to hasNote)
     }
 
+    data object QuestionAnswered : AnalyticsEvent {
+        override val name = "question_answered"
+    }
+
+    data object NoteAdded : AnalyticsEvent {
+        override val name = "note_added"
+    }
+
+    /** A calendar entry was added. [yearly] = a special day that repeats every year. */
+    data class PlanAdded(val yearly: Boolean) : AnalyticsEvent {
+        override val name = "plan_added"
+        override val params: Map<String, Any> get() = mapOf("yearly" to yearly)
+    }
+
     /**
      * A screen was shown. [screenName] is a fixed route name like "home", never anything dynamic.
      * Sent as the standard `screen_view` event, so it shows up in the Screens report.

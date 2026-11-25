@@ -78,6 +78,21 @@ object QuestionBank {
     )
 }
 
+/** Pure helpers for the question screen (unit-tested in QuestionMathTest). */
+object QuestionMath {
+    /**
+     * Days in a row on which both partners answered, ending today (or yesterday, while today
+     * is still open). [days] can be in any order.
+     */
+    fun streak(days: List<DayQuestion>, today: LocalDate): Int {
+        val complete = days.filter { it.answers.size >= 2 }.map { it.day }.toSet()
+        var d = if (today.toString() in complete) today else today.minusDays(1)
+        var n = 0
+        while (d.toString() in complete) { n++; d = d.minusDays(1) }
+        return n
+    }
+}
+
 class QuestionRepository(private val db: FirebaseFirestore) {
 
     private fun questions(coupleId: String) =
@@ -102,7 +117,7 @@ class QuestionRepository(private val db: FirebaseFirestore) {
     }
 
     /** The days of the last [limit] days that have answers, newest first. */
-    fun observeRecent(coupleId: String, limit: Long = 14): Flow<List<DayQuestion>> = callbackFlow {
+    fun observeRecent(coupleId: String, limit: Long = 60): Flow<List<DayQuestion>> = callbackFlow {
         // Document ids are yyyy-MM-dd, so an ascending id range from the cutoff picks the recent days.
         // (Ordering by id descending needs a composite index that the project does not have.)
         val from = LocalDate.now().minusDays(limit).toString()

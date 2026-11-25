@@ -18,6 +18,9 @@ class AnalyticsEventTest {
         AnalyticsEvent.HeartbeatSent(emotion = "ozlem"),
         AnalyticsEvent.NudgeSent,
         AnalyticsEvent.MoodShared(mood = "mutlu", hasNote = true),
+        AnalyticsEvent.QuestionAnswered,
+        AnalyticsEvent.NoteAdded,
+        AnalyticsEvent.PlanAdded(yearly = true),
         AnalyticsEvent.ScreenView("home"),
         AnalyticsEvent.ScreenView("day_counter"),
     )

@@ -22,4 +22,7 @@ object InnerScreens {
     const val DAY_COUNTER = "day_counter"
     const val HEARTBEAT = "heartbeat"
     const val MOOD = "mood"
+    const val QUESTION = "daily_question"
+    const val NOTES = "notes"
+    const val PLANS = "plans"
 }

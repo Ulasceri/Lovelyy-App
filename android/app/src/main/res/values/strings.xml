@@ -394,4 +394,63 @@
     <string name="md_shared">%1$s gönderildi</string>
     <string name="md_failed">Paylaşılamadı, tekrar dene</string>
     <string name="mood_kind_ozlemis">Özlemiş</string>
+
+    <!-- Günün sorusu (approved design 8) -->
+    <string name="q_history">Önceki sorular</string>
+    <string name="q_chip">%1$s · %2$d. soru</string>
+    <string name="q_streak">%1$d gün seri</string>
+    <string name="q_your_answer">Senin cevabın</string>
+    <string name="q_answer_hint">İçinden geleni yaz…</string>
+    <string name="q_partner_answer">%1$s cevabı</string>
+    <string name="q_partner_answered">%1$s cevapladı</string>
+    <string name="q_partner_waiting">Henüz cevaplamadı</string>
+    <string name="q_locked">Sen cevaplayınca açılır. Önce bakmak yok!</string>
+    <string name="q_partner_pending">Cevaplayınca burada görünecek.</string>
+    <string name="q_send">Cevabımı gönder</string>
+    <string name="q_sent">Cevabın %1$s ulaştı</string>
+    <string name="q_failed">Gönderilemedi, tekrar dene</string>
+
+    <!-- Notlar (approved design 18) -->
+    <string name="n_title">Notlar</string>
+    <string name="n_search">Notlarda ara</string>
+    <string name="n_all">Tümü</string>
+    <string name="n_mine">Benim</string>
+    <string name="n_theirs">%1$s</string>
+    <string name="n_pinned">Sabit</string>
+    <string name="n_write">Not yaz</string>
+    <string name="n_empty">Henüz not yok. İlk notu sen yaz.</string>
+    <string name="n_today">Bugün %1$s</string>
+    <string name="n_yesterday">Dün %1$s</string>
+    <string name="n_editor_new">Yeni not</string>
+    <string name="n_editor_edit">Notu düzenle</string>
+    <string name="n_editor_hint">Aklından geçeni yaz…</string>
+    <string name="n_color">Renk %1$d</string>
+    <string name="n_pin">Sabitle</string>
+    <string name="n_unpin">Sabitlemeyi kaldır</string>
+    <string name="n_delete">Sil</string>
+    <string name="n_save">Kaydet</string>
+
+    <!-- Planlar: takvim + özel günler (approved design 11) -->
+    <string name="p_title">Planlar</string>
+    <string name="p_subtitle">Takvim ve özel günler</string>
+    <string name="p_add">Plan ekle</string>
+    <string name="p_days_left">gün kaldı</string>
+    <string name="p_today_word">bugün</string>
+    <string name="p_anniversary">Yıl dönümü</string>
+    <string name="p_prev_month">Önceki ay</string>
+    <string name="p_next_month">Sonraki ay</string>
+    <string name="p_added_by">%1$s · %2$s ekledi</string>
+    <string name="p_left">%1$d gün kaldı</string>
+    <string name="p_today">Bugün</string>
+    <string name="p_tomorrow">Yarın</string>
+    <string name="p_no_plans">Henüz plan yok. Sağ üstteki + ile ekleyebilirsin.</string>
+    <string name="p_no_special">Özel günlerinizi ekleyin</string>
+    <string name="p_bucket">Hayaller listesi</string>
+    <string name="p_wheel">Karar çarkı</string>
+    <string name="p_editor_new">Yeni plan</string>
+    <string name="p_editor_edit">Planı düzenle</string>
+    <string name="p_editor_title_hint">Ne yapacaksınız?</string>
+    <string name="p_editor_date">Tarih: %1$s</string>
+    <string name="p_editor_yearly">Her yıl tekrarlasın (özel gün)</string>
+    <string name="p_pick_date">Tarih seç</string>
 </resources>

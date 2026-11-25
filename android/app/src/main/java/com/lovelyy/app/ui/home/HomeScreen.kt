@@ -114,6 +114,9 @@ import com.lovelyy.app.ui.heartbeat.EmotionVisual
 import com.lovelyy.app.ui.heartbeat.HeartbeatScreen
 import com.lovelyy.app.ui.mood.MoodFace
 import com.lovelyy.app.ui.mood.MoodScreen
+import com.lovelyy.app.ui.notes.NotesScreen
+import com.lovelyy.app.ui.plans.PlansScreen
+import com.lovelyy.app.ui.question.QuestionScreen
 import com.lovelyy.app.ui.lovelyyApp
 import com.lovelyy.app.ui.theme.Brown
 import com.lovelyy.app.ui.theme.BrownSoft
@@ -140,6 +143,8 @@ private object Routes {
     const val COUNTER = "counter"
     const val HEARTBEAT = "heartbeat" // "heartbeat" or "heartbeat:<emotion key>"
     const val MOOD = "mood"
+    const val QUESTION = "question"
+    const val NOTES = "notes"
 }
 
 /** Everything after pairing: the home tabs and the inner screens. */
@@ -163,13 +168,15 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
 
     // screen_view for inner screens (the tabs themselves count as "home").
     val top = stack.lastOrNull()
-    LaunchedEffect(top) {
+    LaunchedEffect(top, tab) {
         Telemetry.onScreen(
             when (top?.substringBefore(':')) {
                 Routes.COUNTER -> InnerScreens.DAY_COUNTER
                 Routes.HEARTBEAT -> InnerScreens.HEARTBEAT
                 Routes.MOOD -> InnerScreens.MOOD
-                else -> "home"
+                Routes.QUESTION -> InnerScreens.QUESTION
+                Routes.NOTES -> InnerScreens.NOTES
+                else -> if (tab == Tab.Planlar) InnerScreens.PLANS else "home"
             },
         )
     }
@@ -206,14 +213,16 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
                 when (route?.substringBefore(':')) {
                     null -> AnimatedContent(tab, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "tab") { t ->
                         when (t) {
-                            Tab.Yuva -> YuvaTab(me, couple, partner, moods, soon, open = ::push)
+                            Tab.Yuva -> YuvaTab(me, couple, partner, moods, soon, open = ::push, openPlans = { tab = Tab.Planlar })
                             Tab.Anilar -> ComingSoon(stringResource(R.string.tab_memories), stringResource(R.string.tab_memories_soon), Icons.Rounded.Photo, Modifier.padding(top = 40.dp))
-                            Tab.Planlar -> ComingSoon(stringResource(R.string.tab_plans), stringResource(R.string.tab_plans_soon), Icons.Rounded.CalendarMonth, Modifier.padding(top = 40.dp))
+                            Tab.Planlar -> PlansScreen(me, couple, partner, onBucket = soon, onWheel = soon)
                             Tab.Biz -> BizTab(me, couple, partner, open = ::push)
                         }
                     }
                     Routes.COUNTER -> CounterScreen(me, couple, partner, onBack = ::pop)
                     Routes.MOOD -> MoodScreen(me, partner, moods, onBack = ::pop, onHistory = soon)
+                    Routes.QUESTION -> QuestionScreen(me, couple, partner, onBack = ::pop, onHistory = soon)
+                    Routes.NOTES -> NotesScreen(me, partner, onBack = ::pop, onSearch = soon)
                     Routes.HEARTBEAT -> HeartbeatScreen(me, partner, Emotion.of(route.substringAfter(':', "")), onHistory = soon)
                 }
             }
@@ -224,7 +233,8 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
             val navTab = when (routeKey) {
                 null -> tab
                 Routes.COUNTER -> Tab.Yuva
-                Routes.MOOD -> Tab.Biz
+                Routes.MOOD, Routes.QUESTION -> Tab.Biz
+                Routes.NOTES -> Tab.Anilar
                 else -> null
             }
             BottomNav(
@@ -317,6 +327,7 @@ private fun YuvaTab(
     moods: Map<String, MoodEntry>,
     soon: () -> Unit,
     open: (String) -> Unit,
+    openPlans: () -> Unit,
 ) {
     val app = lovelyyApp()
     val partnerName = partner?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.home_partner_fallback)
@@ -355,10 +366,10 @@ private fun YuvaTab(
         )
         // Route = null means "not built yet": shows the "Yakında" pill and a toast.
         val corner = listOf(
-            CornerItem(Icons.Rounded.QuestionAnswer, R.string.feature_question, PeachTint),
+            CornerItem(Icons.Rounded.QuestionAnswer, R.string.feature_question, PeachTint, Routes.QUESTION),
             CornerItem(Icons.Rounded.Brush, R.string.feature_drawing, MintTint),
-            CornerItem(Icons.Rounded.EditNote, R.string.feature_notes, PeachTint),
-            CornerItem(Icons.Rounded.Event, R.string.feature_calendar, MintTint),
+            CornerItem(Icons.Rounded.EditNote, R.string.feature_notes, PeachTint, Routes.NOTES),
+            CornerItem(Icons.Rounded.Event, R.string.feature_calendar, MintTint, PLANS_TAB),
             CornerItem(Icons.Rounded.Restaurant, R.string.feature_food, PeachTint),
             CornerItem(Icons.Rounded.Place, R.string.feature_distance, MintTint),
             CornerItem(Icons.Rounded.HourglassTop, R.string.feature_capsule, PeachTint),
@@ -369,7 +380,11 @@ private fun YuvaTab(
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(bottom = 10.dp)) {
                 row.forEach { item ->
                     CornerTile(item.icon, stringResource(item.title), item.tint, Modifier.weight(1f), ready = item.route != null) {
-                        soon()
+                        when (item.route) {
+                            null -> soon()
+                            PLANS_TAB -> openPlans()
+                            else -> item.route?.let(open)
+                        }
                     }
                 }
             }
@@ -511,6 +526,9 @@ private fun MoodTile(who: String, entry: MoodEntry?, bg: Color, labelColor: Colo
     }
 }
 
+/** Corner tile target that switches to the Planlar tab instead of opening an inner screen. */
+private const val PLANS_TAB = "tab:plans"
+
 private class CornerItem(val icon: ImageVector, @androidx.annotation.StringRes val title: Int, val tint: Color, val route: String? = null)
 
 @Composable
@@ -561,6 +579,7 @@ private fun BizTab(me: UserProfile, couple: Couple?, partner: UserProfile?, open
             }
         }
         BizRow(Icons.Rounded.Mood, stringResource(R.string.feature_mood)) { open(Routes.MOOD) }
+        BizRow(Icons.Rounded.QuestionAnswer, stringResource(R.string.feature_question)) { open(Routes.QUESTION) }
         BizRow(Icons.Rounded.AutoStories, stringResource(R.string.feature_days)) { open(Routes.COUNTER) }
         BizRow(Icons.Rounded.Notifications, stringResource(R.string.biz_notifications)) {
             val i = android.content.Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
