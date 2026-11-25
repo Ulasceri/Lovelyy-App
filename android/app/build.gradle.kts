@@ -9,6 +9,9 @@ plugins {
 // shows a "Firebase setup needed" screen instead of crashing.
 if (file("google-services.json").exists()) {
     apply(plugin = libs.plugins.google.services.get().pluginId)
+    // Crash reports (Crashlytics) and app-start / network traces (Performance Monitoring).
+    apply(plugin = libs.plugins.firebase.crashlytics.get().pluginId)
+    apply(plugin = libs.plugins.firebase.perf.get().pluginId)
 } else {
     logger.warn("⚠️  app/google-services.json not found: building without Firebase. See README.md.")
 }
@@ -23,6 +26,10 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "0.1.0"
+
+        // Telemetry (analytics, crash reports, performance) default when the user hasn't chosen.
+        // Release: on. Debug: off, so test runs don't pollute the data. See docs/analytics.md.
+        buildConfigField("boolean", "TELEMETRY_DEFAULT_ENABLED", "true")
     }
 
     // App-specific debug key, committed to the repo, so every machine has the same
@@ -39,6 +46,10 @@ android {
     buildTypes {
         debug {
             signingConfig = signingConfigs.getByName("debug")
+            // Turn telemetry on in a debug build with: ./gradlew assembleDebug -Ptelemetry.debug=true
+            // (or at runtime, see docs/analytics.md).
+            val debugTelemetry = (project.findProperty("telemetry.debug") as String?)?.toBoolean() ?: false
+            buildConfigField("boolean", "TELEMETRY_DEFAULT_ENABLED", debugTelemetry.toString())
         }
         release {
             isMinifyEnabled = false
@@ -54,6 +65,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     androidResources {
         // The cat videos are already compressed; storing them uncompressed lets them stream from the APK.
@@ -79,6 +91,11 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
+    // Telemetry: see docs/analytics.md.
+    implementation(libs.firebase.analytics)
+    implementation(libs.firebase.crashlytics)
+    implementation(libs.firebase.perf)
+    implementation(libs.timber)
     implementation(libs.kotlinx.coroutines.play.services)
 
     implementation(libs.androidx.credentials)

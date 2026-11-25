@@ -8,6 +8,7 @@ import com.google.firebase.firestore.FirebaseFirestoreException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.tasks.await
 import java.security.SecureRandom
+import timber.log.Timber
 
 /**
  * Partner pairing, done entirely on the client and protected by firestore.rules
@@ -114,7 +115,7 @@ class PairingRepository(private val db: FirebaseFirestore) {
                 AppException(AppError.Network, e)
             e is FirebaseFirestoreException && e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED ->
                 AppException(AppError.PermissionDenied, e)
-            else -> AppException(AppError.Unknown, e)
+            else -> AppException(AppError.Unknown, e).also { Timber.e(e, "Pairing failed unexpectedly") }
         }
     }
 

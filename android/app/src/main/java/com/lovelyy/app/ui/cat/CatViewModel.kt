@@ -3,12 +3,14 @@ package com.lovelyy.app.ui.cat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lovelyy.app.LovelyyApplication
+import com.lovelyy.app.analytics.AnalyticsEvent
 import com.lovelyy.app.data.CatAction
 import com.lovelyy.app.data.CatActionType
 import com.lovelyy.app.data.CatDoc
 import com.lovelyy.app.data.CatLevels
 import com.lovelyy.app.data.CatRules
 import com.lovelyy.app.data.UserProfile
+import com.lovelyy.app.telemetry.Telemetry
 import com.lovelyy.app.widget.CatWidget
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
@@ -21,6 +23,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 /** Things the cat screen reacts to once (an animation, a little banner). */
 sealed interface CatEvent {
@@ -48,7 +51,10 @@ class CatViewModel(private val app: LovelyyApplication, private val coupleId: St
             var previous: CatAction? = null
             var first = true
             repo.observe(coupleId)
-                .catch { events.send(CatEvent.Failed) }
+                .catch {
+                    Timber.w(it, "Cat updates failed")
+                    events.send(CatEvent.Failed)
+                }
                 .collect { d ->
                     doc.value = d
                     clock.value = System.currentTimeMillis()
@@ -81,12 +87,24 @@ class CatViewModel(private val app: LovelyyApplication, private val coupleId: St
         viewModelScope.launch {
             try {
                 repo.act(coupleId, me, members, type, strokes, name)
+                analyticsEvent(type, strokes)?.let(Telemetry::track)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                Timber.e(e, "Cat action %s failed", type)
                 events.send(CatEvent.Failed)
             }
         }
+    }
+
+    /** Only care actions are tracked. Wake and Name aren't (the name is free text). */
+    private fun analyticsEvent(type: CatActionType, strokes: Int): AnalyticsEvent? = when (type) {
+        CatActionType.Feed -> AnalyticsEvent.CatFed
+        CatActionType.Water -> AnalyticsEvent.CatWatered
+        CatActionType.Play -> AnalyticsEvent.CatPlayed
+        CatActionType.Pet -> AnalyticsEvent.CatPetted(strokes)
+        CatActionType.Sleep -> AnalyticsEvent.CatSlept
+        CatActionType.Wake, CatActionType.Name -> null
     }
 
     companion object {

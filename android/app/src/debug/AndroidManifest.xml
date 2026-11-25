@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Debug builds only: merged into the main manifest for the debug variant. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <!-- Print Performance Monitoring traces to logcat (tag FirebasePerformance). -->
+        <meta-data android:name="firebase_performance_logcat_enabled" android:value="true" />
+
+        <!-- Telemetry test hooks for adb (no UI). Only the shell holds DUMP, so other apps can't call it. -->
+        <receiver
+            android:name=".debug.DebugTelemetryReceiver"
+            android:exported="true"
+            android:permission="android.permission.DUMP" />
+    </application>
+</manifest>
