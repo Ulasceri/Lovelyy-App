@@ -101,11 +101,13 @@ class QuestionRepository(private val db: FirebaseFirestore) {
         ).await()
     }
 
-    /** The last [limit] days that have answers, newest first. */
+    /** The days of the last [limit] days that have answers, newest first. */
     fun observeRecent(coupleId: String, limit: Long = 14): Flow<List<DayQuestion>> = callbackFlow {
+        // Document ids are yyyy-MM-dd, so an ascending id range from the cutoff picks the recent days.
+        // (Ordering by id descending needs a composite index that the project does not have.)
+        val from = LocalDate.now().minusDays(limit).toString()
         val reg = questions(coupleId)
-            .orderBy(com.google.firebase.firestore.FieldPath.documentId(), Query.Direction.DESCENDING)
-            .limit(limit)
+            .whereGreaterThanOrEqualTo(com.google.firebase.firestore.FieldPath.documentId(), from)
             .addSnapshotListener { snap, err ->
                 if (err != null) {
                     close(err)
@@ -121,7 +123,7 @@ class QuestionRepository(private val db: FirebaseFirestore) {
                                     Answer(uid, a["name"] as? String ?: "", a["text"] as? String ?: "", (a["at"] as? Number)?.toLong() ?: 0L)
                                 },
                             )
-                        },
+                        }.sortedByDescending { it.day },
                     )
                 }
             }

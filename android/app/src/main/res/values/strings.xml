@@ -260,7 +260,7 @@
     <!-- Günün sorusu -->
     <string name="q_answer">Cevapla</string>
     <string name="q_answer_and_see">Cevapla ve onunkini gör</string>
-    <string name="q_waiting">%1$s cevaplayınca iki cevap da açılacak 🔒</string>
+    <string name="q_waiting">%1$s cevaplayınca iki cevap da açılacak</string>
     <string name="q_edit">Cevabımı düzenle</string>
     <string name="q_past">Önceki sorular</string>
     <string name="q_partner_answered">%1$s cevapladı, sıra sende 💌</string>
@@ -268,9 +268,9 @@
     <string name="q_hint">İçinden geldiği gibi yaz…</string>
     <string name="q_partner_skipped">%1$s bu soruyu cevaplamamış.</string>
     <string name="q_locked_past">Bu soruyu cevaplamadın. %1$s cevabını görmek için o gün cevaplaman gerekirdi 🔒</string>
-    <string name="q_you_answered">Cevapladın ✓</string>
+    <string name="q_you_answered">Cevapladın</string>
     <string name="q_your_turn">Sıra sende</string>
-    <string name="q_partner_answered_short">%1$s ✓</string>
+    <string name="q_partner_answered_short">%1$s cevapladı</string>
     <string name="q_partner_not_yet_short">%1$s bekleniyor</string>
     <string name="q_cta_see">Cevapla, onunkini gör</string>
     <string name="q_cta_open">Cevapları gör</string>
@@ -308,7 +308,7 @@
     <string name="cal_yearly_hint">Doğum günü ve yıldönümleri için</string>
     <string name="cal_pick_date">Tarih seç</string>
 
-    <string name="signal_question_msg">%1$s günün sorusunu cevapladı. Sıra sende 💌</string>
+    <string name="signal_question_msg">%1$s günün sorusunu cevapladı 💌</string>
     <string name="signal_note_msg">%1$s yeni bir not bıraktı 📝</string>
     <string name="signal_event_msg">%1$s takvime ekledi: %2$s 📅</string>
 

@@ -13,7 +13,10 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -124,7 +127,7 @@ fun CalendarScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBa
     Box(Modifier.fillMaxSize()) {
         Column(
             Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp)
-                .padding(top = if (onBack == null) 16.dp else 0.dp, bottom = if (onBack == null) 190.dp else 110.dp),
+                .padding(top = if (onBack == null) 16.dp else 0.dp, bottom = if (onBack == null) 220.dp else 110.dp),
         ) {
             if (onBack != null) ScreenTitle(stringResource(R.string.feature_calendar), onBack)
             else Text(stringResource(R.string.tab_plans), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 26.sp, color = Brown, modifier = Modifier.padding(top = 8.dp))
@@ -142,7 +145,7 @@ fun CalendarScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBa
                     Text(stringResource(R.string.cal_special_empty), fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, lineHeight = 20.sp, color = Brown)
                 }
             } else {
-                Row(Modifier.horizontalScroll(rememberScrollState()).padding(vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(Modifier.horizontalScroll(rememberScrollState()).height(IntrinsicSize.Max).padding(vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     special.forEach { (e, days) -> SpecialCard(e, days, today) { if (!e.builtIn) editing = e } }
                 }
             }
@@ -192,7 +195,10 @@ fun CalendarScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBa
         }
         PeachButton(
             stringResource(R.string.cal_add), { creating = true },
-            modifier = Modifier.align(Alignment.BottomCenter).padding(start = 20.dp, end = 20.dp, bottom = if (onBack == null) 112.dp else 20.dp),
+            // As the Planlar tab it must clear the bottom nav: 106dp tall plus the system bar inset.
+            modifier = Modifier.align(Alignment.BottomCenter)
+                .then(if (onBack == null) Modifier.navigationBarsPadding() else Modifier)
+                .padding(start = 20.dp, end = 20.dp, bottom = if (onBack == null) 118.dp else 20.dp),
             leading = { Icon(Icons.Rounded.Add, null, tint = Brown, modifier = Modifier.size(22.dp)) },
         )
     }
@@ -224,13 +230,13 @@ private fun SpecialCard(e: CalEvent, days: Long, today: LocalDate, onClick: () -
     val next = CalendarMath.nextOccurrence(e, today) ?: return
     val isToday = days == 0L
     val years = CalendarMath.yearsAt(e, next)
-    SoftCard(Modifier.width(150.dp), color = if (isToday) Peach else CreamCard, radius = 22.dp, padding = 14.dp, shadow = true, onClick = onClick) {
+    SoftCard(Modifier.width(160.dp).fillMaxHeight(), color = if (isToday) Peach else CreamCard, radius = 22.dp, padding = 14.dp, shadow = true, onClick = onClick) {
         Text(e.emoji, fontSize = 28.sp)
-        Text(e.title, fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Brown, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 6.dp))
+        Text(e.title, fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 15.sp, lineHeight = 19.sp, color = Brown, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 6.dp))
         if (years > 0) Text(stringResource(R.string.cal_years, years), fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, color = BrownSoft)
         Text(
             if (isToday) stringResource(R.string.cal_today) else stringResource(R.string.counter_left, days),
-            fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = if (isToday) Brown else PeachDeep,
+            fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = if (isToday) Brown else PeachDeep, maxLines = 1,
             modifier = Modifier.padding(top = 8.dp),
         )
         Text(fmt(next, "d MMMM"), fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, color = BrownSoft)
