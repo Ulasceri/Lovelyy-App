@@ -64,10 +64,11 @@ private fun DrawScope.bow(c: Offset, s: Float, color: Color, deep: Color, tilt: 
 /** A small brown hat with a peach band, sitting between the ears. */
 private fun DrawScope.hat(k: Float) {
     // Brim rests on the top of the head (y ≈ 180); 15% smaller than the first try, which floated above it.
-    val cx = 348f * k
+    val cx = 360f * k
     val s = 0.85f * k
     val brimTop = 178f * k
-    drawOval(Ink, Offset(cx - 92f * s, brimTop), Size(184f * s, 34f * s))
+    // Narrow brim so it stays clear of the speech bubble on the right.
+    drawOval(Ink, Offset(cx - 74f * s, brimTop), Size(148f * s, 32f * s))
     drawRoundRect(Ink, Offset(cx - 56f * s, brimTop - 72f * s), Size(112f * s, 86f * s), CornerRadius(18f * s))
     drawRect(PeachBand, Offset(cx - 56f * s, brimTop - 14f * s), Size(112f * s, 18f * s))
 }
