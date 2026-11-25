@@ -9,6 +9,7 @@ import com.lovelyy.app.data.AppError
 import com.lovelyy.app.data.AppException
 import com.lovelyy.app.data.PairingRepository
 import com.lovelyy.app.data.UserProfile
+import com.lovelyy.app.telemetry.trace
 import kotlinx.coroutines.launch
 
 class PairingViewModel(private val pairing: PairingRepository) : ViewModel() {
@@ -71,11 +72,11 @@ class PairingViewModel(private val pairing: PairingRepository) : ViewModel() {
 
     fun newCode(me: UserProfile) {
         expiresAt = null
-        launchAction { pairing.createCode(me) }
+        launchAction { trace("pairing_create_code") { pairing.createCode(me) } }
     }
 
     // On success, users/{me}.coupleId is set and AppViewModel switches to Home by itself.
-    fun join(me: UserProfile) = launchAction { pairing.joinWithCode(me, input) }
+    fun join(me: UserProfile) = launchAction { trace("pairing_join") { pairing.joinWithCode(me, input) } }
 
     private fun launchAction(block: suspend () -> Unit) {
         if (loading) return

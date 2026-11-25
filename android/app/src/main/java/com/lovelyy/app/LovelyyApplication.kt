@@ -14,8 +14,15 @@ import com.lovelyy.app.data.SignalRepository
 import com.lovelyy.app.signals.SignalCenter
 import com.lovelyy.app.data.PairingRepository
 import com.lovelyy.app.data.UserRepository
+import com.lovelyy.app.telemetry.Telemetry
 
 class LovelyyApplication : Application() {
+
+    override fun onCreate() {
+        super.onCreate()
+        // Logging, analytics, crash reports, performance. See docs/analytics.md.
+        Telemetry.init(this)
+    }
 
     /** False until app/google-services.json is added (see README). */
     val isFirebaseConfigured: Boolean by lazy { FirebaseApp.getApps(this).isNotEmpty() }

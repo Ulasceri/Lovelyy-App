@@ -42,6 +42,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
+import timber.log.Timber
 
 /**
  * Delivers heartbeats, nudges and mood notices from the partner.
@@ -81,7 +82,7 @@ class SignalCenter(private val app: LovelyyApplication) {
         SignalWorker.schedule(app)
         job = scope.launch {
             app.signalRepository.observeRecent(coupleId)
-                .catch { /* offline or signed out: the worker will catch up */ }
+                .catch { Timber.w(it, "Signal updates stopped (offline or signed out?)") /* the worker will catch up */ }
                 .collect { list ->
                     _recent.value = list
                     val last = lastSeen(app)
@@ -219,6 +220,7 @@ class SignalWorker(context: Context, params: WorkerParameters) : CoroutineWorker
             }
             Result.success()
         } catch (e: Exception) {
+            Timber.w(e, "Signal check failed, will retry")
             Result.retry()
         }
     }

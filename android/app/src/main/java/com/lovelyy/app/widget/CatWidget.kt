@@ -24,6 +24,7 @@ import com.lovelyy.app.data.CatMood
 import com.lovelyy.app.data.CatRules
 import com.lovelyy.app.data.Need
 import java.util.concurrent.TimeUnit
+import timber.log.Timber
 
 /**
  * Home-screen widget: the cat's picture for its current mood, its name and how it feels.
@@ -157,6 +158,7 @@ class CatWidgetWorker(context: Context, params: WorkerParameters) : CoroutineWor
             app.catRepository.get(coupleId)?.let { CatWidget.save(app, coupleId, it) } ?: CatWidget.updateAll(app)
             Result.success()
         } catch (e: Exception) {
+            Timber.w(e, "Widget refresh failed, will retry")
             CatWidget.updateAll(app)
             Result.retry()
         }
