@@ -276,7 +276,7 @@ private fun YuvaTab(
                 modifier = Modifier.weight(1f),
                 onClick = { soon() },
             )
-            NudgeCard(me, partner, Modifier.weight(1f), compact = true)
+            NudgeCard(me, partner, Modifier.weight(1f), compact = true, onSoon = soon)
         }
 
         MoodCard(me, partnerName, moods[me.uid], partner?.uid?.let { moods[it] }, Modifier.padding(top = 14.dp), soon)

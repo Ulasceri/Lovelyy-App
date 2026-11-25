@@ -46,7 +46,14 @@ import kotlinx.coroutines.launch
 
 /** "Aklımdasın": one tap, the partner's phone buzzes softly with "X seni düşünüyor". */
 @Composable
-fun NudgeCard(me: UserProfile, partner: UserProfile?, modifier: Modifier = Modifier, compact: Boolean = false) {
+fun NudgeCard(
+    me: UserProfile,
+    partner: UserProfile?,
+    modifier: Modifier = Modifier,
+    compact: Boolean = false,
+    /** Set while the nudge isn't approved yet: a tap only calls this and sends nothing. */
+    onSoon: (() -> Unit)? = null,
+) {
     val app = lovelyyApp()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -74,7 +81,8 @@ fun NudgeCard(me: UserProfile, partner: UserProfile?, modifier: Modifier = Modif
                 .height(44.dp)
                 .clip(RoundedCornerShape(14.dp))
                 .background(if (state == 0) Peach else PeachTint)
-                .bounceClick(enabled = state == 0 && partner != null) {
+                .bounceClick(enabled = onSoon != null || (state == 0 && partner != null)) {
+                    if (onSoon != null) { onSoon(); return@bounceClick }
                     val p = partner ?: return@bounceClick
                     val coupleId = me.coupleId ?: return@bounceClick
                     state = 1
