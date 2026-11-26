@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
@@ -120,7 +121,7 @@ fun AccessoriesScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 SvgStrokeIcon(FLAME_D, Brown, Modifier.size(14.dp))
-                Text(stringResource(R.string.ac_streak, current), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Brown)
+                Text(pluralStringResource(R.plurals.ac_streak, current.toInt(), current), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Brown)
             }
         }
 
@@ -140,7 +141,7 @@ fun AccessoriesScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit
 
         val accusative = stringResource(accusativeRes(sel))
         val label = when {
-            !selUnlocked -> stringResource(R.string.ac_opens_in, (sel.day - current).coerceAtLeast(1))
+            !selUnlocked -> pluralStringResource(R.plurals.ac_opens_in, ((sel.day - current).coerceAtLeast(1)).toInt(), (sel.day - current).coerceAtLeast(1))
             selWorn -> stringResource(R.string.ac_take_off, accusative)
             else -> stringResource(R.string.ac_put_on_named, accusative, TurkishSuffix.dative(catName))
         }
@@ -190,7 +191,7 @@ private fun AccessoryTile(a: Accessory, unlocked: Boolean, worn: Boolean, select
                 color = if (!unlocked) Muted else if (worn) WornText else OpenText,
             )
             Text(
-                if (unlocked) stringResource(R.string.ac_opened_day, a.day) else stringResource(R.string.ac_days_left, (a.day - current).coerceAtLeast(1)),
+                if (unlocked) stringResource(R.string.ac_opened_day, a.day) else pluralStringResource(R.plurals.ac_days_left, ((a.day - current).coerceAtLeast(1)).toInt(), (a.day - current).coerceAtLeast(1)),
                 fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, lineHeight = 16.sp, color = Muted, maxLines = 1,
             )
         }

@@ -80,9 +80,18 @@
     <string name="refuse_awake">%1$s zaten uyanık.</string>
 
     <string name="time_now">az önce</string>
-    <string name="time_minutes">%1$d dk önce</string>
-    <string name="time_hours">%1$d sa önce</string>
-    <string name="time_days">%1$d gün önce</string>
+    <plurals name="time_minutes">
+        <item quantity="one">%1$d dk önce</item>
+        <item quantity="other">%1$d dk önce</item>
+    </plurals>
+    <plurals name="time_hours">
+        <item quantity="one">%1$d sa önce</item>
+        <item quantity="other">%1$d sa önce</item>
+    </plurals>
+    <plurals name="time_days">
+        <item quantity="one">%1$d gün önce</item>
+        <item quantity="other">%1$d gün önce</item>
+    </plurals>
 
     <string name="mood_sleeping">Uyuyor 💤</string>
     <string name="mood_hungry">Acıktı 🍗</string>
@@ -128,7 +137,10 @@
     <string name="pair_have_code">Sevgilimin kodu var, onu gireceğim</string>
     <string name="pair_enter_title">Kodu gir</string>
     <string name="pair_enter_body">Sevgilinin ekranındaki 6 haneli kodu yaz.</string>
-    <string name="pair_enter_hint_short">Kod 6 haneli, %1$d hane kaldı</string>
+    <plurals name="pair_enter_hint_short">
+        <item quantity="one">Kod 6 haneli, %1$d hane kaldı</item>
+        <item quantity="other">Kod 6 haneli, %1$d hane kaldı</item>
+    </plurals>
     <string name="pair_enter_hint_ttl">Kod 30 dakika geçerli, sadece bir kez kullanılır.</string>
     <string name="pair_delete">Sil</string>
 
@@ -140,7 +152,10 @@
     <string name="tab_memories_soon">Fotoğraflarınız ve anılarınız burada birikecek. Sonraki adımlarda geliyor.</string>
     <string name="tab_plans_soon">Takvim, özel günler ve hayaller listesi burada olacak. Sonraki adımlarda geliyor.</string>
     <string name="nav_send_heartbeat">Kalp atışı gönder</string>
-    <string name="home_day_number">%1$d gündür birliktesiniz</string>
+    <plurals name="home_day_number">
+        <item quantity="one">%1$d gündür birliktesiniz</item>
+        <item quantity="other">%1$d gündür birliktesiniz</item>
+    </plurals>
     <string name="home_set_date">Tanıştığınız günü ekleyin</string>
     <string name="home_inbox">Kalp atışları</string>
     <string name="home_soon">Yakında</string>
@@ -163,7 +178,10 @@
     <string name="biz_profile_soon">Profil fotoğrafı ve ayarlar sonraki adımlarda geliyor.</string>
 
     <!-- Cat on home -->
-    <string name="cat_streak_chip">%1$d gün seri</string>
+    <plurals name="cat_streak_chip">
+        <item quantity="one">%1$d gün seri</item>
+        <item quantity="other">%1$d gün seri</item>
+    </plurals>
     <string name="cat_both_cared">Bugün ikiniz de ilgilendiniz, seri büyüdü ✓</string>
     <string name="cat_waiting_partner">Sen bugün ilgilendin, %1$s bekleniyor</string>
     <string name="cat_your_turn">Bugün henüz ilgilenmedin</string>
@@ -178,7 +196,10 @@
     <!-- Day counter (Gün sayacı) -->
     <string name="counter_together">Birlikte</string>
     <string name="counter_together_long">Birlikte geçen zaman</string>
-    <string name="counter_days">%1$d gün</string>
+    <plurals name="counter_days">
+        <item quantity="one">%1$d gün</item>
+        <item quantity="other">%1$d gün</item>
+    </plurals>
     <string name="counter_day_word">gün</string>
     <string name="counter_set_cta">Sayacı başlatın</string>
     <string name="counter_set_short">Tarih seç</string>
@@ -194,7 +215,10 @@
     <string name="counter_picker_title">Birlikte olduğunuz ilk gün</string>
     <string name="counter_change">Tarihi değiştir</string>
     <string name="counter_next">Sıradaki: %1$s</string>
-    <string name="counter_left">%1$d gün kaldı</string>
+    <plurals name="counter_left">
+        <item quantity="one">%1$d gün kaldı</item>
+        <item quantity="other">%1$d gün kaldı</item>
+    </plurals>
     <string name="counter_facts_title">Birlikte geçirdiğiniz</string>
     <string name="counter_heartbeats">Bu sürede kalbiniz yaklaşık %1$s kez attı 💓</string>
     <string name="counter_milestones">Kutlama günleri</string>
@@ -280,7 +304,10 @@
     <!-- Notlar -->
     <string name="notes_empty_title">Henüz not yok</string>
     <string name="notes_empty_body">Alışveriş listesi, tatlı bir mesaj ya da unutulmaması gereken bir şey. İlk notu sen bırak 💛</string>
-    <string name="notes_count">%1$d not</string>
+    <plurals name="notes_count">
+        <item quantity="one">%1$d not</item>
+        <item quantity="other">%1$d not</item>
+    </plurals>
     <string name="notes_add">Not ekle</string>
     <string name="notes_new">Yeni not</string>
     <string name="notes_edit">Notu düzenle</string>
@@ -316,8 +343,14 @@
     <string name="wh_by">%1$s çevirdi · %2$s</string>
     <string name="wh_by_me">Sen çevirdin · %1$s</string>
     <string name="signal_event_msg">%1$s takvime ekledi: %2$s 📅</string>
-    <string name="signal_summary_hearts">%1$s sana %2$d kalp daha gönderdi 💗</string>
-    <string name="signal_summary_mixed">%1$s sana %2$d bildirim daha gönderdi 💌</string>
+    <plurals name="signal_summary_hearts">
+        <item quantity="one">%1$s sana %2$d kalp daha gönderdi 💗</item>
+        <item quantity="other">%1$s sana %2$d kalp daha gönderdi 💗</item>
+    </plurals>
+    <plurals name="signal_summary_mixed">
+        <item quantity="one">%1$s sana %2$d bildirim daha gönderdi 💌</item>
+        <item quantity="other">%1$s sana %2$d bildirim daha gönderdi 💌</item>
+    </plurals>
 
     <!-- Setup / errors -->
     <string name="setup_title">Firebase kurulumu gerekiyor</string>
@@ -352,8 +385,14 @@
     <string name="dc_months">ay</string>
     <string name="dc_hours">saat</string>
     <string name="dc_path_title">Kutlamalar yolu</string>
-    <string name="dc_until_day">%1$d. güne %2$d gün</string>
-    <string name="dc_until_year">%1$d. yıla %2$d gün</string>
+    <plurals name="dc_until_day">
+        <item quantity="one">%1$d. güne %2$d gün</item>
+        <item quantity="other">%1$d. güne %2$d gün</item>
+    </plurals>
+    <plurals name="dc_until_year">
+        <item quantity="one">%1$d. yıla %2$d gün</item>
+        <item quantity="other">%1$d. yıla %2$d gün</item>
+    </plurals>
     <string name="dc_node_year">%1$d. yıl</string>
     <string name="dc_next_line">%1$s · O gün %2$s parti şapkasını takacak</string>
     <string name="dc_cat_fallback">kedimiz</string>
@@ -383,9 +422,18 @@
     <string name="hb2_nudge_done">Dürtüldü</string>
     <string name="hb2_cooldown">Kalbin yolda, birazdan tekrar gönderebilirsin</string>
     <string name="signal_limit">Şimdilik yeterince sinyal gönderdin, biraz sonra tekrar dene 🙂</string>
-    <string name="time_ago_minutes">%1$d dakika önce</string>
-    <string name="time_ago_hours">%1$d saat önce</string>
-    <string name="time_ago_days">%1$d gün önce</string>
+    <plurals name="time_ago_minutes">
+        <item quantity="one">%1$d dakika önce</item>
+        <item quantity="other">%1$d dakika önce</item>
+    </plurals>
+    <plurals name="time_ago_hours">
+        <item quantity="one">%1$d saat önce</item>
+        <item quantity="other">%1$d saat önce</item>
+    </plurals>
+    <plurals name="time_ago_days">
+        <item quantity="one">%1$d gün önce</item>
+        <item quantity="other">%1$d gün önce</item>
+    </plurals>
     <string name="time_ago_now">az önce</string>
 
     <!-- Ruh hali (approved design 7) -->
@@ -409,7 +457,10 @@
     <!-- Günün sorusu (approved design 8) -->
     <string name="q_history">Önceki sorular</string>
     <string name="q_chip">%1$s · %2$d. soru</string>
-    <string name="q_streak">%1$d gün seri</string>
+    <plurals name="q_streak">
+        <item quantity="one">%1$d gün seri</item>
+        <item quantity="other">%1$d gün seri</item>
+    </plurals>
     <string name="q_your_answer">Senin cevabın</string>
     <string name="q_answer_hint">İçinden geleni yaz…</string>
     <string name="q_partner_answer">%1$s cevabı</string>
@@ -459,7 +510,10 @@
     <string name="p_prev_month">Önceki ay</string>
     <string name="p_next_month">Sonraki ay</string>
     <string name="p_added_by">%1$s · %2$s ekledi</string>
-    <string name="p_left">%1$d gün kaldı</string>
+    <plurals name="p_left">
+        <item quantity="one">%1$d gün kaldı</item>
+        <item quantity="other">%1$d gün kaldı</item>
+    </plurals>
     <string name="p_today">Bugün</string>
     <string name="p_tomorrow">Yarın</string>
     <string name="p_no_plans">Henüz plan yok. Sağ üstteki + ile ekleyebilirsin.</string>
@@ -490,8 +544,14 @@
     <string name="cc_sleep">%1$s uyuttu</string>
     <string name="cc_wake">%1$s uyandırdı</string>
     <string name="cc_percent">%%%1$d</string>
-    <string name="cc_streak_title">%1$d gün bakım serisi</string>
-    <string name="cc_streak_next">%1$s için %2$d gün kaldı</string>
+    <plurals name="cc_streak_title">
+        <item quantity="one">%1$d gün bakım serisi</item>
+        <item quantity="other">%1$d gün bakım serisi</item>
+    </plurals>
+    <plurals name="cc_streak_next">
+        <item quantity="one">%1$s için %2$d gün kaldı</item>
+        <item quantity="other">%1$s için %2$d gün kaldı</item>
+    </plurals>
     <string name="cc_streak_all">Tüm aksesuarlar açıldı</string>
     <string name="cc_streak_chip">%1$d / %2$d</string>
     <string name="cc_day">%1$d. gün</string>
@@ -499,7 +559,10 @@
     <string name="cc_acc_papyon">Papyon</string>
     <string name="cc_acc_sapka">Şapka</string>
     <string name="cc_acc_gozluk">Gözlük</string>
-    <string name="cc_locked_hint">%1$s %2$d günlük seride açılır</string>
+    <plurals name="cc_locked_hint">
+        <item quantity="one">%1$s %2$d günlük seride açılır</item>
+        <item quantity="other">%1$s %2$d günlük seride açılır</item>
+    </plurals>
     <string name="cc_locked">%1$s, kilitli</string>
     <string name="cc_unlocked">%1$s, açıldı</string>
     <string name="cc_worn">%1$s, kedinin üstünde</string>
@@ -509,7 +572,10 @@
     <string name="pf_title">Biz</string>
     <string name="pf_subtitle">Profil ve ayarlar</string>
     <string name="pf_since">%1$s beri</string>
-    <string name="pf_together">Birlikte %1$d gün</string>
+    <plurals name="pf_together">
+        <item quantity="one">Birlikte %1$d gün</item>
+        <item quantity="other">Birlikte %1$d gün</item>
+    </plurals>
     <string name="pf_edit">Profili düzenle</string>
     <string name="pf_edit_title">Adın</string>
     <string name="pf_edit_body">Sevgilin seni bu isimle görecek.</string>
@@ -537,7 +603,10 @@
     <string name="ds_title">Mesafe</string>
     <string name="ds_refresh">Konumu güncelle</string>
     <string name="ds_between">Aranızda</string>
-    <string name="ds_km">%1$d km</string>
+    <plurals name="ds_km">
+        <item quantity="one">%1$d km</item>
+        <item quantity="other">%1$d km</item>
+    </plurals>
     <string name="ds_updated">%1$s güncellendi</string>
     <string name="ds_no_city">Şehir yok</string>
     <string name="ds_waiting_me">Mesafeyi görmek için konumunu paylaş</string>
@@ -545,11 +614,17 @@
     <string name="ds_car">Arabayla</string>
     <string name="ds_plane">Uçakla</string>
     <string name="ds_duration">%1$d sa %2$d dk</string>
-    <string name="ds_duration_min">%1$d dk</string>
+    <plurals name="ds_duration_min">
+        <item quantity="one">%1$d dk</item>
+        <item quantity="other">%1$d dk</item>
+    </plurals>
     <string name="ds_next_meet">Bir sonraki buluşma</string>
     <string name="ds_no_meet">Henüz plan yok, Planlar\'dan ekleyebilirsin</string>
     <string name="ds_meet_today">Bugün</string>
-    <string name="ds_meet_days">%1$d gün</string>
+    <plurals name="ds_meet_days">
+        <item quantity="one">%1$d gün</item>
+        <item quantity="other">%1$d gün</item>
+    </plurals>
     <string name="ds_share">Konumumu paylaş</string>
     <string name="ds_share_sub">Yalnızca %1$s görür</string>
     <string name="ds_city_only">Sadece şehir ve mesafe</string>
@@ -591,8 +666,14 @@
     <string name="wh_spinning">Çark dönüyor</string>
     <string name="wh_result">Çarkın kararı</string>
     <string name="wh_spin">Çarkı çevir</string>
-    <string name="wh_list">%1$s çarkındaki seçenekler (%2$d)</string>
-    <string name="wh_more">+%1$d daha</string>
+    <plurals name="wh_list">
+        <item quantity="one">%1$s çarkındaki seçenekler (%2$d)</item>
+        <item quantity="other">%1$s çarkındaki seçenekler (%2$d)</item>
+    </plurals>
+    <plurals name="wh_more">
+        <item quantity="one">+%1$d daha</item>
+        <item quantity="other">+%1$d daha</item>
+    </plurals>
     <string name="wh_less">Daha az göster</string>
     <string name="wh_add">Ekle</string>
     <string name="wh_remove">%1$s çıkar</string>
@@ -602,9 +683,15 @@
     <string name="wh_new_title">Yeni çark</string>
     <string name="wh_new_name">Çarkın adı, örn. Hafta sonu ne yapsak?</string>
     <string name="wh_new_items">Seçenekler (her satıra bir tane)</string>
-    <string name="wh_min_items">En az %1$d seçenek gerekli</string>
+    <plurals name="wh_min_items">
+        <item quantity="one">En az %1$d seçenek gerekli</item>
+        <item quantity="other">En az %1$d seçenek gerekli</item>
+    </plurals>
     <string name="wh_duplicate">Bu seçenek zaten çarkta</string>
-    <string name="wh_max_items">En fazla %1$d seçenek olabilir</string>
+    <plurals name="wh_max_items">
+        <item quantity="one">En fazla %1$d seçenek olabilir</item>
+        <item quantity="other">En fazla %1$d seçenek olabilir</item>
+    </plurals>
     <string name="wh_delete_wheel">Bu çarkı sil</string>
     <string name="wh_reset">Varsayılana dön</string>
     <string name="wh_save">Kaydet</string>
@@ -627,7 +714,10 @@
     <string name="tc_opened_list">Açılmış mektuplar</string>
     <string name="tc_from_partner">%1$s sana mühürlü bir mektup</string>
     <string name="tc_from_me">Senin mühürlü mektubun</string>
-    <string name="tc_days">%1$d gün</string>
+    <plurals name="tc_days">
+        <item quantity="one">%1$d gün</item>
+        <item quantity="other">%1$d gün</item>
+    </plurals>
     <string name="tc_opens_in">sonra açılacak</string>
     <string name="tc_opens_today">Bugün açılıyor</string>
     <string name="tc_none_title">Henüz mühürlü mektup yok</string>
@@ -673,11 +763,20 @@
     <string name="mm_subtitle">Birlikte biriktirdikleriniz</string>
     <string name="mm_search">Anılarda ara</string>
     <string name="mm_drawing_sub">Aynı tuvale birlikte çizin</string>
-    <string name="mm_notes_count">%1$d not</string>
+    <plurals name="mm_notes_count">
+        <item quantity="one">%1$d not</item>
+        <item quantity="other">%1$d not</item>
+    </plurals>
     <string name="mm_notes_new">Yeni: “%1$s”</string>
     <string name="mm_notes_none">Henüz not yok</string>
-    <string name="mm_capsule_count">%1$d mühürlü mektup</string>
-    <string name="mm_capsule_next">En yakını %1$d gün sonra</string>
+    <plurals name="mm_capsule_count">
+        <item quantity="one">%1$d mühürlü mektup</item>
+        <item quantity="other">%1$d mühürlü mektup</item>
+    </plurals>
+    <plurals name="mm_capsule_next">
+        <item quantity="one">En yakını %1$d gün sonra</item>
+        <item quantity="other">En yakını %1$d gün sonra</item>
+    </plurals>
     <string name="mm_capsule_none">Henüz mektup yok</string>
     <string name="mm_capsule_write">Geleceğe bir mektup yaz</string>
     <string name="mm_recent">Son anılar</string>
@@ -696,10 +795,16 @@
     <string name="widget_wide_name">Lovelyy kedi (geniş)</string>
     <string name="widget_days_name">Lovelyy gün sayacı</string>
     <string name="widget_drawing_name">Lovelyy canlı çizim</string>
-    <string name="widget_streak">%1$d gün seri</string>
+    <plurals name="widget_streak">
+        <item quantity="one">%1$d gün seri</item>
+        <item quantity="other">%1$d gün seri</item>
+    </plurals>
     <string name="widget_couple_day">%1$s · %2$d. gün</string>
     <string name="widget_together">Birlikte</string>
-    <string name="widget_days">%1$d gün</string>
+    <plurals name="widget_days">
+        <item quantity="one">%1$d gün</item>
+        <item quantity="other">%1$d gün</item>
+    </plurals>
     <string name="widget_send_heart">Kalp gönder</string>
     <string name="widget_heart_sent">Kalp gönderildi 💛</string>
     <string name="widget_heart_failed">Kalp gönderilemedi, uygulamayı aç</string>
@@ -755,7 +860,10 @@
     <string name="hi_mood_empty">Burada ikinizin paylaştığı ruh halleri gün gün birikecek. Bugünkünü paylaşarak başlayabilirsin.</string>
     <string name="hi_today_long">%1$s · bugün</string>
     <string name="hi_q_title">Önceki sorular</string>
-    <string name="hi_q_count">%1$d soru birlikte cevaplandı</string>
+    <plurals name="hi_q_count">
+        <item quantity="one">%1$d soru birlikte cevaplandı</item>
+        <item quantity="other">%1$d soru birlikte cevaplandı</item>
+    </plurals>
     <string name="hi_q_partner_done">%1$s cevapladı</string>
     <string name="hi_q_answer">Cevapla</string>
     <string name="hi_q_empty">Birlikte cevapladığınız sorular burada duracak.</string>
@@ -780,7 +888,10 @@
     <string name="se_notes">Notlar</string>
     <string name="se_dreams">Hayaller</string>
     <string name="se_memories">Anılar</string>
-    <string name="se_count">“%1$s” için %2$d sonuç</string>
+    <plurals name="se_count">
+        <item quantity="one">“%1$s” için %2$d sonuç</item>
+        <item quantity="other">“%1$s” için %2$d sonuç</item>
+    </plurals>
     <string name="se_by_me">Sen yazdın</string>
     <string name="se_by">%1$s yazdı</string>
     <string name="se_dream_done">Gerçekleşti</string>
@@ -793,7 +904,10 @@
 
     <!-- Saved drawings (boards 28-29) -->
     <string name="dg_title">Çizimlerimiz</string>
-    <string name="dg_count">%1$d çizim</string>
+    <plurals name="dg_count">
+        <item quantity="one">%1$d çizim</item>
+        <item quantity="other">%1$d çizim</item>
+    </plurals>
     <string name="dg_sub">Canlı çizimden kaydettikleriniz</string>
     <string name="dg_empty">Henüz kaydedilmiş çizim yok. Canlı çizimde “Anılara kaydet” dediğiniz her resim burada durur.</string>
     <string name="dg_new">Yeni çizim başlat</string>
@@ -811,17 +925,30 @@
 
     <!-- Opened letters (boards 30-31) -->
     <string name="ol_title">Açılmış mektuplar</string>
-    <string name="ol_intro">Günü gelip açılan %1$d mektubunuz burada duruyor.</string>
+    <string name="ol_quote">“%1$s”</string>
+    <plurals name="ol_intro">
+        <item quantity="one">Günü gelip açılan %1$d mektubunuz burada duruyor.</item>
+        <item quantity="other">Günü gelip açılan %1$d mektubunuz burada duruyor.</item>
+    </plurals>
     <string name="ol_none">Henüz günü gelen bir mektup yok.</string>
     <string name="ol_empty">Zaman kapsülüne bir mektup yazın; günü gelince burada okursunuz.</string>
     <string name="ol_opened_on">%1$s açıldı</string>
     <string name="ol_read">Oku</string>
-    <string name="ol_waiting">%1$d mühürlü mektup sırasını bekliyor</string>
-    <string name="ol_nearest">En yakını %1$d gün sonra açılacak</string>
+    <plurals name="ol_waiting">
+        <item quantity="one">%1$d mühürlü mektup sırasını bekliyor</item>
+        <item quantity="other">%1$d mühürlü mektup sırasını bekliyor</item>
+    </plurals>
+    <plurals name="ol_nearest">
+        <item quantity="one">En yakını %1$d gün sonra açılacak</item>
+        <item quantity="other">En yakını %1$d gün sonra açılacak</item>
+    </plurals>
     <string name="ol_from">%1$s sana</string>
     <string name="ol_from_me">Senden %1$s</string>
     <string name="ol_written_on">%1$s yazıldı</string>
-    <string name="ol_sealed_days">%1$d gün mühürlü kaldı</string>
+    <plurals name="ol_sealed_days">
+        <item quantity="one">%1$d gün mühürlü kaldı</item>
+        <item quantity="other">%1$d gün mühürlü kaldı</item>
+    </plurals>
 
     <!-- Accessories (board 32) -->
     <string name="ac_acc_kurdele">Kurdeleyi</string>
@@ -832,21 +959,33 @@
     <string name="ac_preview">Önizleme: %1$s</string>
     <string name="ac_preview_locked">Önizleme: %1$s (kilitli)</string>
     <string name="ac_worn_label">%1$s takılı</string>
-    <string name="ac_streak">%1$d gün seri</string>
+    <plurals name="ac_streak">
+        <item quantity="one">%1$d gün seri</item>
+        <item quantity="other">%1$d gün seri</item>
+    </plurals>
     <string name="ac_locked">Kilitli</string>
     <string name="ac_open">Açık</string>
     <string name="ac_worn">Takılı</string>
     <string name="ac_opened_day">%1$d. günde açıldı</string>
-    <string name="ac_days_left">%1$d gün kaldı</string>
+    <plurals name="ac_days_left">
+        <item quantity="one">%1$d gün kaldı</item>
+        <item quantity="other">%1$d gün kaldı</item>
+    </plurals>
     <string name="ac_note">Aksesuarlar, %1$s ikinizin de baktığı günlerin serisiyle açılır. Taktığını %2$s de görür.</string>
-    <string name="ac_opens_in">%1$d gün sonra açılır</string>
+    <plurals name="ac_opens_in">
+        <item quantity="one">%1$d gün sonra açılır</item>
+        <item quantity="other">%1$d gün sonra açılır</item>
+    </plurals>
     <string name="ac_take_off">%1$s çıkar</string>
     <string name="ac_put_on_named">%1$s %2$s tak</string>
 
     <!-- Inbox (board 26) -->
     <string name="ib_title">Bildirimler</string>
     <string name="ib_read_all">Tümünü okundu işaretle</string>
-    <string name="ib_new">%1$d yeni</string>
+    <plurals name="ib_new">
+        <item quantity="one">%1$d yeni</item>
+        <item quantity="other">%1$d yeni</item>
+    </plurals>
     <string name="ib_unread">Okunmadı</string>
     <string name="ib_empty">%1$s bir şey gönderdiğinde burada görünecek.</string>
     <string name="ib_mood">%1$s ruh halini paylaştı: %2$s</string>
@@ -859,7 +998,10 @@
 
     <!-- Account (board 33) -->
     <string name="acc_paired">%1$s ile eşleşmiş</string>
-    <string name="acc_paired_days">%1$s ile eşleşmiş · %2$d gündür birlikte</string>
+    <plurals name="acc_paired_days">
+        <item quantity="one">%1$s ile eşleşmiş · %2$d gündür birlikte</item>
+        <item quantity="other">%1$s ile eşleşmiş · %2$d gündür birlikte</item>
+    </plurals>
     <string name="acc_login">Giriş bilgileri</string>
     <string name="acc_method">Giriş yöntemi</string>
     <string name="acc_method_google">Google</string>
@@ -888,7 +1030,10 @@
     <string name="un_title">%1$s ile eşleşmeyi kaldırmak üzeresin</string>
     <string name="un_what">Kaldırırsan ne olur?</string>
     <string name="un_cat">%1$s veda eder</string>
-    <string name="un_cat_sub">%1$s, %2$d günlük bakım serisi ve açtığınız aksesuarlar silinir.</string>
+    <plurals name="un_cat_sub">
+        <item quantity="one">%1$s, %2$d günlük bakım serisi ve açtığınız aksesuarlar silinir.</item>
+        <item quantity="other">%1$s, %2$d günlük bakım serisi ve açtığınız aksesuarlar silinir.</item>
+    </plurals>
     <string name="un_data">Ortak her şey silinir</string>
     <string name="un_data_sub">Notlar, anılar, çizimler, mektuplar, hayaller ve takvim ikiniz için de kalıcı olarak silinir.</string>
     <string name="un_partner">%1$s haberdar olur</string>
@@ -959,4 +1104,15 @@
     <string name="onb_loc_promise_who">Yalnızca sevgilin görür</string>
     <string name="onb_loc_promise_what">Sadece şehir ve mesafe; tam adresin hiçbir zaman gösterilmez</string>
     <string name="onb_loc_allow">Konumumu paylaş</string>
+
+    <!-- Calendar weekday header, Monday first (the grid is Monday-first for every language) -->
+    <string-array name="cal_weekdays_short">
+        <item>Pt</item>
+        <item>Sa</item>
+        <item>Ça</item>
+        <item>Pe</item>
+        <item>Cu</item>
+        <item>Ct</item>
+        <item>Pz</item>
+    </string-array>
 </resources>

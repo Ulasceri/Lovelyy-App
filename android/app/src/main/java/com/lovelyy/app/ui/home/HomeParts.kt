@@ -1,5 +1,6 @@
 package com.lovelyy.app.ui.home
 
+import com.lovelyy.app.text.AppLocale
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -118,9 +120,9 @@ fun relativeTime(at: Long): String {
     val minutes = ((System.currentTimeMillis() - at) / 60_000).coerceAtLeast(0)
     return when {
         minutes < 1 -> stringResource(R.string.time_now)
-        minutes < 60 -> stringResource(R.string.time_minutes, minutes)
-        minutes < 24 * 60 -> stringResource(R.string.time_hours, minutes / 60)
-        else -> stringResource(R.string.time_days, minutes / (24 * 60))
+        minutes < 60 -> pluralStringResource(R.plurals.time_minutes, minutes.toInt(), minutes)
+        minutes < 24 * 60 -> pluralStringResource(R.plurals.time_hours, (minutes / 60).toInt(), minutes / 60)
+        else -> pluralStringResource(R.plurals.time_days, (minutes / (24 * 60)).toInt(), minutes / (24 * 60))
     }
 }
 
@@ -142,4 +144,4 @@ fun ComingSoon(title: String, body: String, icon: androidx.compose.ui.graphics.v
 fun moodLabel(kind: com.lovelyy.app.data.MoodKind): String = stringResource(kind.labelRes())
 
 fun formatDate(millis: Long): String =
-    com.lovelyy.app.data.DayCounter.dateOf(millis).format(java.time.format.DateTimeFormatter.ofPattern("d MMMM yyyy", java.util.Locale("tr")))
+    com.lovelyy.app.data.DayCounter.dateOf(millis).format(AppLocale.formatter("dMMMMy"))

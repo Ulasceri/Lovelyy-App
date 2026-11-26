@@ -50,6 +50,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringArrayResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -292,7 +293,7 @@ fun WheelScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onHi
     val goneText = stringResource(R.string.gone_wheel)
     val showGone = { Toast.makeText(context, goneText, Toast.LENGTH_SHORT).show() }
     fun saveItems(newItems: List<String>) = vm.save(wheel.id, wheel.label, newItems, showGone)
-    val minItemsText = stringResource(R.string.wh_min_items, WheelMath.MIN_ITEMS)
+    val minItemsText = pluralStringResource(R.plurals.wh_min_items, WheelMath.MIN_ITEMS.toInt(), WheelMath.MIN_ITEMS)
     val duplicateText = stringResource(R.string.wh_duplicate)
     fun toast(text: String) = Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
 
@@ -372,7 +373,7 @@ fun WheelScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onHi
 
         // Options.
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(stringResource(R.string.wh_list, wheel.label, items.size), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = BrownSoft)
+            Text(pluralStringResource(R.plurals.wh_list, items.size.toInt(), wheel.label, items.size), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = BrownSoft)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 val shown = if (showAll) items else items.take(VISIBLE_CHIPS)
                 shown.forEach { item ->
@@ -387,7 +388,7 @@ fun WheelScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onHi
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
-                            if (showAll) stringResource(R.string.wh_less) else stringResource(R.string.wh_more, items.size - VISIBLE_CHIPS),
+                            if (showAll) stringResource(R.string.wh_less) else pluralStringResource(R.plurals.wh_more, (items.size - VISIBLE_CHIPS).toInt(), items.size - VISIBLE_CHIPS),
                             fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Brown,
                         )
                     }
@@ -559,8 +560,8 @@ private fun NewWheelSheet(onDismiss: () -> Unit, onCreate: (String, List<String>
             SheetField(name, { name = it.take(WheelRepository.MAX_LABEL) }, stringResource(R.string.wh_new_name))
             SheetField(lines, { lines = it.take(400) }, stringResource(R.string.wh_new_items), singleLine = false, minHeight = 140.dp)
             val problem = when {
-                list.size < WheelMath.MIN_ITEMS -> stringResource(R.string.wh_min_items, WheelMath.MIN_ITEMS)
-                list.size > WheelMath.MAX_ITEMS -> stringResource(R.string.wh_max_items, WheelMath.MAX_ITEMS)
+                list.size < WheelMath.MIN_ITEMS -> pluralStringResource(R.plurals.wh_min_items, WheelMath.MIN_ITEMS.toInt(), WheelMath.MIN_ITEMS)
+                list.size > WheelMath.MAX_ITEMS -> pluralStringResource(R.plurals.wh_max_items, WheelMath.MAX_ITEMS.toInt(), WheelMath.MAX_ITEMS)
                 else -> null
             }
             if (problem != null && lines.isNotBlank()) {

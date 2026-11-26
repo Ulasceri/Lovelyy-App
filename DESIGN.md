@@ -236,6 +236,7 @@ Haptics:
 - **Sizes:** list/nav 22dp · small inline 16-20dp · card icon 22dp · care button 28dp · center heart 28dp · "Yakında" large 44dp (in a 96dp circle).
 - **Color:** icon `Brown` (active) / `BrownSoft` (inactive) / `BrownHint` (inside a field); icon circle background `PeachTint`/`MintTint`.
 - **Canvas:** no emoji, faces and icons are SVG. A new icon is first drawn as SVG on the canvas; in code the closest Rounded Material icon or a vector is used.
+- **App logo / launcher icon:** two cats sitting side by side (Peach `#FFB38A` and deep mint `#5FB39E`) whose tails form a heart, on Cream `#FFF8F2`. Adaptive icon: `res/drawable/ic_launcher_foreground.xml` + `ic_launcher_background.xml` (the foreground is also the themed/monochrome layer and the splash icon). Source SVG: `assets/brand/lovelyy-icon.svg`. Wordmark: "Lovelyy" in Quicksand Bold, Brown, with the two final "y" letters in `#F29A6B` and `#5FB39E`.
 - The cat artwork is animated via `ui/cat/` (CatAnimator, CatClip); on the welcome screen, "a seated peach-colored tabby cat".
 
 ---

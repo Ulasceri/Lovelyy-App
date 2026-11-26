@@ -40,6 +40,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -253,7 +254,7 @@ fun CatCareScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBac
             wearing = ui?.doc?.let { CareRewards.worn(it.wearing, it.streak.best) },
             onWear = { a -> vm.wear(a) },
             onLocked = { a ->
-                banner = context.getString(R.string.cc_locked_hint, context.getString(accessoryNameRes(a)), a.day)
+                banner = context.resources.getQuantityString(R.plurals.cc_locked_hint, a.day.toInt(), context.getString(accessoryNameRes(a)), a.day)
                 view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
             },
         )
@@ -315,6 +316,7 @@ private fun NeedCard(
         pct / 100f, spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessLow), label = "need",
     )
     val low = value != null && value < CatRules.LOW
+    val needDescription = "$label ${stringResource(R.string.cc_percent, pct)}"
     Column(
         modifier.softShadow(shape, 6.dp).clip(shape).background(CreamCard).padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -322,7 +324,7 @@ private fun NeedCard(
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.clearAndSetSemantics { contentDescription = "$label %$pct" },
+            modifier = Modifier.clearAndSetSemantics { contentDescription = needDescription },
         ) {
             SvgStrokeIcon(icon, Brown, Modifier.size(20.dp))
             Text(label, fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Brown, modifier = Modifier.weight(1f), maxLines = 1)
@@ -370,9 +372,9 @@ private fun StreakCard(current: Int, best: Int, wearing: Accessory?, onWear: (Ac
                 drawSvg(flame, 24f, Color(0xFFE07A45), strokeWidth = 1.6f)
             }
             Column(Modifier.weight(1f)) {
-                Text(stringResource(R.string.cc_streak_title, current), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Brown)
+                Text(pluralStringResource(R.plurals.cc_streak_title, current.toInt(), current), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Brown)
                 Text(
-                    if (next != null) stringResource(R.string.cc_streak_next, accessoryName(next), next.day - current)
+                    if (next != null) pluralStringResource(R.plurals.cc_streak_next, (next.day - current).toInt(), accessoryName(next), next.day - current)
                     else stringResource(R.string.cc_streak_all),
                     fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, color = BrownSoft,
                     maxLines = 1, overflow = TextOverflow.Ellipsis,

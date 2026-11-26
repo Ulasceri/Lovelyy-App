@@ -1,5 +1,6 @@
 package com.lovelyy.app.ui.heartbeat
 
+import com.lovelyy.app.text.AppLocale
 import android.os.SystemClock
 import android.view.HapticFeedbackConstants
 import android.widget.Toast
@@ -56,6 +57,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -100,9 +102,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import java.util.Locale
 
-private val TR = Locale.forLanguageTag("tr-TR")
 private val RingTrack = Color(0xFFF3EAE3)
 private val NudgeTint = Color(0xFFD6F0E8)
 
@@ -211,11 +211,11 @@ fun HeartbeatScreen(me: UserProfile, partner: UserProfile?, initial: Emotion?, o
                         last == null -> stringResource(R.string.hb2_none)
                         last.from == me.uid -> stringResource(
                             R.string.hb2_last_sent, timeAgo(last.time),
-                            stringResource((last.emotion ?: Emotion.Sevgi).labelRes()).lowercase(TR),
+                            stringResource((last.emotion ?: Emotion.Sevgi).labelRes()).lowercase(AppLocale.current()),
                         )
                         else -> stringResource(
                             R.string.hb2_last, last.fromName.ifBlank { partnerName }, timeAgo(last.time),
-                            stringResource((last.emotion ?: Emotion.Sevgi).labelRes()).lowercase(TR),
+                            stringResource((last.emotion ?: Emotion.Sevgi).labelRes()).lowercase(AppLocale.current()),
                         )
                     },
                     fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = BrownSoft, maxLines = 2,
@@ -430,7 +430,7 @@ private fun Initial(name: String, color: Color) {
         Modifier.size(42.dp).clip(CircleShape).background(color).border(3.dp, Cream, CircleShape),
         contentAlignment = Alignment.Center,
     ) {
-        Text(name.trim().firstOrNull()?.uppercase(TR) ?: "?", fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 17.sp, color = Brown)
+        Text(name.trim().firstOrNull()?.uppercase(AppLocale.current()) ?: "?", fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 17.sp, color = Brown)
     }
 }
 
@@ -440,8 +440,8 @@ fun timeAgo(at: Long): String {
     val minutes = ((System.currentTimeMillis() - at) / 60_000).coerceAtLeast(0)
     return when {
         minutes < 1 -> stringResource(R.string.time_ago_now)
-        minutes < 60 -> stringResource(R.string.time_ago_minutes, minutes.toInt())
-        minutes < 24 * 60 -> stringResource(R.string.time_ago_hours, (minutes / 60).toInt())
-        else -> stringResource(R.string.time_ago_days, (minutes / (24 * 60)).toInt())
+        minutes < 60 -> pluralStringResource(R.plurals.time_ago_minutes, minutes.toInt(), minutes.toInt())
+        minutes < 24 * 60 -> pluralStringResource(R.plurals.time_ago_hours, ((minutes / 60).toInt()).toInt(), (minutes / 60).toInt())
+        else -> pluralStringResource(R.plurals.time_ago_days, ((minutes / (24 * 60)).toInt()).toInt(), (minutes / (24 * 60)).toInt())
     }
 }

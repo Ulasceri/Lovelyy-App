@@ -1,5 +1,6 @@
 package com.lovelyy.app.location
 
+import com.lovelyy.app.text.AppLocale
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
@@ -15,7 +16,6 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import timber.log.Timber
-import java.util.Locale
 import kotlin.coroutines.resume
 
 /**
@@ -66,7 +66,7 @@ object CoarseLocation {
         if (!Geocoder.isPresent()) return@withContext ""
         runCatching {
             @Suppress("DEPRECATION")
-            val a = Geocoder(context, Locale.forLanguageTag("tr-TR")).getFromLocation(lat, lng, 1)?.firstOrNull()
+            val a = Geocoder(context, AppLocale.current()).getFromLocation(lat, lng, 1)?.firstOrNull()
             a?.adminArea ?: a?.locality ?: a?.subAdminArea ?: ""
         }.onFailure { Timber.w(it, "Geocoder failed") }.getOrDefault("")
     }
