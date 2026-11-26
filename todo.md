@@ -8,3 +8,4 @@
 - [ ] Firebase Console > Authentication > Settings'te Email enumeration protection'ı aç.
 - [ ] Play yayınından önce release build'de R8'i (isMinifyEnabled) açıp test et.
 - [ ] Sinyal sınırlarını değiştirmek için Firestore'da config/limits dokümanındaki signalsPerHour / signalsPerDay / minGapSeconds alanlarını düzenle (yoksa oluştur; varsayılan 15 / 60 / 2).
+- [ ] Ada ile giriş yapıp Plans ve History ekranlarındaki Türkçe tarihleri (PR #10 sonrası) gözle kontrol et.
