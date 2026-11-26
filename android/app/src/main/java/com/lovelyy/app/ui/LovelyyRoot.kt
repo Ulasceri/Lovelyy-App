@@ -19,6 +19,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lovelyy.app.LovelyyApplication
 import com.lovelyy.app.ui.auth.LoginScreen
 import com.lovelyy.app.ui.home.HomeScreen
+import com.lovelyy.app.ui.onboarding.PairedFlow
 import com.lovelyy.app.ui.pairing.PairingScreen
 import com.lovelyy.app.ui.profile.NameScreen
 import com.lovelyy.app.ui.setup.ErrorScreen
@@ -44,6 +45,13 @@ fun LovelyyRoot() {
                 AppState.SignedOut -> LoginScreen()
                 is AppState.NeedsName -> NameScreen(s.me)
                 is AppState.Pairing -> PairingScreen(s.me)
+                is AppState.JustPaired -> PairedFlow(
+                    me = s.me,
+                    coupleId = s.coupleId,
+                    onNotificationAnswer = vm::notificationPrimerAnswered,
+                    onLocationAnswer = vm::locationPrimerAnswered,
+                    onDone = { vm.finishPairedFlow(s.me.uid) },
+                )
                 is AppState.Home -> HomeScreen(s.me, s.couple, s.partner)
                 is AppState.Failed -> ErrorScreen(s.message)
             }

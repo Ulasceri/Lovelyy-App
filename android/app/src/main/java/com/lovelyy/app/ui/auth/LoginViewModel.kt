@@ -6,10 +6,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.lovelyy.app.analytics.AnalyticsEvent
+import com.lovelyy.app.analytics.InnerScreens
 import com.lovelyy.app.data.AppError
 import com.lovelyy.app.data.AppException
 import com.lovelyy.app.data.AuthRepository
 import com.lovelyy.app.data.UserRepository
+import com.lovelyy.app.telemetry.Telemetry
 import kotlinx.coroutines.launch
 
 class LoginViewModel(
@@ -17,8 +20,8 @@ class LoginViewModel(
     private val users: UserRepository,
 ) : ViewModel() {
 
-    /** Welcome (Karşılama) → SignIn (Giriş) ⇄ SignUp (Kayıt). */
-    enum class Mode { Welcome, SignIn, SignUp }
+    /** Welcome (Karşılama) → Intro (try-it tanıtım, only via "Başlayalım") → SignUp (Kayıt) ⇄ SignIn (Giriş). */
+    enum class Mode { Welcome, Intro, SignIn, SignUp }
 
     var mode by mutableStateOf(Mode.Welcome)
     var name by mutableStateOf("")
@@ -31,6 +34,19 @@ class LoginViewModel(
     /** Shown after "Şifremi unuttum" worked. */
     var resetSent by mutableStateOf(false)
         private set
+
+    /** "Başlayalım" on Karşılama: the intro comes before the sign-up form. */
+    fun startIntro() {
+        switchMode(Mode.Intro)
+        Telemetry.onScreen(InnerScreens.INTRO)
+    }
+
+    /** The intro ended, through its last page or "Atla"; either way the sign-up form is next. */
+    fun finishIntro(skipped: Boolean, demosTried: Int) {
+        Telemetry.track(AnalyticsEvent.IntroFinished(skipped, demosTried))
+        Telemetry.onScreen("login")
+        switchMode(Mode.SignUp)
+    }
 
     fun switchMode(newMode: Mode) {
         mode = newMode

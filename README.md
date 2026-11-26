@@ -10,7 +10,9 @@ Android uygulaması Kotlin + Jetpack Compose + Material 3 ile yazılır, arka u�
 | Özellik | Durum |
 |---|---|
 | Karşılama, Giriş (Google + e-posta/şifre), isim belirleme | Hazır |
+| İlk açılış tanıtımı: 3 sayfalık "dene" tanıtımı (besle, kalp atışı gönder, birlikte çiz); "Atla" ile geçilebilir | Hazır |
 | Partnerle 6 haneli kodla eşleşme | Hazır |
+| Eşleşme sonrası: "Eşleştiniz" ekranı, bildirim ve konum izni ön ekranları (izin penceresi sadece düğmeye basınca açılır) | Hazır |
 | Anasayfa (Yuva / Anılar / Planlar / Biz) ve alt gezinme çubuğu | Hazır |
 | Ortak animasyonlu kedi: ana sayfa + kedi bakımı ekranı, seri ve aksesuarlar | Hazır (kısa videolar `assets/cat/` içinde, ExoPlayer ile oynar) |
 | Gün sayacı, kalp atışı, ruh hali, günün sorusu, notlar | Hazır |
@@ -44,7 +46,7 @@ Android paket düzeni (`android/app/src/main/java/com/lovelyy/app/`):
 
 | Paket | Ne var |
 |---|---|
-| `ui/` | `LovelyyRoot`, `AppViewModel` ve ekranlar: `auth/` (Karşılama + Giriş), `profile/`, `pairing/`, `home/`, `cat/`, `setup/`, `theme/`, `components/` |
+| `ui/` | `LovelyyRoot`, `AppViewModel` ve ekranlar: `auth/` (Karşılama + Giriş), `onboarding/` (tanıtım + eşleşme sonrası akış), `profile/`, `pairing/`, `home/`, `cat/`, `setup/`, `theme/`, `components/` |
 | `data/` | Firebase erişimi ve modeller: Auth, User, Pairing, Cat ve diğer depolar |
 | `analytics/` | Tipli analytics olayları ve ekran görüntüleme takibi |
 | `telemetry/` | Crashlytics, Performance, Timber ağacı, onay anahtarı |

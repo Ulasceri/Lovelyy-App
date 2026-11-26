@@ -87,6 +87,7 @@ import com.lovelyy.app.ui.components.PeachButton
 import com.lovelyy.app.ui.components.bounceClick
 import com.lovelyy.app.ui.components.softShadow
 import com.lovelyy.app.ui.lovelyyApp
+import com.lovelyy.app.ui.onboarding.IntroScreen
 import com.lovelyy.app.ui.theme.Brown
 import com.lovelyy.app.ui.theme.BrownSoft
 import com.lovelyy.app.ui.theme.CreamCard
@@ -105,20 +106,33 @@ fun LoginScreen() {
     val vm: LoginViewModel = viewModel { LoginViewModel(app.authRepository, app.userRepository) }
     val context = LocalContext.current
 
-    BackHandler(enabled = vm.mode != LoginViewModel.Mode.Welcome) { vm.switchMode(LoginViewModel.Mode.Welcome) }
+    // The intro handles its own back presses (page by page), so this one is only for the forms.
+    BackHandler(enabled = vm.mode == LoginViewModel.Mode.SignIn || vm.mode == LoginViewModel.Mode.SignUp) {
+        vm.switchMode(LoginViewModel.Mode.Welcome)
+    }
 
+    // 0 = Karşılama, 1 = tanıtım, 2 = giriş/kayıt formu: later steps slide in from the right.
     AnimatedContent(
-        targetState = vm.mode == LoginViewModel.Mode.Welcome,
+        targetState = when (vm.mode) {
+            LoginViewModel.Mode.Welcome -> 0
+            LoginViewModel.Mode.Intro -> 1
+            else -> 2
+        },
         transitionSpec = {
-            if (targetState) (slideInHorizontally { -it / 4 } + fadeIn()) togetherWith (slideOutHorizontally { it / 4 } + fadeOut())
+            if (targetState < initialState) (slideInHorizontally { -it / 4 } + fadeIn()) togetherWith (slideOutHorizontally { it / 4 } + fadeOut())
             else (slideInHorizontally { it / 4 } + fadeIn()) togetherWith (slideOutHorizontally { -it / 4 } + fadeOut())
         },
         label = "welcome",
-    ) { welcome ->
-        if (welcome) {
+    ) { step ->
+        if (step == 0) {
             WelcomeContent(
-                onStart = { vm.switchMode(LoginViewModel.Mode.SignUp) },
+                onStart = vm::startIntro,
                 onHaveAccount = { vm.switchMode(LoginViewModel.Mode.SignIn) },
+            )
+        } else if (step == 1) {
+            IntroScreen(
+                onBack = { vm.switchMode(LoginViewModel.Mode.Welcome) },
+                onDone = vm::finishIntro,
             )
         } else {
             LoginContent(
