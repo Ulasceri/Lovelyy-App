@@ -37,6 +37,7 @@ import com.lovelyy.app.R
 import com.lovelyy.app.data.Couple
 import com.lovelyy.app.data.DayCounter
 import com.lovelyy.app.data.UserProfile
+import com.lovelyy.app.data.displayCatName
 import com.lovelyy.app.text.TurkishSuffix
 import com.lovelyy.app.ui.cat.CatViewModel
 import com.lovelyy.app.ui.components.CenteredTopBar
@@ -240,7 +241,7 @@ fun UnpairScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit) {
     val context = LocalContext.current
     val cat: CatViewModel = viewModel(key = "cat-$coupleId") { CatViewModel(app, coupleId, me.uid) }
     val catUi by cat.ui.collectAsStateWithLifecycle()
-    val catName = catUi?.doc?.name?.takeIf { it.isNotBlank() } ?: stringResource(R.string.cat_generic)
+    val catName = displayCatName(catUi?.doc?.name)
     val streak = catUi?.doc?.streak?.best ?: 0
     val partnerName = partner?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.home_partner_fallback)
     var typed by rememberSaveable { mutableStateOf("") }

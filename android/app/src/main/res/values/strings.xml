@@ -838,11 +838,9 @@
     <string name="ac_opened_day">%1$d. günde açıldı</string>
     <string name="ac_days_left">%1$d gün kaldı</string>
     <string name="ac_note">Aksesuarlar, %1$s ikinizin de baktığı günlerin serisiyle açılır. Taktığını %2$s de görür.</string>
-    <string name="ac_note_cat">kedinize</string>
     <string name="ac_opens_in">%1$d gün sonra açılır</string>
     <string name="ac_take_off">%1$s çıkar</string>
     <string name="ac_put_on_named">%1$s %2$s tak</string>
-    <string name="ac_put_on">%1$s tak</string>
 
     <!-- Inbox (board 26) -->
     <string name="ib_title">Bildirimler</string>

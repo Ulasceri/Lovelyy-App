@@ -32,6 +32,7 @@ import com.lovelyy.app.R
 import com.lovelyy.app.data.CareRewards
 import com.lovelyy.app.data.CareRewards.Accessory
 import com.lovelyy.app.data.UserProfile
+import com.lovelyy.app.data.displayCatName
 import com.lovelyy.app.text.TurkishSuffix
 import com.lovelyy.app.ui.components.CenteredTopBar
 import com.lovelyy.app.ui.components.SvgStrokeIcon
@@ -85,7 +86,7 @@ fun AccessoriesScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit
     val current = doc?.streak?.current(LocalDate.now()) ?: 0
     val worn = doc?.let { CareRewards.worn(it.wearing, best) }
     val partnerName = partner?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.home_partner_fallback)
-    val catName = doc?.name?.takeIf { it.isNotBlank() }
+    val catName = displayCatName(doc?.name)
     var selName by rememberSaveable { mutableStateOf<String?>(null) }
     val sel = Accessory.entries.firstOrNull { it.name == selName } ?: worn ?: Accessory.entries.first()
     val selUnlocked = CareRewards.unlocked(sel, best)
@@ -100,7 +101,7 @@ fun AccessoriesScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit
         BoxWithConstraints(Modifier.fillMaxWidth().height(280.dp).softShadow(shape, 10.dp).clip(shape).background(CatBg)) {
             val side = maxWidth
             Box(Modifier.size(side).offset(y = -side * 0.05f)) {
-                Image(painterResource(R.drawable.cat_base), stringResource(R.string.ac_cat_desc, catName ?: stringResource(R.string.cat_generic)), Modifier.fillMaxSize())
+                Image(painterResource(R.drawable.cat_base), stringResource(R.string.ac_cat_desc, catName), Modifier.fillMaxSize())
                 CatAccessoryLayer(sel, Modifier.fillMaxSize())
             }
             Text(
@@ -132,7 +133,7 @@ fun AccessoriesScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit
         }
 
         Text(
-            stringResource(R.string.ac_note, catName?.let { TurkishSuffix.dative(it) } ?: stringResource(R.string.ac_note_cat), partnerName),
+            stringResource(R.string.ac_note, TurkishSuffix.dative(catName), partnerName),
             fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, lineHeight = 19.sp, color = SubText,
             textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
         )
@@ -141,8 +142,7 @@ fun AccessoriesScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit
         val label = when {
             !selUnlocked -> stringResource(R.string.ac_opens_in, (sel.day - current).coerceAtLeast(1))
             selWorn -> stringResource(R.string.ac_take_off, accusative)
-            catName != null -> stringResource(R.string.ac_put_on_named, accusative, TurkishSuffix.dative(catName))
-            else -> stringResource(R.string.ac_put_on, accusative)
+            else -> stringResource(R.string.ac_put_on_named, accusative, TurkishSuffix.dative(catName))
         }
         val btnShape = RoundedCornerShape(28.dp)
         Box(
