@@ -164,6 +164,14 @@ class PlusRulesTest {
         assertNull(PlusRules.sync(synced, "ada", StoreSubscription(PlusPlan.Monthly, t0, "tok", true), now))
     }
 
+    @Test fun activeUntilForWidgets() {
+        assertNull(PlusRules.activeUntil(null))
+        assertEquals(t0 + 14 * day, PlusRules.activeUntil(trial))
+        assertEquals(t0 + 30 * day + PlusRules.RENEW_GRACE_MS, PlusRules.activeUntil(paid(t0 + 30 * day, true)))
+        assertEquals(t0 + 30 * day, PlusRules.activeUntil(paid(t0 + 30 * day, false)))
+        assertEquals(t0 + 14 * day, PlusRules.activeUntil(paid(t0 + 2 * day, false)))
+    }
+
     @Test fun mapRoundTrip() {
         val p = paid(t0 + day, true).copy(giftNote = "not")
         assertEquals(p, PlusInfo.fromMap(p.toMap()))

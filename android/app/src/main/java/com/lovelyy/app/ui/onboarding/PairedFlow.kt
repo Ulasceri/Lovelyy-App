@@ -117,12 +117,13 @@ import com.lovelyy.app.ui.theme.Quicksand
 import kotlinx.coroutines.delay
 
 private const val STEP_PAIRED = 0
-private const val STEP_NOTIFICATIONS = 1
-private const val STEP_LOCATION = 2
+private const val STEP_PLUS = 1
+private const val STEP_NOTIFICATIONS = 2
+private const val STEP_LOCATION = 3
 
 /**
- * Shown once, right after two people pair (design boards A4-A6): the "you are paired" moment, then a
- * primer for notifications and one for location. The system permission window only opens when the
+ * Shown once, right after two people pair (design boards A4-A6 and P1): the "you are paired" moment, the
+ * 14-day Plus trial gift (P1, no price), then a primer for notifications and one for location. The system permission window only opens when the
  * main button is tapped; "Şimdi değil" never opens it. A permission that is already granted (or not
  * needed on this Android version) skips its primer.
  *
@@ -134,6 +135,7 @@ fun PairedFlow(
     coupleId: String,
     onNotificationAnswer: (allowed: Boolean) -> Unit,
     onLocationAnswer: (allowed: Boolean) -> Unit,
+    onStartTrial: () -> Unit,
     onDone: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -149,6 +151,7 @@ fun PairedFlow(
 
     fun after(current: Int) {
         when {
+            current < STEP_PLUS -> step = STEP_PLUS
             current < STEP_NOTIFICATIONS && needNotifications -> step = STEP_NOTIFICATIONS
             current < STEP_LOCATION && needLocation -> step = STEP_LOCATION
             else -> onDone()
@@ -168,12 +171,21 @@ fun PairedFlow(
     }
 
     BackHandler(enabled = step != STEP_PAIRED) {
-        step = if (step == STEP_LOCATION && needNotifications) STEP_NOTIFICATIONS else STEP_PAIRED
+        step = when {
+            step == STEP_LOCATION && needNotifications -> STEP_NOTIFICATIONS
+            step == STEP_PLUS -> STEP_PAIRED
+            else -> STEP_PLUS
+        }
     }
+    LaunchedEffect(step) { if (step == STEP_PLUS) com.lovelyy.app.telemetry.Telemetry.onScreen(com.lovelyy.app.analytics.InnerScreens.PLUS_TRIAL_GIFT) }
 
     AnimatedContent(step, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "paired-flow") { s ->
         when (s) {
             STEP_PAIRED -> PairedStep(onNext = { after(STEP_PAIRED) })
+            STEP_PLUS -> com.lovelyy.app.ui.plus.PlusTrialGiftScreen(onStart = {
+                onStartTrial()
+                after(STEP_PLUS)
+            })
             STEP_NOTIFICATIONS -> NotificationStep(
                 index = 1, total = primers,
                 onAllow = { askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS) },

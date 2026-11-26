@@ -236,6 +236,16 @@ object PlusRules {
         return now >= until - DAY_MS
     }
 
+    /**
+     * The last moment this couple is Plus without anything changing (trial end, or paid end plus the renew
+     * grace). Saved for the home-screen widgets, which can't read Firestore while the app is closed.
+     */
+    fun activeUntil(p: PlusInfo?): Long? {
+        if (p == null) return null
+        val paid = p.until?.takeIf { p.source != PlusSource.Trial }?.let { if (p.autoRenew == true) it + RENEW_GRACE_MS else it }
+        return listOfNotNull(trialEnd(p), paid).maxOrNull()
+    }
+
     /** One key per purchase, so the partner's "Plus açıldı" shows once per purchase (renewals keep the key). */
     fun celebrationKey(p: PlusInfo?): String? {
         if (p == null || p.source == PlusSource.Trial) return null
