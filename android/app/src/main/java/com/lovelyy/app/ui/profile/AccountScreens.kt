@@ -57,7 +57,11 @@ import com.lovelyy.app.ui.theme.Peach
 import com.lovelyy.app.ui.theme.PeachSoft
 import com.lovelyy.app.ui.theme.Quicksand
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.ui.focus.onFocusChanged
 import timber.log.Timber
 
 private const val MAIL_D = "M6 6h12a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V9a3 3 0 0 1 3-3z M4 8l8 6 8-6"
@@ -230,6 +234,7 @@ private fun ActionRow(icon: String, label: String, sub: String?, color: Color = 
  * Eşleşmeyi kaldır (approved board 34): what unpairing does, then type KALDIR to enable the red button.
  * Unpairing deletes the shared data for both partners (LeaveRepository).
  */
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun UnpairScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit) {
     val coupleId = me.coupleId ?: return
@@ -281,6 +286,9 @@ fun UnpairScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit) {
             fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = SubText, modifier = Modifier.padding(start = 4.dp),
         )
         val fieldShape = RoundedCornerShape(18.dp)
+        // When the keyboard opens, scroll so the red button and "Vazgeç" show too, not only the field.
+        val bottom = remember { BringIntoViewRequester() }
+        val scope = rememberCoroutineScope()
         BasicTextField(
             value = typed,
             onValueChange = { typed = it.take(10) },
@@ -290,7 +298,14 @@ fun UnpairScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit) {
             cursorBrush = SolidColor(Brown),
             modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp).clip(fieldShape).background(Color.White)
                 .border(2.dp, if (ok) Danger else Color(0xFFEADFD6), fieldShape)
-                .semantics { contentDescription = context.getString(R.string.un_field) },
+                .semantics { contentDescription = context.getString(R.string.un_field) }
+                .onFocusChanged { f ->
+                    if (f.isFocused) scope.launch {
+                        // Wait for the keyboard animation, then for the padding it adds.
+                        delay(350)
+                        bottom.bringIntoView()
+                    }
+                },
             decorationBox = { inner ->
                 Box(Modifier.padding(horizontal = 18.dp, vertical = 16.dp)) {
                     if (typed.isEmpty()) Text(CONFIRM_WORD, fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 17.sp, color = Muted.copy(alpha = 0.6f), letterSpacing = 2.sp)
@@ -314,7 +329,7 @@ fun UnpairScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit) {
         }
         Text(
             stringResource(R.string.un_keep), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Brown,
-            modifier = Modifier.align(Alignment.CenterHorizontally).heightIn(min = 44.dp).bounceClick(onClick = onBack).padding(12.dp),
+            modifier = Modifier.align(Alignment.CenterHorizontally).bringIntoViewRequester(bottom).heightIn(min = 44.dp).bounceClick(onClick = onBack).padding(12.dp),
         )
     }
 }
