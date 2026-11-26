@@ -206,8 +206,8 @@ fun IntroScreen(onBack: () -> Unit, onDone: (skipped: Boolean, tried: Int) -> Un
             Spacer(Modifier.height(10.dp))
             // The copy block keeps one height on every page (tallest case: a two-line title with a
             // two-line body), so the stage above does not resize between pages. Measured in sp so it
-            // follows the font scale.
-            val copyHeight = with(LocalDensity.current) { (35 * 2 + 24 * 2).sp.toDp() } + 10.dp
+            // follows the font scale; the extra dp cover line-height rounding.
+            val copyHeight = with(LocalDensity.current) { (35 * 2 + 24 * 2).sp.toDp() } + 16.dp
             Column(Modifier.heightIn(min = copyHeight)) {
                 Text(
                     stringResource(when (page) { 0 -> R.string.onb_cat_title; 1 -> R.string.onb_heart_title; else -> R.string.onb_draw_title }),
