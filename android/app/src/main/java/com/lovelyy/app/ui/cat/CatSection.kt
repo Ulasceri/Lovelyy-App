@@ -230,7 +230,6 @@ fun CatSection(me: UserProfile, couple: Couple?, partner: UserProfile?, modifier
                 onStroke = { view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK) },
                 onPetDone = { strokes -> if (strokes > 0) vm.act(me, members, CatActionType.Pet, strokes) },
                 onStreakClick = onOpenCare,
-                wearing = ui?.doc?.let { com.lovelyy.app.data.CareRewards.shown(it.wearing, it.streak.best) },
                 footer = ui?.doc?.recent?.let { todayLineText(it, me.uid, partnerName) },
             )
             NeedsRow(ui?.levels)
@@ -312,8 +311,6 @@ internal fun CatStage(
     /** A small line pinned bottom-left ("Bugün: sen sevdin"), hidden while a banner shows. */
     footer: String? = null,
     onStreakClick: (() -> Unit)? = null,
-    /** The accessory the cat wears; drawn while the cat sits still (the idle clip or the poster). */
-    wearing: com.lovelyy.app.data.CareRewards.Accessory? = null,
 ) {
     val hearts = remember { mutableStateListOf<Heart>() }
     val density = LocalDensity.current
@@ -393,12 +390,6 @@ internal fun CatStage(
                         .zIndex(animator.z(layer)),
                 )
             }
-            if (wearing != null) {
-                // The accessory is a drawing on top of the video, so it only shows while the cat sits still.
-                val still = if (animator.started) animator.currentClip == CatClip.Idle else !sleepingPoster
-                val alpha by androidx.compose.animation.core.animateFloatAsState(if (still) 1f else 0f, label = "accessory")
-                CatAccessoryLayer(wearing, Modifier.fillMaxSize().zIndex(2f).graphicsLayer { this.alpha = alpha })
-            }
         }
 
         hearts.forEach { h -> key(h.id) { FloatingHeart(h) { hearts.remove(h) } } }
@@ -437,11 +428,7 @@ internal fun CatStage(
                 fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Brown,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(
-                        // With the hat on, the bubble moves to the right edge so it doesn't cover the brim.
-                        top = bubbleTop + if (wearing == com.lovelyy.app.data.CareRewards.Accessory.Sapka) 4.dp else 0.dp,
-                        end = if (wearing == com.lovelyy.app.data.CareRewards.Accessory.Sapka) 4.dp else bubbleEnd,
-                    )
+                    .padding(top = bubbleTop, end = bubbleEnd)
                     .zIndex(3f)
                     .graphicsLayer { translationY = bob.dp.toPx() }
                     .softShadow(RoundedCornerShape(16.dp, 16.dp, 4.dp, 16.dp), 4.dp)

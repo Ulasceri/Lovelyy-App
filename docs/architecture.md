@@ -89,10 +89,10 @@ SharedPreferences; sign-out clears it. The heart is a `HeartReceiver` broadcast 
 heartbeat with the signed-in user. The drawing widget shows a 420 px PNG rendered by the app (or by the
 30-min worker) into app storage. In-app showcase: `ui/widgets/WidgetsScreen.kt` (Biz → Ana ekran widget'ları).
 Taps open their screen: widgets and notifications pass a `DeepLink` route (`MainActivity.kt`) that Home pushes.
-The cat doc has `wearing` (an unlocked accessory, chosen on Kedi bakımı); `ui/cat/CatAccessory.kt` draws it
-over the cat while the idle clip plays. **Turned off for now** (`CareRewards.WEAR_ON_CAT = false`, Ulaş 2026-11-26):
-the drawing stays still while the cat breathes and moves. The streak stays (its card shows the best streak);
-the accessory badges and the wardrobe button are hidden. Accessories come back baked into the video clips (see tools/cat-animation). Unsealed capsule letters are kept as a draft on the phone.
+Cat accessories were removed on 2026-11-26 (Ulaş): drawn over the video they stayed still while the cat moved.
+If they come back they will be designed first and baked into the video clips (tools/cat-animation). The care streak
+stays (Kedi bakımı shows the current and best streak). `firestore.rules` still accepts the old `wearing` field on
+`cat/main` so older installs keep working; the app no longer writes it. Unsealed capsule letters are kept as a draft on the phone.
 
 # Step 3: redesigned screens + first three features
 

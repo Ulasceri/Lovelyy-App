@@ -135,12 +135,6 @@ sealed interface AnalyticsEvent {
         override val name = "drawing_deleted"
     }
 
-    /** An accessory was put on the cat ([accessory] is the fixed accessory id, e.g. "Papyon") or taken off (null). */
-    data class AccessoryWorn(val accessory: String?) : AnalyticsEvent {
-        override val name = "accessory_worn"
-        override val params: Map<String, Any> get() = mapOf("accessory" to (accessory ?: "none"))
-    }
-
     /** Bildirimler: "mark all read" was tapped. */
     data object InboxReadAll : AnalyticsEvent {
         override val name = "inbox_read_all"
