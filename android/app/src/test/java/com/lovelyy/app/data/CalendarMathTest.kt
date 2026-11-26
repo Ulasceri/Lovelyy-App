@@ -50,6 +50,14 @@ class CalendarMathTest {
     }
 
     @Test
+    fun yearlyNeverBeforeItsOwnDate() {
+        val created = ev(LocalDate.of(2028, 2, 29), yearly = true)
+        assertEquals(LocalDate.of(2028, 2, 29), CalendarMath.nextOccurrence(created, today))
+        assertEquals(LocalDate.of(2028, 2, 29).toEpochDay() - today.toEpochDay(), CalendarMath.daysUntil(created, today))
+        assertEquals(0, CalendarMath.yearsAt(created, today))
+    }
+
+    @Test
     fun questionIsStablePerDay() {
         assertEquals(QuestionBank.forDay(today), QuestionBank.forDay(LocalDate.of(2026, 11, 25)))
         val n = QuestionBank.QUESTIONS.size.toLong()

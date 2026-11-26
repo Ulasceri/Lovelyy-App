@@ -7,6 +7,11 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.lovelyy.app.data.AuthRepository
 import com.lovelyy.app.data.CatRepository
 import com.lovelyy.app.data.EventRepository
+import com.lovelyy.app.data.LocationRepository
+import com.lovelyy.app.data.DreamRepository
+import com.lovelyy.app.data.WheelRepository
+import com.lovelyy.app.data.CapsuleRepository
+import com.lovelyy.app.data.DrawingRepository
 import com.lovelyy.app.data.MoodRepository
 import com.lovelyy.app.data.NoteRepository
 import com.lovelyy.app.data.QuestionRepository
@@ -22,6 +27,8 @@ class LovelyyApplication : Application() {
         super.onCreate()
         // Logging, analytics, crash reports, performance. See docs/analytics.md.
         Telemetry.init(this)
+        // Partner signals: listen from process start, not only once Home is shown (see SignalCenter).
+        if (isFirebaseConfigured) runCatching { signalCenter.resumeIfSignedIn() }.onFailure { timber.log.Timber.w(it, "Resuming signal updates failed") }
     }
 
     /** False until app/google-services.json is added (see README). */
@@ -37,5 +44,13 @@ class LovelyyApplication : Application() {
     val questionRepository by lazy { QuestionRepository(FirebaseFirestore.getInstance()) }
     val noteRepository by lazy { NoteRepository(FirebaseFirestore.getInstance()) }
     val eventRepository by lazy { EventRepository(FirebaseFirestore.getInstance()) }
+    val locationRepository by lazy { LocationRepository(FirebaseFirestore.getInstance()) }
+    val dreamRepository by lazy { DreamRepository(FirebaseFirestore.getInstance()) }
+    val wheelRepository by lazy { WheelRepository(FirebaseFirestore.getInstance()) }
+    val capsuleRepository by lazy { CapsuleRepository(FirebaseFirestore.getInstance()) }
+    val drawingRepository by lazy { DrawingRepository(FirebaseFirestore.getInstance()) }
     val signalCenter by lazy { SignalCenter(this) }
+
+    /** A screen asked for by a widget or notification tap; Home opens it and clears it. */
+    val pendingRoute = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
 }

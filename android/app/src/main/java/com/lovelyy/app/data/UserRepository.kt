@@ -15,6 +15,10 @@ class UserRepository(private val db: FirebaseFirestore) {
 
     /** Creates users/{uid} the first time someone signs in. Safe to call on every launch. */
     suspend fun ensureUserDoc(user: FirebaseUser) {
+        // Fast path: the doc is already on the phone (every start after the first). The transaction needs the
+        // network and took seconds on cold start.
+        val cached = runCatching { userRef(user.uid).get(com.google.firebase.firestore.Source.CACHE).await() }.getOrNull()
+        if (cached?.exists() == true) return
         createOrNameUser(user.uid, user.displayName.orEmpty(), photoUrl = user.photoUrl?.toString(), overwriteBlankName = false)
     }
 

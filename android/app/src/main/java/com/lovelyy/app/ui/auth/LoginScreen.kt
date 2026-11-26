@@ -36,6 +36,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -120,9 +121,9 @@ fun LoginScreen() {
         } else {
             LoginContent(
                 signUp = vm.mode == LoginViewModel.Mode.SignUp,
-                name = vm.name, onName = { vm.name = it },
-                email = vm.email, onEmail = { vm.email = it },
-                password = vm.password, onPassword = { vm.password = it },
+                name = vm.name, onName = { vm.name = it; vm.clearError() },
+                email = vm.email, onEmail = { vm.email = it; vm.clearError() },
+                password = vm.password, onPassword = { vm.password = it; vm.clearError() },
                 loading = vm.loading,
                 resetSent = vm.resetSent,
                 errorSlot = { ErrorText(vm.error, Modifier.fillMaxWidth()) },
@@ -339,6 +340,7 @@ private fun LoginContent(
                     password, onPassword, stringResource(R.string.field_password_ph),
                     leadingIcon = Icons.Rounded.Lock,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { if (!loading && (!signUp || name.isNotBlank())) onSubmit() }),
                     visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
                     trailing = {
                         Box(

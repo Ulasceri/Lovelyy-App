@@ -16,3 +16,22 @@ val AppState.screenName: String?
         is AppState.Home -> "home"
         is AppState.Failed -> "error"
     }
+
+/** Inner screens opened on top of the home tabs (logged by HomeScreen when they open). */
+object InnerScreens {
+    const val DAY_COUNTER = "day_counter"
+    const val HEARTBEAT = "heartbeat"
+    const val MOOD = "mood"
+    const val QUESTION = "daily_question"
+    const val NOTES = "notes"
+    const val PLANS = "plans"
+    const val CAT_CARE = "cat_care"
+    const val PROFILE = "profile"
+    const val DISTANCE = "distance"
+    const val DREAMS = "dreams"
+    const val WHEEL = "wheel"
+    const val CAPSULE = "time_capsule"
+    const val DRAWING = "live_drawing"
+    const val MEMORIES = "memories"
+    const val WIDGETS = "widgets"
+}

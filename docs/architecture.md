@@ -82,6 +82,16 @@ refills it), love 8h. The streak grows by one for each day on which both partner
 RemoteViews widget with one picture per mood. The app saves the cat whenever it changes; the
 widget computes the mood itself (time-based), and WorkManager refreshes from Firestore every 30 min.
 
+Four widgets (all RemoteViews, `widget/CatWidget.kt` + `widget/MoreWidgets.kt`): small cat, wide cat
+(needs bars + streak + couple day), day counter with a heart, and live drawing. Widgets can't read
+Firestore while the app is closed, so `WidgetData` keeps the couple (ids, names, start date) in
+SharedPreferences; sign-out clears it. The heart is a `HeartReceiver` broadcast that sends a "Sevgi"
+heartbeat with the signed-in user. The drawing widget shows a 420 px PNG rendered by the app (or by the
+30-min worker) into app storage. In-app showcase: `ui/widgets/WidgetsScreen.kt` (Biz → Ana ekran widget'ları).
+Taps open their screen: widgets and notifications pass a `DeepLink` route (`MainActivity.kt`) that Home pushes.
+The cat doc has `wearing` (an unlocked accessory, chosen on Kedi bakımı); `ui/cat/CatAccessory.kt` draws it
+over the cat while the idle clip plays. Unsealed capsule letters are kept as a draft on the phone.
+
 # Step 3: redesigned screens + first three features
 
 ## Navigation
@@ -110,6 +120,14 @@ treats them as valid for 30 minutes (the rules still allow up to 24h).
 | `couples/{id}/questions/{yyyy-MM-dd}` | day, question, answers.{uid} = {name, text, at} | günün sorusu; question text comes from `QuestionBank.forDay` so both phones agree without a server |
 | `couples/{id}/notes/{auto}` | text, color (0-4), pinned, by, byName, at | shared sticky notes |
 | `couples/{id}/events/{auto}` | title, date (yyyy-MM-dd), emoji, yearly, by, byName, at | plans and special days; the anniversary is built in from `startDate`, not stored |
+| `couples/{id}/locations/{uid}` | city, lat, lng (rounded: 0.1° city-only or 0.01°), cityOnly, at | only while the partner shares location on Mesafe; turning sharing off deletes it. The app shows only city and distance |
+| `couples/{id}/dreams/{auto}` | title, category (seyahat/deneyim/hayat/diger), goal, by, byName, at, doneAt | shared bucket list (Hayaller) |
+| `couples/{id}/wheels/{id}` | label, items[], at | decision wheels; ids `yemek`, `gezi`, `izle` override the built-in wheels, other ids are custom wheels. Spins are not stored |
+| `couples/{id}/wheelSpins/{wheelId}` | label, result, by, byName, at | the last result of each wheel, shared: the spinner saves it before the wheel stops, the partner's wheel rests on the same result and gets a "wheel" signal |
+| `couples/{id}/capsules/{auto}` | title, text, openOn (yyyy-MM-dd), by, byName, at | time-capsule letters; the app hides the text until `openOn` (rules can't hide a field, so this is not a hard lock) |
+| `couples/{id}/strokes/{auto}` | by, color, width, points[] (normalized 0..1, max 400 points), at | the current shared canvas (Canlı çizim), max 600 strokes |
+| `couples/{id}/drawing/presence` | {uid: millis} | last time each partner drew; "drawing now" = within 45 s |
+| `couples/{id}/drawings/{auto}` | strokes[], by, byName, at | drawings saved to Anılar; saving clears the canvas |
 
 Günün sorusu hides the partner's answer until you answer, but only in the app: Firestore rules
 can't hide one field of a document from a member, and both partners are members. That's fine for
@@ -125,9 +143,21 @@ Real push (FCM) needs a trusted sender (a Cloud Function), and functions need th
 So `signals/SignalCenter.kt` does the best possible without a server:
 
 - While the app process is alive (open or recently backgrounded) a Firestore listener sees a new
-  signal within about a second and posts a local notification.
-- When the app is closed, `SignalWorker` (WorkManager) checks every ~15 minutes, Android's
-  minimum, and posts what was missed.
+  signal within about a second and posts a local notification. The listener starts with the
+  process (`LovelyyApplication.onCreate`) and re-subscribes after transient errors.
+- When the app goes to the background, a few one-time `SignalWorker` checks run ~1, 3, 7 and 15
+  minutes later; after that (and when the app is closed) the periodic `SignalWorker` checks every
+  ~15 minutes, Android's minimum, and posts what was missed.
+- "Is this new?" never uses the sender's clock (`at` is only for display): `SignalFreshness`
+  remembers the ids of signals already seen and compares the server `createdAt` with a floor set
+  on the first check (first-run grace: only the last 10 minutes notify after install or sign-in).
+  The query is ordered by `createdAt` too.
+- At most 3 notifications one by one; older new signals become one summary notification
+  ("Bora sana 5 kalp daha gönderdi").
+
+Remaining platform limits: Android freezes cached background processes (cached apps freezer,
+Doze, App Standby), so a backgrounded app's listener can still lag by minutes until a job or the
+user wakes it, and WorkManager delays are "at the earliest" (Doze can defer them further).
 
 With Blaze: add `firebase-messaging`, store each user's FCM token, and a function on
 `couples/{id}/signals/{sid}` create that sends to the partner's token. Then delivery is instant

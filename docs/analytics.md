@@ -25,8 +25,10 @@ Everything goes through `com.lovelyy.app.telemetry.Telemetry`, set up once in `L
 - Param keys `snake_case` (max 40 chars, max 25 params). Values: String, Long/Int, Double, Boolean (sent as 0/1).
 - Prefer a small number of events with params over many near-duplicate events.
 
-Current events: `pairing_completed`, `cat_fed`, `cat_watered`, `cat_played`, `cat_petted` (`strokes`), `cat_slept`, and `screen_view`.
-Screen names: `login`, `name_setup`, `pairing`, `home`, `error`, `firebase_setup`.
+Current events: `pairing_completed`, `cat_fed`, `cat_watered`, `cat_played`, `cat_petted` (`strokes`), `cat_slept`,
+`start_date_set`, `counter_shared`, `heartbeat_sent` (`emotion`), `nudge_sent`, `mood_shared` (`mood`, `has_note`), `question_answered`, `note_added`, `plan_added` (`yearly`), `location_sharing_changed` (`sharing`), `location_updated` (`city_only`), `profile_name_changed`, `dream_added` (`category`), `dream_completed`, `wheel_spun` (`built_in`, `items`), `wheel_created`, `capsule_sealed` (`days`), `drawing_saved` (`strokes`), and `screen_view`. Location events never carry coordinates or a city; dream, wheel, capsule and drawing events never carry titles, options, letter text or drawings. The home-screen widget's heart logs `heartbeat_sent` like the app does.
+Screen names: `login`, `name_setup`, `pairing`, `home`, `error`, `firebase_setup`, and the inner screens opened from home
+(`analytics/Screens.kt` → `InnerScreens`, logged by `HomeScreen`): `day_counter`, `heartbeat`, `mood`, `daily_question`, `notes`, `plans` (the Planlar tab), `cat_care`, `profile` (the Biz tab), `distance`, `dreams`, `wheel`, `time_capsule`, `live_drawing`, `memories` (the Anılar tab), `widgets`.
 
 ### Adding an event
 

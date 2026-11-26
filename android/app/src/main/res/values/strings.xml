@@ -26,6 +26,8 @@
     <string name="pair_share_text">Lovelyy\'de benimle eşleş 💛 Kodum: %1$s</string>
     <string name="pair_join">Eşleş</string>
     <string name="sign_out">Çıkış yap</string>
+    <string name="sign_out_title">Çıkış yapılsın mı?</string>
+    <string name="sign_out_body">Hesabından çıkacaksın. Tekrar giriş yapınca her şey yerinde olacak.</string>
 
     <!-- Home -->
     <string name="home_us">%1$s &amp; %2$s</string>
@@ -220,10 +222,10 @@
     <string name="emotion_opucuk">Öpücük</string>
     <string name="emotion_huzur">Huzur</string>
     <string name="emotion_ozlem_msg">%1$s seni çok özledi…</string>
-    <string name="emotion_sevgi_msg">%1$s seni çok seviyor…</string>
-    <string name="emotion_ask_msg">%1$s sana deli gibi âşık…</string>
-    <string name="emotion_sarilma_msg">%1$s sana sımsıkı sarılmak istiyor…</string>
-    <string name="emotion_opucuk_msg">%1$s sana kocaman bir öpücük gönderdi…</string>
+    <string name="emotion_sevgi_msg">%1$s sana sevgisini gönderdi</string>
+    <string name="emotion_ask_msg">%1$s sana deli gibi âşık</string>
+    <string name="emotion_sarilma_msg">%1$s sana kocaman sarıldı</string>
+    <string name="emotion_opucuk_msg">%1$s sana bir öpücük yolladı</string>
     <string name="emotion_huzur_msg">%1$s seninle çok huzurlu…</string>
     <string name="nudge_title">Aklımdasın</string>
     <string name="nudge_body">Tek dokunuşla dürt, %1$s seni düşündüğünü bilsin.</string>
@@ -263,7 +265,6 @@
     <string name="q_waiting">%1$s cevaplayınca iki cevap da açılacak</string>
     <string name="q_edit">Cevabımı düzenle</string>
     <string name="q_past">Önceki sorular</string>
-    <string name="q_partner_answered">%1$s cevapladı, sıra sende 💌</string>
     <string name="q_partner_not_yet">%1$s henüz cevaplamadı</string>
     <string name="q_hint">İçinden geldiği gibi yaz…</string>
     <string name="q_partner_skipped">%1$s bu soruyu cevaplamamış.</string>
@@ -310,7 +311,12 @@
 
     <string name="signal_question_msg">%1$s günün sorusunu cevapladı 💌</string>
     <string name="signal_note_msg">%1$s yeni bir not bıraktı 📝</string>
+    <string name="signal_wheel_msg">%1$s çarkı çevirdi. %2$s 🎡</string>
+    <string name="wh_by">%1$s çevirdi · %2$s</string>
+    <string name="wh_by_me">Sen çevirdin · %1$s</string>
     <string name="signal_event_msg">%1$s takvime ekledi: %2$s 📅</string>
+    <string name="signal_summary_hearts">%1$s sana %2$d kalp daha gönderdi 💗</string>
+    <string name="signal_summary_mixed">%1$s sana %2$d bildirim daha gönderdi 💌</string>
 
     <!-- Setup / errors -->
     <string name="setup_title">Firebase kurulumu gerekiyor</string>
@@ -331,4 +337,385 @@
     <string name="err_already_paired">Zaten biriyle eşleşmişsin.</string>
     <string name="err_permission">İzin hatası. Kod geçersiz olabilir ya da Firestore kuralları yüklenmemiş.</string>
     <string name="err_unknown">Beklenmeyen bir hata oldu. Tekrar dener misin?</string>
+
+    <!-- Gün sayacı (approved design 5) -->
+    <string name="dc_edit_date">Tanışma tarihini düzenle</string>
+    <string name="dc_together">Birlikte</string>
+    <string name="dc_day_word">gün</string>
+    <string name="dc_unit_h">sa</string>
+    <string name="dc_unit_m">dk</string>
+    <string name="dc_unit_s">sn</string>
+    <string name="dc_unit_ms">ms</string>
+    <string name="dc_since">%1$s beri</string>
+    <string name="dc_weeks">hafta</string>
+    <string name="dc_months">ay</string>
+    <string name="dc_hours">saat</string>
+    <string name="dc_path_title">Kutlamalar yolu</string>
+    <string name="dc_until_day">%1$d. güne %2$d gün</string>
+    <string name="dc_until_year">%1$d. yıla %2$d gün</string>
+    <string name="dc_node_year">%1$d. yıl</string>
+    <string name="dc_next_line">%1$s · O gün %2$s parti şapkasını takacak</string>
+    <string name="dc_cat_fallback">kedimiz</string>
+    <string name="dc_share">Bu anı paylaş</string>
+    <string name="dc_share_text">%1$s ve %2$s %3$s gündür birlikte. Lovelyy</string>
+    <string name="dc_pick">Tanışma tarihini seç</string>
+    <string name="dc_no_date">Tarihinizi seçin, sayaç başlasın</string>
+    <string name="dc_today_milestone">Bugün %1$s! Kutlu olsun</string>
+    <string name="dc_milestone_day">%1$d. gün</string>
+
+    <!-- Kalp atışı + dürtme (approved design 6) -->
+    <string name="hb2_title">%1$s kalbini gönder</string>
+    <string name="hb2_last">%1$s %2$s sana %3$s gönderdi</string>
+    <string name="hb2_none">İlk kalbi sen gönder</string>
+    <string name="hb2_last_sent">Sen %1$s ona %2$s gönderdin</string>
+    <string name="hb2_history">Geçmiş</string>
+    <string name="hb2_preview_label">%1$s telefonunda böyle görünecek</string>
+    <string name="hb2_preview_app">Lovelyy · şimdi</string>
+    <string name="hb2_hold_cd">Basılı tutarak gönder</string>
+    <string name="hb2_hint_idle">Basılı tut, kalbin %1$s ulaşsın</string>
+    <string name="hb2_hint_holding">Bırakma, kalbin yolda…</string>
+    <string name="hb2_hint_sent">Gönderildi! %1$s telefonu titriyor</string>
+    <string name="hb2_hint_failed">Gönderilemedi, tekrar dene</string>
+    <string name="hb2_nudge_title">Dürt</string>
+    <string name="hb2_nudge_body">Tek dokunuş: “%1$s seni düşünüyor”</string>
+    <string name="hb2_nudge_action">Dürt</string>
+    <string name="hb2_nudge_done">Dürtüldü</string>
+    <string name="time_ago_minutes">%1$d dakika önce</string>
+    <string name="time_ago_hours">%1$d saat önce</string>
+    <string name="time_ago_days">%1$d gün önce</string>
+    <string name="time_ago_now">az önce</string>
+
+    <!-- Ruh hali (approved design 7) -->
+    <string name="md_title">Ruh hali</string>
+    <string name="md_history">Geçmiş ruh halleri</string>
+    <string name="md_you">Sen</string>
+    <string name="md_now">şimdi</string>
+    <string name="md_your_mood_cd">Senin ruh halin</string>
+    <string name="md_partner_mood_cd">%1$s ruh hali: %2$s</string>
+    <string name="md_partner_none">Henüz paylaşmadı</string>
+    <string name="md_my_note">Notun</string>
+    <string name="md_partner_note">%1$s notu</string>
+    <string name="md_question">Bugün nasılsın?</string>
+    <string name="md_note_label">Not ekle (isteğe bağlı)</string>
+    <string name="md_note_hint">%1$s bir şey söylemek ister misin?</string>
+    <string name="md_share">%1$s ile paylaş</string>
+    <string name="md_shared">%1$s gönderildi</string>
+    <string name="md_failed">Paylaşılamadı, tekrar dene</string>
+    <string name="mood_kind_ozlemis">Özlemiş</string>
+
+    <!-- Günün sorusu (approved design 8) -->
+    <string name="q_history">Önceki sorular</string>
+    <string name="q_chip">%1$s · %2$d. soru</string>
+    <string name="q_streak">%1$d gün seri</string>
+    <string name="q_your_answer">Senin cevabın</string>
+    <string name="q_answer_hint">İçinden geleni yaz…</string>
+    <string name="q_partner_answer">%1$s cevabı</string>
+    <string name="q_partner_answered">%1$s cevapladı</string>
+    <string name="q_partner_waiting">Henüz cevaplamadı</string>
+    <string name="q_locked">Sen cevaplayınca açılır. Önce bakmak yok!</string>
+    <string name="q_partner_pending">Cevaplayınca burada görünecek.</string>
+    <string name="q_send">Cevabımı gönder</string>
+    <string name="q_sent">Cevabın %1$s ulaştı</string>
+    <string name="q_failed">Gönderilemedi, tekrar dene</string>
+
+    <!-- Notlar (approved design 18) -->
+    <string name="n_title">Notlar</string>
+    <string name="n_search">Notlarda ara</string>
+    <string name="n_all">Tümü</string>
+    <string name="n_mine">Benim</string>
+    <string name="n_theirs">%1$s</string>
+    <string name="n_pinned">Sabit</string>
+    <string name="n_write">Not yaz</string>
+    <string name="n_empty">Henüz not yok. İlk notu sen yaz.</string>
+    <string name="n_today">Bugün %1$s</string>
+    <string name="n_yesterday">Dün %1$s</string>
+    <string name="n_editor_new">Yeni not</string>
+    <string name="n_editor_edit">Notu düzenle</string>
+    <string name="n_editor_hint">Aklından geçeni yaz…</string>
+    <string name="n_color">Renk %1$d</string>
+    <string name="n_pin">Sabitle</string>
+    <string name="n_unpin">Sabitlemeyi kaldır</string>
+    <string name="n_delete">Sil</string>
+    <string name="n_save">Kaydet</string>
+
+    <!-- Planlar: takvim + özel günler (approved design 11) -->
+    <string name="p_title">Planlar</string>
+    <string name="p_subtitle">Takvim ve özel günler</string>
+    <string name="p_add">Plan ekle</string>
+    <string name="p_days_left">gün kaldı</string>
+    <string name="p_today_word">bugün</string>
+    <string name="p_anniversary">Yıl dönümü</string>
+    <string name="p_prev_month">Önceki ay</string>
+    <string name="p_next_month">Sonraki ay</string>
+    <string name="p_added_by">%1$s · %2$s ekledi</string>
+    <string name="p_left">%1$d gün kaldı</string>
+    <string name="p_today">Bugün</string>
+    <string name="p_tomorrow">Yarın</string>
+    <string name="p_no_plans">Henüz plan yok. Sağ üstteki + ile ekleyebilirsin.</string>
+    <string name="p_no_special">Özel günlerinizi ekleyin</string>
+    <string name="p_bucket">Hayaller listesi</string>
+    <string name="p_wheel">Karar çarkı</string>
+    <string name="p_editor_new">Yeni plan</string>
+    <string name="p_editor_edit">Planı düzenle</string>
+    <string name="p_editor_title_hint">Ne yapacaksınız?</string>
+    <string name="p_editor_date">Tarih: %1$s</string>
+    <string name="p_editor_yearly">Her yıl tekrarlasın (özel gün)</string>
+    <string name="p_pick_date">Tarih seç</string>
+
+    <!-- Kedi bakımı (approved design 14) -->
+    <string name="cc_accessories">Aksesuarlar</string>
+    <string name="cc_today">Bugün: %1$s</string>
+    <string name="cc_today_none">Bugün henüz kimse ilgilenmedi</string>
+    <string name="cc_me_feed">sen besledin</string>
+    <string name="cc_me_water">sen su verdin</string>
+    <string name="cc_me_play">sen oynadın</string>
+    <string name="cc_me_pet">sen sevdin</string>
+    <string name="cc_me_sleep">sen uyuttun</string>
+    <string name="cc_me_wake">sen uyandırdın</string>
+    <string name="cc_feed">%1$s besledi</string>
+    <string name="cc_water">%1$s su verdi</string>
+    <string name="cc_play">%1$s oynadı</string>
+    <string name="cc_pet">%1$s sevdi</string>
+    <string name="cc_sleep">%1$s uyuttu</string>
+    <string name="cc_wake">%1$s uyandırdı</string>
+    <string name="cc_percent">%%%1$d</string>
+    <string name="cc_streak_title">%1$d gün bakım serisi</string>
+    <string name="cc_streak_next">%1$s için %2$d gün kaldı</string>
+    <string name="cc_streak_all">Tüm aksesuarlar açıldı</string>
+    <string name="cc_streak_chip">%1$d / %2$d</string>
+    <string name="cc_day">%1$d. gün</string>
+    <string name="cc_acc_kurdele">Kurdele</string>
+    <string name="cc_acc_papyon">Papyon</string>
+    <string name="cc_acc_sapka">Şapka</string>
+    <string name="cc_acc_gozluk">Gözlük</string>
+    <string name="cc_locked_hint">%1$s %2$d günlük seride açılır</string>
+    <string name="cc_locked">%1$s, kilitli</string>
+    <string name="cc_unlocked">%1$s, açıldı</string>
+    <string name="cc_worn">%1$s, kedinin üstünde</string>
+    <string name="cc_wear_hint">Açılan bir aksesuara dokun, kedin onu taksın.</string>
+
+    <!-- Biz: profil ve ayarlar (approved design 10) -->
+    <string name="pf_title">Biz</string>
+    <string name="pf_subtitle">Profil ve ayarlar</string>
+    <string name="pf_since">%1$s beri</string>
+    <string name="pf_together">Birlikte %1$d gün</string>
+    <string name="pf_edit">Profili düzenle</string>
+    <string name="pf_edit_title">Adın</string>
+    <string name="pf_edit_body">Sevgilin seni bu isimle görecek.</string>
+    <string name="pf_bell">Bildirimler</string>
+    <string name="pf_mood">Ruh hali</string>
+    <string name="pf_question">Günün sorusu</string>
+    <string name="pf_distance">Mesafe</string>
+    <string name="pf_days">Gün sayacı</string>
+    <string name="pf_notifications">Bildirimler</string>
+    <string name="pf_on">Açık</string>
+    <string name="pf_off">Kapalı</string>
+    <string name="pf_location">Konum paylaşımı</string>
+    <string name="pf_location_city">Şehir düzeyi</string>
+    <string name="pf_location_precise">Yaklaşık 1 km</string>
+    <string name="pf_widgets">Ana ekran widget\'ları</string>
+    <string name="pf_widgets_count">%1$d ekli</string>
+    <string name="pf_widgets_none">Ekle</string>
+    <string name="pf_cat_name">Kedinin adı</string>
+    <string name="pf_account">Hesap</string>
+    <string name="pf_account_google">Google ile bağlı</string>
+    <string name="pf_account_email">E-posta ile bağlı</string>
+    <string name="pf_unpair">Eşleşmeyi kaldır</string>
+
+    <!-- Mesafe (approved design 9) -->
+    <string name="ds_title">Mesafe</string>
+    <string name="ds_refresh">Konumu güncelle</string>
+    <string name="ds_between">Aranızda</string>
+    <string name="ds_km">%1$d km</string>
+    <string name="ds_updated">%1$s güncellendi</string>
+    <string name="ds_no_city">Şehir yok</string>
+    <string name="ds_waiting_me">Mesafeyi görmek için konumunu paylaş</string>
+    <string name="ds_waiting_partner">%1$s henüz konum paylaşmadı</string>
+    <string name="ds_car">Arabayla</string>
+    <string name="ds_plane">Uçakla</string>
+    <string name="ds_duration">%1$d sa %2$d dk</string>
+    <string name="ds_duration_min">%1$d dk</string>
+    <string name="ds_next_meet">Bir sonraki buluşma</string>
+    <string name="ds_no_meet">Henüz plan yok, Planlar\'dan ekleyebilirsin</string>
+    <string name="ds_meet_today">Bugün</string>
+    <string name="ds_meet_days">%1$d gün</string>
+    <string name="ds_share">Konumumu paylaş</string>
+    <string name="ds_share_sub">Yalnızca %1$s görür</string>
+    <string name="ds_city_only">Sadece şehir ve mesafe</string>
+    <string name="ds_city_only_sub">Tam adresin hiçbir zaman gösterilmez</string>
+    <string name="ds_no_permission">Konum izni olmadan mesafe gösterilemez</string>
+    <string name="ds_no_fix">Konum bulunamadı, biraz sonra tekrar dene</string>
+
+    <!-- Hayaller listesi (approved design 12) -->
+    <string name="dr_title">Hayaller listesi</string>
+    <string name="dr_search">Hayallerde ara</string>
+    <string name="dr_done_together">Birlikte gerçekleştirdiniz</string>
+    <string name="dr_count">%1$d / %2$d hayal</string>
+    <string name="dr_next">Sırada</string>
+    <string name="dr_done">Gerçekleşenler</string>
+    <string name="dr_add">Hayal ekle</string>
+    <string name="dr_empty">Henüz hayal yok. Birlikte yapmak istediklerinizi ekleyin.</string>
+    <string name="dr_empty_next">Hepsini gerçekleştirdiniz! Sıradaki hayalinizi ekleyin.</string>
+    <string name="dr_none_done">İlk hayalinizi gerçekleştirince burada görünecek.</string>
+    <string name="dr_cat_seyahat">Seyahat</string>
+    <string name="dr_cat_deneyim">Deneyim</string>
+    <string name="dr_cat_hayat">Hayat</string>
+    <string name="dr_cat_diger">Diğer</string>
+    <string name="dr_editor_new">Yeni hayal</string>
+    <string name="dr_editor_edit">Hayali düzenle</string>
+    <string name="dr_editor_title">Ne yapmak istiyorsunuz?</string>
+    <string name="dr_editor_goal">Hedef (isteğe bağlı), örn. Nisan 2027</string>
+    <string name="dr_save">Kaydet</string>
+    <string name="dr_delete">Sil</string>
+    <string name="dr_mark_done">%1$s, gerçekleşti olarak işaretle</string>
+    <string name="dr_mark_undone">%1$s, gerçekleşti işaretini kaldır</string>
+
+    <!-- Karar çarkı (approved design 13) -->
+    <string name="wh_title">Karar çarkı</string>
+    <string name="wh_history">Önceki sonuçlar</string>
+    <string name="wh_yemek">Ne yesek?</string>
+    <string name="wh_gezi">Nereye gitsek?</string>
+    <string name="wh_izle">Ne izlesek?</string>
+    <string name="wh_new">Yeni çark oluştur</string>
+    <string name="wh_spinning">Çark dönüyor</string>
+    <string name="wh_result">Çarkın kararı</string>
+    <string name="wh_spin">Çarkı çevir</string>
+    <string name="wh_list">%1$s çarkındaki seçenekler (%2$d)</string>
+    <string name="wh_more">+%1$d daha</string>
+    <string name="wh_less">Daha az göster</string>
+    <string name="wh_add">Ekle</string>
+    <string name="wh_remove">%1$s çıkar</string>
+    <string name="wh_add_title">Seçenek ekle</string>
+    <string name="wh_add_hint">Yeni seçenek</string>
+    <string name="wh_not_spun">Çevir, çark karar versin</string>
+    <string name="wh_new_title">Yeni çark</string>
+    <string name="wh_new_name">Çarkın adı, örn. Hafta sonu ne yapsak?</string>
+    <string name="wh_new_items">Seçenekler (her satıra bir tane)</string>
+    <string name="wh_min_items">En az %1$d seçenek gerekli</string>
+    <string name="wh_duplicate">Bu seçenek zaten çarkta</string>
+    <string name="wh_max_items">En fazla %1$d seçenek olabilir</string>
+    <string name="wh_delete_wheel">Bu çarkı sil</string>
+    <string name="wh_reset">Varsayılana dön</string>
+    <string name="wh_save">Kaydet</string>
+    <string name="wh_cancel">Vazgeç</string>
+    <string-array name="wh_items_yemek">
+        <item>Pizza</item><item>Lahmacun</item><item>Mantı</item><item>Sushi</item>
+        <item>Burger</item><item>Makarna</item><item>Döner</item><item>Çiğ köfte</item>
+    </string-array>
+    <string-array name="wh_items_gezi">
+        <item>Sinema</item><item>Sahil</item><item>Kafe</item><item>Piknik</item>
+        <item>Müze</item><item>Bowling</item><item>Lunapark</item><item>Evde kal</item>
+    </string-array>
+    <string-array name="wh_items_izle">
+        <item>Komedi</item><item>Romantik</item><item>Korku</item><item>Bilim kurgu</item>
+        <item>Animasyon</item><item>Belgesel</item><item>Aksiyon</item><item>Dizi</item>
+    </string-array>
+
+    <!-- Zaman kapsülü (approved design 19) -->
+    <string name="tc_title">Zaman kapsülü</string>
+    <string name="tc_opened_list">Açılmış mektuplar</string>
+    <string name="tc_from_partner">%1$s sana mühürlü bir mektup</string>
+    <string name="tc_from_me">Senin mühürlü mektubun</string>
+    <string name="tc_days">%1$d gün</string>
+    <string name="tc_opens_in">sonra açılacak</string>
+    <string name="tc_opens_today">Bugün açılıyor</string>
+    <string name="tc_none_title">Henüz mühürlü mektup yok</string>
+    <string name="tc_none_body">Geleceğe bir mektup yaz, gününde birlikte açın.</string>
+    <string name="tc_letters">Mektuplarınız</string>
+    <string name="tc_by_me">Sen yazdın</string>
+    <string name="tc_by">%1$s yazdı</string>
+    <string name="tc_opens_on">%1$s · %2$s açılır</string>
+    <string name="tc_opened_on">%1$s · %2$s açıldı</string>
+    <string name="tc_read">Oku</string>
+    <string name="tc_write">Geleceğe mektup yaz</string>
+    <string name="tc_editor_title">Geleceğe mektup</string>
+    <string name="tc_editor_name">Başlık, örn. İkinci yıl dönümümüze</string>
+    <string name="tc_editor_text">Mektubun… Açılış gününe kadar kimse okuyamaz.</string>
+    <string name="tc_editor_date">Açılış günü: %1$s</string>
+    <string name="tc_editor_pick">Açılış günü seç</string>
+    <string name="tc_seal">Mühürle</string>
+    <string name="tc_delete">Mektubu sil</string>
+    <string name="tc_close">Kapat</string>
+    <string name="tc_sealed_until">%1$s tarihine kadar mühürlü</string>
+
+    <!-- Canlı çizim (approved design 17) -->
+    <string name="lv_title">Canlı çizim</string>
+    <string name="lv_old">Eski çizimler</string>
+    <string name="lv_partner_now">%1$s şu an çiziyor</string>
+    <string name="lv_partner_last">%1$s en son %2$s çizdi</string>
+    <string name="lv_partner_never">%1$s henüz çizmedi</string>
+    <string name="lv_you">Sen</string>
+    <string name="lv_color">Renk %1$d</string>
+    <string name="lv_brush">Fırça kalınlığı</string>
+    <string name="lv_brush_size">Fırça kalınlığı: %1$d / 3</string>
+    <string name="lv_eraser">Silgi</string>
+    <string name="lv_undo">Geri al</string>
+    <string name="lv_widget">Ana ekran widget\'ında göster</string>
+    <string name="lv_widget_sub">Çizim ikinizin telefonunda canlı görünür</string>
+    <string name="lv_save">Anılara kaydet</string>
+    <string name="lv_saved">Çizim Anılar\'a kaydedildi</string>
+    <string name="lv_empty_hint">Parmağınla çiz, %1$s anında görsün</string>
+    <string name="lv_canvas">Birlikte çizdiğiniz resim</string>
+
+    <!-- Anılar sekmesi (approved design 16) -->
+    <string name="mm_title">Anılar</string>
+    <string name="mm_subtitle">Birlikte biriktirdikleriniz</string>
+    <string name="mm_search">Anılarda ara</string>
+    <string name="mm_drawing_sub">Aynı tuvale birlikte çizin</string>
+    <string name="mm_notes_count">%1$d not</string>
+    <string name="mm_notes_new">Yeni: “%1$s”</string>
+    <string name="mm_notes_none">Henüz not yok</string>
+    <string name="mm_capsule_count">%1$d mühürlü mektup</string>
+    <string name="mm_capsule_next">En yakını %1$d gün sonra</string>
+    <string name="mm_capsule_none">Henüz mektup yok</string>
+    <string name="mm_capsule_write">Geleceğe bir mektup yaz</string>
+    <string name="mm_recent">Son anılar</string>
+    <string name="mm_recent_none">Birlikte yaptıklarınız burada birikecek.</string>
+    <string name="mm_ev_note">%1$s bir not bıraktı</string>
+    <string name="mm_ev_drawing">Birlikte bir resim çizdiniz</string>
+    <string name="mm_ev_dream_added">%1$s bir hayal ekledi</string>
+    <string name="mm_ev_dream_done">%1$s hayali gerçekleşti</string>
+    <string name="mm_ev_year">%1$d. yılınızı kutladınız</string>
+    <string name="mm_ev_100">100. gününüzü kutladınız</string>
+    <string name="mm_ev_capsule">%1$s bir mektup mühürledi</string>
+    <string name="mm_today">Bugün</string>
+    <string name="mm_yesterday">Dün</string>
+
+    <!-- Widgets (approved design 15) -->
+    <string name="widget_wide_name">Lovelyy kedi (geniş)</string>
+    <string name="widget_days_name">Lovelyy gün sayacı</string>
+    <string name="widget_drawing_name">Lovelyy canlı çizim</string>
+    <string name="widget_streak">%1$d gün seri</string>
+    <string name="widget_couple_day">%1$s · %2$d. gün</string>
+    <string name="widget_together">Birlikte</string>
+    <string name="widget_days">%1$d gün</string>
+    <string name="widget_send_heart">Kalp gönder</string>
+    <string name="widget_heart_sent">Kalp gönderildi 💛</string>
+    <string name="widget_heart_failed">Kalp gönderilemedi, uygulamayı aç</string>
+    <string name="widget_drawing_empty">Birlikte çizmek için dokun</string>
+    <string name="wg_subtitle">Telefonun ana ekranında böyle görünür</string>
+    <string name="wg_cat_small">Kedi · küçük</string>
+    <string name="wg_cat_wide">Kedi · geniş</string>
+    <string name="wg_drawing">Canlı çizim</string>
+    <string name="wg_days">Gün sayacı + tek dokunuşla kalp</string>
+    <string name="wg_hint">Ana ekrana eklemek için bir widget\'a dokun</string>
+    <string name="wg_pin_failed">Bu telefon widget eklemeyi desteklemiyor. Ana ekrana uzun basıp Widget\'lar\'dan ekleyebilirsin.</string>
+    <string name="widget_days_sample">♥ gün</string>
+    <string name="widget_drawing_sample_live">Canlı çizim</string>
+    <string name="del_confirm">Sil</string>
+    <string name="del_dream_title">Bu hayal silinsin mi?</string>
+    <string name="del_dream_body">İkinizin listesinden de kalkar. Geri alınamaz.</string>
+    <string name="del_letter_title">Bu mektup silinsin mi?</string>
+    <string name="del_letter_body">Mektup zaman kapsülünden kalıcı olarak silinir. Geri alınamaz.</string>
+    <string name="del_note_title">Bu not silinsin mi?</string>
+    <string name="del_note_body">Not ikinizin panosundan da kalkar. Geri alınamaz.</string>
+    <string name="del_plan_title">Bu plan silinsin mi?</string>
+    <string name="del_plan_body">Plan ikinizin takviminden de kalkar. Geri alınamaz.</string>
+    <string name="del_wheel_title">Bu çark silinsin mi?</string>
+    <string name="del_wheel_body">Çark ve seçenekleri ikinizde de silinir. Geri alınamaz.</string>
+    <string name="gone_plan">Bu plan partnerin tarafından silinmiş</string>
+    <string name="gone_note">Bu not partnerin tarafından silinmiş</string>
+    <string name="gone_dream">Bu hayal partnerin tarafından silinmiş</string>
+    <string name="gone_wheel">Bu çark partnerin tarafından silinmiş</string>
+    <string name="tc_draft_kept">Mektubun taslak olarak saklandı</string>
 </resources>

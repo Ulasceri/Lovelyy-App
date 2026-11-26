@@ -54,6 +54,7 @@ import androidx.compose.material.icons.filled.SportsBaseball
 import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -88,6 +89,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -126,7 +128,7 @@ import kotlin.random.Random
 
 /** The whole cat block of Home: the living cat, its needs, the care buttons and the streak. */
 @Composable
-fun CatSection(me: UserProfile, couple: Couple?, partner: UserProfile?, modifier: Modifier = Modifier) {
+fun CatSection(me: UserProfile, couple: Couple?, partner: UserProfile?, modifier: Modifier = Modifier, onOpenCare: () -> Unit = {}) {
     val coupleId = me.coupleId ?: return
     val app = lovelyyApp()
     val vm: CatViewModel = viewModel(key = "cat-$coupleId") { CatViewModel(app, coupleId, me.uid) }
@@ -225,6 +227,9 @@ fun CatSection(me: UserProfile, couple: Couple?, partner: UserProfile?, modifier
                 onPetting = { animator.setPetting(it) },
                 onStroke = { view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK) },
                 onPetDone = { strokes -> if (strokes > 0) vm.act(me, members, CatActionType.Pet, strokes) },
+                onStreakClick = onOpenCare,
+                wearing = ui?.doc?.let { com.lovelyy.app.data.CareRewards.worn(it.wearing, it.streak.best) },
+                footer = ui?.doc?.recent?.let { todayLineText(it, me.uid, partnerName) },
             )
             NeedsRow(ui?.levels)
         }
@@ -243,11 +248,9 @@ fun CatSection(me: UserProfile, couple: Couple?, partner: UserProfile?, modifier
         ui?.let { u ->
             StatusLine(
                 streak = u.doc.streak,
-                lastAction = u.doc.lastAction,
                 me = me,
                 partnerUid = partner?.uid,
                 partnerName = partnerName,
-                describe = texts,
                 modifier = Modifier.padding(top = 14.dp),
             )
         }
@@ -269,11 +272,11 @@ fun CatSection(me: UserProfile, couple: Couple?, partner: UserProfile?, modifier
     }
 }
 
-private fun confirmHaptic() =
+internal fun confirmHaptic() =
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) HapticFeedbackConstants.CONFIRM else HapticFeedbackConstants.KEYBOARD_TAP
 
 /** The animation that shows an action. Sleep/Wake are shown by the mood itself. */
-private fun CatActionType.clip(): CatClip? = when (this) {
+internal fun CatActionType.clip(): CatClip? = when (this) {
     CatActionType.Feed -> CatClip.Eating
     CatActionType.Water -> CatClip.Drinking
     CatActionType.Play -> CatClip.Playing
@@ -287,7 +290,7 @@ private fun CatActionType.clip(): CatClip? = when (this) {
 private data class Heart(val id: Long, val at: Offset, val drift: Float, val size: Float)
 
 @Composable
-private fun CatStage(
+internal fun CatStage(
     animator: CatAnimator,
     sleepingPoster: Boolean,
     name: String?,
@@ -299,6 +302,17 @@ private fun CatStage(
     onPetting: (Boolean) -> Unit,
     onStroke: () -> Unit,
     onPetDone: (Int) -> Unit,
+    stageModifier: Modifier = Modifier.aspectRatio(STAGE_RATIO),
+    /** Which part of the square video stays visible when the stage is wider than tall (0.5 = middle). */
+    cropBias: Float = 0.5f,
+    showChips: Boolean = true,
+    bubbleTop: Dp = 64.dp,
+    bubbleEnd: Dp = 18.dp,
+    /** A small line pinned bottom-left ("Bugün: sen sevdin"), hidden while a banner shows. */
+    footer: String? = null,
+    onStreakClick: (() -> Unit)? = null,
+    /** The accessory the cat wears; drawn while the cat sits still (the idle clip or the poster). */
+    wearing: com.lovelyy.app.data.CareRewards.Accessory? = null,
 ) {
     val hearts = remember { mutableStateListOf<Heart>() }
     val density = LocalDensity.current
@@ -312,7 +326,7 @@ private fun CatStage(
     BoxWithConstraints(
         Modifier
             .fillMaxWidth()
-            .aspectRatio(STAGE_RATIO)
+            .then(stageModifier)
             .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
             .background(CatBg)
             // Tap = surprise. Stroke = petting (hearts + purring + love).
@@ -359,7 +373,8 @@ private fun CatStage(
     ) {
         val side = maxWidth
         // Videos are square; the stage is a bit wider than tall, so crop top and bottom evenly.
-        Box(Modifier.requiredSize(side, side)) {
+        val shift = (side - maxHeight) * (0.5f - cropBias)
+        Box(Modifier.requiredSize(side, side).offset(y = shift)) {
             if (!animator.started) {
                 Image(
                     painter = painterResource(if (sleepingPoster) R.drawable.cat_sleep else R.drawable.cat_base),
@@ -377,12 +392,18 @@ private fun CatStage(
                         .zIndex(animator.z(layer)),
                 )
             }
+            if (wearing != null) {
+                // The accessory is a drawing on top of the video, so it only shows while the cat sits still.
+                val still = if (animator.started) animator.currentClip == CatClip.Idle else !sleepingPoster
+                val alpha by androidx.compose.animation.core.animateFloatAsState(if (still) 1f else 0f, label = "accessory")
+                CatAccessoryLayer(wearing, Modifier.fillMaxSize().zIndex(2f).graphicsLayer { this.alpha = alpha })
+            }
         }
 
         hearts.forEach { h -> key(h.id) { FloatingHeart(h) { hearts.remove(h) } } }
 
         // Top: name tag and streak.
-        Row(
+        if (showChips) Row(
             Modifier
                 .fillMaxWidth()
                 .padding(14.dp)
@@ -398,7 +419,7 @@ private fun CatStage(
                 Icon(Icons.Filled.Edit, null, Modifier.size(14.dp), tint = BrownSoft)
             }
             Spacer(Modifier.weight(1f))
-            Chip(solid = true) {
+            Chip(onClick = onStreakClick, solid = true) {
                 Icon(Icons.Filled.LocalFireDepartment, null, Modifier.size(16.dp), tint = Color(0xFFE07A45))
                 Spacer(Modifier.width(4.dp))
                 Text(stringResource(R.string.cat_streak_chip, streak), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Brown)
@@ -415,13 +436,32 @@ private fun CatStage(
                 fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Brown,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(top = 64.dp, end = 18.dp)
+                    .padding(
+                        // With the hat on, the bubble moves to the right edge so it doesn't cover the brim.
+                        top = bubbleTop + if (wearing == com.lovelyy.app.data.CareRewards.Accessory.Sapka) 4.dp else 0.dp,
+                        end = if (wearing == com.lovelyy.app.data.CareRewards.Accessory.Sapka) 4.dp else bubbleEnd,
+                    )
                     .zIndex(3f)
                     .graphicsLayer { translationY = bob.dp.toPx() }
                     .softShadow(RoundedCornerShape(16.dp, 16.dp, 4.dp, 16.dp), 4.dp)
                     .clip(RoundedCornerShape(16.dp, 16.dp, 4.dp, 16.dp))
                     .background(CreamCard)
                     .padding(horizontal = 12.dp, vertical = 8.dp),
+            )
+        }
+
+        if (footer != null && banner == null) {
+            Text(
+                footer,
+                fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Brown,
+                maxLines = 1, overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(start = 14.dp, end = 14.dp, bottom = 12.dp)
+                    .zIndex(3f)
+                    .clip(RoundedCornerShape(50))
+                    .background(CreamCard.copy(alpha = 0.9f))
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
             )
         }
 
@@ -547,7 +587,7 @@ private fun NeedMeter(label: String, value: Double?, modifier: Modifier) {
 }
 
 /** The care button to highlight: the need that is lowest (if it's getting low). */
-private fun mostNeeded(l: CatLevels): CatActionType? {
+internal fun mostNeeded(l: CatLevels): CatActionType? {
     if (l.sleeping) return null
     val needs = listOf(
         CatActionType.Feed to l.hunger,
@@ -559,7 +599,7 @@ private fun mostNeeded(l: CatLevels): CatActionType? {
     return if (v < CatRules.HAPPY) type else null
 }
 
-private fun CatMood.bubbleRes(): Int = when (this) {
+internal fun CatMood.bubbleRes(): Int = when (this) {
     CatMood.Sleeping -> R.string.bubble_sleeping
     CatMood.Hungry -> R.string.bubble_hungry
     CatMood.Thirsty -> R.string.bubble_thirsty
@@ -583,9 +623,9 @@ private fun CareButtons(
     modifier: Modifier = Modifier,
 ) {
     Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-        CareButton(Icons.Filled.Restaurant, stringResource(R.string.cat_feed), enabled && !sleeping, highlight == CatActionType.Feed, onFeed, Modifier.weight(1f))
-        CareButton(Icons.Filled.WaterDrop, stringResource(R.string.cat_water), enabled && !sleeping, highlight == CatActionType.Water, onWater, Modifier.weight(1f))
-        CareButton(Icons.Filled.SportsBaseball, stringResource(R.string.cat_play), enabled && !sleeping, highlight == CatActionType.Play, onPlay, Modifier.weight(1f))
+        CareButton(Icons.Filled.Restaurant, stringResource(R.string.cat_feed), enabled, highlight == CatActionType.Feed, onFeed, Modifier.weight(1f), dimmed = sleeping)
+        CareButton(Icons.Filled.WaterDrop, stringResource(R.string.cat_water), enabled, highlight == CatActionType.Water, onWater, Modifier.weight(1f), dimmed = sleeping)
+        CareButton(Icons.Filled.SportsBaseball, stringResource(R.string.cat_play), enabled, highlight == CatActionType.Play, onPlay, Modifier.weight(1f), dimmed = sleeping)
         CareButton(
             if (sleeping) Icons.Filled.WbSunny else Icons.Filled.Bedtime,
             stringResource(if (sleeping) R.string.cat_wake else R.string.cat_sleep),
@@ -595,14 +635,14 @@ private fun CareButtons(
 }
 
 @Composable
-private fun CareButton(icon: ImageVector, label: String, enabled: Boolean, highlighted: Boolean, onClick: () -> Unit, modifier: Modifier) {
+private fun CareButton(icon: ImageVector, label: String, enabled: Boolean, highlighted: Boolean, onClick: () -> Unit, modifier: Modifier, dimmed: Boolean = false) {
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
     val scale by animateFloatAsState(
         if (pressed) 0.88f else 1f,
         spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium), label = "press",
     )
-    val alpha by animateFloatAsState(if (enabled) 1f else 0.45f, label = "enabled")
+    val alpha by animateFloatAsState(if (enabled && !dimmed) 1f else 0.45f, label = "enabled")
     val bg by androidx.compose.animation.animateColorAsState(if (highlighted) Peach else CreamCard, label = "bg")
     Column(
         modifier
@@ -630,16 +670,13 @@ private fun CareButton(icon: ImageVector, label: String, enabled: Boolean, highl
 @Composable
 private fun StatusLine(
     streak: CareStreak,
-    lastAction: CatAction?,
     me: UserProfile,
     partnerUid: String?,
     partnerName: String,
-    describe: (CatAction) -> String,
     modifier: Modifier = Modifier,
 ) {
     val today = LocalDate.now()
     val parts = buildList {
-        if (lastAction != null) add(describe(lastAction).trimEnd() + " · " + relativeTime(lastAction.at))
         val meDone = streak.caredToday(me.uid, today)
         val partnerDone = partnerUid != null && streak.caredToday(partnerUid, today)
         add(
@@ -658,20 +695,9 @@ private fun StatusLine(
     )
 }
 
-@Composable
-private fun relativeTime(at: Long): String {
-    val minutes = ((System.currentTimeMillis() - at) / 60_000).coerceAtLeast(0)
-    return when {
-        minutes < 1 -> stringResource(R.string.time_now)
-        minutes < 60 -> stringResource(R.string.time_minutes, minutes)
-        minutes < 24 * 60 -> stringResource(R.string.time_hours, minutes / 60)
-        else -> stringResource(R.string.time_days, minutes / (24 * 60))
-    }
-}
-
 /** "Deniz besledi", "Sen oynadın"... */
 @Composable
-private fun actionTexts(partnerName: String, myUid: String): (CatAction) -> String {
+internal fun actionTexts(partnerName: String, myUid: String): (CatAction) -> String {
     val context = LocalContext.current
     return remember(partnerName, myUid) {
         { a: CatAction ->
@@ -692,7 +718,7 @@ private fun actionTexts(partnerName: String, myUid: String): (CatAction) -> Stri
 }
 
 @Composable
-private fun refusalTexts(catName: String?): (CatRules.Refusal) -> String {
+internal fun refusalTexts(catName: String?): (CatRules.Refusal) -> String {
     val context = LocalContext.current
     val name = catName?.takeIf { it.isNotBlank() } ?: context.getString(R.string.cat_generic)
     return remember(name) {
@@ -713,7 +739,7 @@ private fun refusalTexts(catName: String?): (CatRules.Refusal) -> String {
 // ---------- naming ----------
 
 @Composable
-private fun NameCatDialog(initial: String, canDismiss: Boolean, onDismiss: () -> Unit, onSave: (String) -> Unit) {
+internal fun NameCatDialog(initial: String, canDismiss: Boolean, onDismiss: () -> Unit, onSave: (String) -> Unit) {
     var text by remember { mutableStateOf(initial) }
     AlertDialog(
         onDismissRequest = { if (canDismiss) onDismiss() },
@@ -731,15 +757,15 @@ private fun NameCatDialog(initial: String, canDismiss: Boolean, onDismiss: () ->
             }
         },
         confirmButton = {
-            TextButton(onClick = { onSave(text.trim()) }, enabled = text.isNotBlank()) { Text(stringResource(R.string.action_save)) }
+            TextButton(onClick = { onSave(text.trim()) }, enabled = text.isNotBlank(), colors = ButtonDefaults.textButtonColors(contentColor = Brown)) { Text(stringResource(R.string.action_save)) }
         },
         dismissButton = if (canDismiss) {
-            { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } }
+            { TextButton(onClick = onDismiss, colors = ButtonDefaults.textButtonColors(contentColor = Brown)) { Text(stringResource(R.string.action_cancel)) } }
         } else null,
         shape = MaterialTheme.shapes.extraLarge,
         containerColor = MaterialTheme.colorScheme.background,
     )
 }
 
-private const val STAGE_RATIO = 1.12f
+internal const val STAGE_RATIO = 1.12f
 private const val STROKE_DP = 70

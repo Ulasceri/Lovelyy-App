@@ -11,11 +11,15 @@ Android uygulaması Kotlin + Jetpack Compose + Material 3 ile yazılır, arka u�
 |---|---|
 | Karşılama, Giriş (Google + e-posta/şifre), isim belirleme | Hazır |
 | Partnerle 6 haneli kodla eşleşme | Hazır |
-| Anasayfa (Yuva / Anılar / Planlar / Biz) ve alt gezinme çubuğu | Hazır (onaylı tasarım aktarıldı) |
-| Ortak animasyonlu kedi: besle, su ver, oyna, sev, uyut | Hazır (kısa videolar `assets/cat/` içinde, ExoPlayer ile oynar) |
-| Ana ekran widget'ı (kedinin anlık durumu) | Hazır |
+| Anasayfa (Yuva / Anılar / Planlar / Biz) ve alt gezinme çubuğu | Hazır |
+| Ortak animasyonlu kedi: ana sayfa + kedi bakımı ekranı, seri ve aksesuarlar | Hazır (kısa videolar `assets/cat/` içinde, ExoPlayer ile oynar) |
+| Gün sayacı, kalp atışı, ruh hali, günün sorusu, notlar | Hazır |
+| Planlar (takvim + özel günler), hayaller listesi, karar çarkı | Hazır |
+| Anılar: canlı çizim, zaman kapsülü | Hazır |
+| Biz: profil, ayarlar, mesafe (şehir düzeyinde konum paylaşımı) | Hazır |
+| 4 ana ekran widget'ı (küçük kedi, geniş kedi, gün sayacı + kalp, canlı çizim) | Hazır |
 | Analytics, Crashlytics, Performance, Timber katmanı | Hazır, bkz. [docs/analytics.md](docs/analytics.md) |
-| Sayaç, kalp atışı, ruh hali, notlar vb. diğer özellikler | Henüz yapılmadı: arayüzde **"Yakında"** olarak görünür. Her biri önce tasarlanıp onaylanır, sonra yapılır. Anılar ve Planlar sekmeleri de şimdilik "Yakında" yer tutucusudur. |
+| Henüz tasarlanıp kodlanmamış ekranlar | Arayüzde **"Yakında"** olarak görünür |
 
 ## Teknoloji
 

@@ -17,9 +17,11 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.google.firebase.auth.FirebaseAuth
 import com.lovelyy.app.LovelyyApplication
-import com.lovelyy.app.MainActivity
+import com.lovelyy.app.DeepLink
 import com.lovelyy.app.R
+import com.lovelyy.app.data.CareStreak
 import com.lovelyy.app.data.CatDoc
+import com.lovelyy.app.ui.cat.bubbleRes
 import com.lovelyy.app.data.CatMood
 import com.lovelyy.app.data.CatRules
 import com.lovelyy.app.data.Need
@@ -46,6 +48,8 @@ object CatWidget {
             putNeed("energy", doc.energy)
             putNeed("love", doc.love)
             putLong("sleepingSince", doc.sleepingSince ?: 0L)
+            putInt("streak.count", doc.streak.count)
+            putString("streak.last", doc.streak.lastCompleteDay)
         }
         updateAll(context)
     }
@@ -66,29 +70,70 @@ object CatWidget {
             energy = need("energy"),
             love = need("love"),
             sleepingSince = p.getLong("sleepingSince", 0L).takeIf { it > 0 },
+            streak = CareStreak(count = p.getInt("streak.count", 0), lastCompleteDay = p.getString("streak.last", null)),
         )
     }
 
     fun coupleId(context: Context): String? =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString("coupleId", null)
 
+    /** Refreshes every cat widget (small and wide). */
     fun updateAll(context: Context) {
         val manager = AppWidgetManager.getInstance(context)
         val ids = manager.getAppWidgetIds(ComponentName(context, CatWidgetProvider::class.java))
-        if (ids.isEmpty()) return
-        val views = render(context)
-        ids.forEach { manager.updateAppWidget(it, views) }
+        if (ids.isNotEmpty()) {
+            val views = render(context)
+            ids.forEach { manager.updateAppWidget(it, views) }
+        }
+        val wide = manager.getAppWidgetIds(ComponentName(context, CatWideWidgetProvider::class.java))
+        if (wide.isNotEmpty()) {
+            val views = renderWide(context)
+            wide.forEach { manager.updateAppWidget(it, views) }
+        }
     }
+
+    /** "Kedi · geniş": picture, name + streak, the four needs and "Ulaş & Elif · 412. gün". */
+    private fun renderWide(context: Context): RemoteViews {
+        val doc = load(context)
+        val views = RemoteViews(context.packageName, R.layout.widget_cat_wide)
+        views.setOnClickPendingIntent(R.id.wide_root, openApp(context, DeepLink.CAT))
+        val couple = WidgetData.couple(context)
+        views.setTextViewText(
+            R.id.wide_couple,
+            if (couple != null && couple.startMillis != null) {
+                context.getString(R.string.widget_couple_day, context.getString(R.string.home_us, couple.myName, couple.partnerName), couple.days())
+            } else couple?.let { context.getString(R.string.home_us, it.myName, it.partnerName) } ?: context.getString(R.string.widget_open_app),
+        )
+        if (doc == null) {
+            views.setImageViewResource(R.id.wide_cat, R.drawable.cat_w_idle)
+            views.setTextViewText(R.id.wide_name, context.getString(R.string.app_name))
+            views.setTextViewText(R.id.wide_streak, context.getString(R.string.widget_streak, 0))
+            return views
+        }
+        val levels = CatRules.levels(doc)
+        views.setImageViewResource(R.id.wide_cat, levels.mood.picture())
+        views.setTextViewText(R.id.wide_name, doc.name?.takeIf { it.isNotBlank() } ?: context.getString(R.string.cat_generic))
+        views.setTextViewText(R.id.wide_streak, context.getString(R.string.widget_streak, doc.streak.current(java.time.LocalDate.now())))
+        fun bar(ok: Int, low: Int, value: Double) {
+            val v = value.toInt().coerceIn(0, 100)
+            val isLow = value < CatRules.LOW
+            views.setViewVisibility(ok, if (isLow) android.view.View.GONE else android.view.View.VISIBLE)
+            views.setViewVisibility(low, if (isLow) android.view.View.VISIBLE else android.view.View.GONE)
+            views.setProgressBar(if (isLow) low else ok, 100, v, false)
+        }
+        bar(R.id.wide_hunger_ok, R.id.wide_hunger_low, levels.hunger)
+        bar(R.id.wide_thirst_ok, R.id.wide_thirst_low, levels.thirst)
+        bar(R.id.wide_energy_ok, R.id.wide_energy_low, levels.energy)
+        bar(R.id.wide_love_ok, R.id.wide_love_low, levels.love)
+        return views
+    }
+
+    internal fun openApp(context: Context, route: String? = null): PendingIntent = DeepLink.intent(context, route)
 
     private fun render(context: Context): RemoteViews {
         val doc = load(context)
         val views = RemoteViews(context.packageName, R.layout.widget_cat)
-        val open = PendingIntent.getActivity(
-            context, 0,
-            Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
-        )
-        views.setOnClickPendingIntent(R.id.widget_root, open)
+        views.setOnClickPendingIntent(R.id.widget_root, openApp(context, DeepLink.CAT))
         if (doc == null) {
             views.setImageViewResource(R.id.widget_cat, R.drawable.cat_w_idle)
             views.setTextViewText(R.id.widget_name, context.getString(R.string.app_name))
@@ -98,7 +143,7 @@ object CatWidget {
         val mood = CatRules.levels(doc).mood
         views.setImageViewResource(R.id.widget_cat, mood.picture())
         views.setTextViewText(R.id.widget_name, doc.name?.takeIf { it.isNotBlank() } ?: context.getString(R.string.cat_generic))
-        views.setTextViewText(R.id.widget_status, context.getString(mood.text()))
+        views.setTextViewText(R.id.widget_status, context.getString(mood.bubbleRes()))
         return views
     }
 
@@ -110,16 +155,6 @@ object CatWidget {
         CatMood.WantsLove -> R.drawable.cat_w_love
         CatMood.Happy -> R.drawable.cat_w_happy
         CatMood.Idle -> R.drawable.cat_w_idle
-    }
-
-    private fun CatMood.text() = when (this) {
-        CatMood.Sleeping -> R.string.mood_sleeping
-        CatMood.Hungry -> R.string.mood_hungry
-        CatMood.Thirsty -> R.string.mood_thirsty
-        CatMood.Sleepy -> R.string.mood_sleepy
-        CatMood.WantsLove -> R.string.mood_love
-        CatMood.Happy -> R.string.mood_happy
-        CatMood.Idle -> R.string.mood_idle
     }
 
     fun schedule(context: Context) {
@@ -141,8 +176,18 @@ class CatWidgetProvider : AppWidgetProvider() {
     override fun onEnabled(context: Context) = CatWidget.schedule(context)
 
     override fun onDisabled(context: Context) {
-        CatWidget.cancel(context)
+        if (!WidgetData.anyWidgets(context)) CatWidget.cancel(context)
     }
+}
+
+/** "Kedi · geniş" widget. Rendered together with the small one by [CatWidget.updateAll]. */
+class CatWideWidgetProvider : AppWidgetProvider() {
+    override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) {
+        CatWidget.updateAll(context)
+        CatWidget.schedule(context)
+    }
+
+    override fun onEnabled(context: Context) = CatWidget.schedule(context)
 }
 
 /** Fetches the latest cat so the widget also shows what the partner did. */
@@ -156,6 +201,10 @@ class CatWidgetWorker(context: Context, params: WorkerParameters) : CoroutineWor
         val coupleId = CatWidget.coupleId(app) ?: return Result.success()
         return try {
             app.catRepository.get(coupleId)?.let { CatWidget.save(app, coupleId, it) } ?: CatWidget.updateAll(app)
+            DaysWidget.updateAll(app)
+            if (DrawingWidget.hasWidgets(app)) {
+                runCatching { DrawingWidget.save(app, app.drawingRepository.current(coupleId), null) }
+            }
             Result.success()
         } catch (e: Exception) {
             Timber.w(e, "Widget refresh failed, will retry")

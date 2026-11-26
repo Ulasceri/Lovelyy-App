@@ -35,13 +35,11 @@ Android app for couples with a **shared cat** they care for together. Kotlin + J
 Material 3, Firebase only (Auth, Firestore, Crashlytics, Analytics, Performance), monorepo.
 iOS comes later (`ios/` is a stub). Product: [docs/product.md](docs/product.md).
 
-**Built (designed + approved):** Karşılama, Giriş, Eşleşme, Anasayfa (with the cat), and telemetry.
-**Everything else is a "Yakında" placeholder** (`home_soon` string): Home cards and bottom-nav tabs
-(Yuva, Anılar, Planlar, Biz) answer a tap with "Yakında".
-
-Earlier undesigned feature screens (day counter, heartbeat, mood, daily question, notes, calendar) were
-removed on 2026-11-25. The data layer (`data/*`, `signals/*`) was kept and is **not wired to UI**; rebuild
-screens on top of it only after design + approval. They are in git history up to commit `cf23db5`.
+**Built (designed + approved):** Karşılama, Giriş, Eşleşme, Anasayfa with the bottom nav (Yuva, Anılar,
+Planlar, Biz), the cat and Kedi bakımı (streak, accessories), day counter, heartbeat, mood, daily question,
+notes, calendar, bucket list, decision wheel, live drawing, time capsule, distance, profile/settings,
+4 home-screen widgets, and telemetry.
+**Not designed yet = "Yakında" placeholder** (`home_soon` string), e.g. old drawings and heartbeat history.
 
 ## Architecture and where things live
 

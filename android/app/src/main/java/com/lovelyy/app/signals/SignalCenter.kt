@@ -19,17 +19,22 @@ import androidx.core.content.edit
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.workDataOf
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestoreException
 import com.lovelyy.app.LovelyyApplication
-import com.lovelyy.app.MainActivity
+import com.lovelyy.app.DeepLink
 import com.lovelyy.app.R
 import com.lovelyy.app.data.Emotion
 import com.lovelyy.app.data.MoodKind
 import com.lovelyy.app.data.Signal
+import com.lovelyy.app.data.SignalFreshness
 import com.lovelyy.app.data.SignalKind
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -39,7 +44,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 import timber.log.Timber
@@ -54,6 +61,22 @@ import timber.log.Timber
  *    in the background it posts a local notification with a heartbeat vibration.
  *  - When the app is fully closed, [SignalWorker] checks every ~15 minutes (Android's minimum)
  *    and posts the notifications it missed.
+ *
+ * "Is this new?" never trusts the sender's clock: see [SignalFreshness] (seen ids + server time).
+ *
+ * Why a signal can still arrive late while the app is in the background (platform limits we can't
+ * fix without real push):
+ *  - Android freezes cached background processes (the "cached apps freezer", Android 11+, and
+ *    Doze / App Standby on idle phones). A frozen process keeps its Firestore listener registered
+ *    but receives nothing until something wakes it, so the listener alone can lag by minutes.
+ *  - Periodic WorkManager work can't run more often than every 15 minutes and Doze may defer it
+ *    further (maintenance windows); one-time work with a delay is also only "at the earliest".
+ * What we do about it: the listener is started as soon as the process starts (also when a worker
+ * starts it) and re-subscribes after transient errors instead of stopping for good (before, one
+ * error ended it until the next 15-minute check); and when the app goes to the background we queue
+ * a short series of one-time checks (~1, 3, 7 and 15 minutes later, see
+ * [SignalWorker.scheduleFollowUps]). Each job run wakes the process, so the listener catches up
+ * then too. Only FCM (Blaze plan + a Cloud Function) makes delivery instant.
  */
 class SignalCenter(private val app: LovelyyApplication) {
 
@@ -69,8 +92,27 @@ class SignalCenter(private val app: LovelyyApplication) {
     /** The couple's latest signals, newest first (both directions). */
     val recent: StateFlow<List<Signal>> = _recent
 
-    /** Set by MainActivity: true while the app is on screen. */
+    /** True while the app is on screen. Set by MainActivity through [onAppVisible]. */
     @Volatile var appVisible = false
+        private set
+
+    /** MainActivity onStart/onStop. Going to the background queues a few quick catch-up checks. */
+    fun onAppVisible(visible: Boolean) {
+        appVisible = visible
+        if (!app.isFirebaseConfigured || savedCouple(app) == null) return
+        if (visible) SignalWorker.cancelFollowUps(app) else SignalWorker.scheduleFollowUps(app)
+    }
+
+    /**
+     * Process start (Application.onCreate, also when WorkManager starts the process): listen again
+     * for the couple saved last time, so the listener lives as long as the process does.
+     */
+    fun resumeIfSignedIn() {
+        if (!app.isFirebaseConfigured) return
+        val user = FirebaseAuth.getInstance().currentUser ?: return
+        val (coupleId, myUid) = savedCouple(app) ?: return
+        if (user.uid == myUid) start(coupleId, myUid)
+    }
 
     fun start(coupleId: String, myUid: String) {
         val key = "$coupleId/$myUid"
@@ -78,19 +120,23 @@ class SignalCenter(private val app: LovelyyApplication) {
         stop()
         listeningTo = key
         save(app) { putString(K_COUPLE, coupleId); putString(K_UID, myUid) }
-        if (lastSeen(app) == 0L) save(app) { putLong(K_LAST, System.currentTimeMillis() - FIRST_RUN_GRACE_MS) }
         SignalWorker.schedule(app)
         job = scope.launch {
             app.signalRepository.observeRecent(coupleId)
-                .catch { Timber.w(it, "Signal updates stopped (offline or signed out?)") /* the worker will catch up */ }
+                // Keep listening while the process lives: re-subscribe after transient errors
+                // (network, unavailable). Permission denied means unpaired or signed out: stop then.
+                .retryWhen { cause, attempt ->
+                    val denied = (cause as? FirebaseFirestoreException)?.code == FirebaseFirestoreException.Code.PERMISSION_DENIED
+                    if (denied) return@retryWhen false
+                    Timber.w(cause, "Signal updates failed, re-subscribing")
+                    delay((5_000L shl attempt.coerceAtMost(6L).toInt()).coerceAtMost(5 * 60_000L))
+                    true
+                }
+                .catch { Timber.w(it, "Signal updates stopped (unpaired or signed out?)") /* the worker will catch up */ }
                 .collect { list ->
                     _recent.value = list
-                    val last = lastSeen(app)
-                    val fresh = list.filter { it.to == myUid && it.at > last }.sortedBy { it.at }
-                    if (fresh.isEmpty()) return@collect
-                    save(app) { putLong(K_LAST, fresh.last().at) }
                     // No in-app overlay yet (its design isn't approved): everything is a notification.
-                    fresh.takeLast(MAX_NOTIFY).forEach { notify(app, it) }
+                    deliver(app, myUid, list)
                 }
         }
     }
@@ -111,12 +157,17 @@ class SignalCenter(private val app: LovelyyApplication) {
 
     companion object {
         private const val PREFS = "signals"
-        private const val K_LAST = "lastSeenAt"
+        /** Pre-fix "newest sender time seen". Only read to migrate without re-notifying. */
+        private const val K_LEGACY_LAST = "lastSeenAt"
+        private const val K_FLOOR = "floor"
+        private const val K_SEEN = "seenIds"
         private const val K_COUPLE = "coupleId"
         private const val K_UID = "uid"
         private const val CHANNEL = "partner_signals"
-        private const val FIRST_RUN_GRACE_MS = 10 * 60_000L
+        /** Notified one by one; older fresh signals are folded into one summary notification. */
         private const val MAX_NOTIFY = 3
+        /** Listener and worker run in the same process: decide + save as one step. */
+        private val LOCK = Any()
         /** Heartbeat-like vibration: ba-dum ... ba-dum. */
         val HEARTBEAT_PATTERN = longArrayOf(0, 90, 110, 140, 520, 90, 110, 140)
         val NUDGE_PATTERN = longArrayOf(0, 60, 90, 60)
@@ -124,8 +175,34 @@ class SignalCenter(private val app: LovelyyApplication) {
         private inline fun save(context: Context, block: android.content.SharedPreferences.Editor.() -> Unit) =
             context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit(action = block)
 
-        fun lastSeen(context: Context) = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getLong(K_LAST, 0L)
-        fun markSeen(context: Context, at: Long) = save(context) { putLong(K_LAST, at) }
+        /** Picks the new signals for me in [list], remembers them and posts their notifications. */
+        fun deliver(context: Context, myUid: String, list: List<Signal>) {
+            val fresh = synchronized(LOCK) {
+                val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                val state = if (prefs.contains(K_FLOOR)) {
+                    SignalFreshness.State(
+                        floor = prefs.getLong(K_FLOOR, 0L),
+                        seen = prefs.getString(K_SEEN, null).orEmpty().split(',').filter { it.isNotEmpty() },
+                    )
+                } else {
+                    null
+                }
+                // Updating from the old sender-clock version: what is already there was handled, no grace.
+                val grace = if (prefs.contains(K_LEGACY_LAST)) 0L else SignalFreshness.FIRST_RUN_GRACE_MS
+                val decision = SignalFreshness.decide(list, myUid, state, System.currentTimeMillis(), grace)
+                save(context) {
+                    putLong(K_FLOOR, decision.state.floor)
+                    putString(K_SEEN, decision.state.seen.joinToString(","))
+                    remove(K_LEGACY_LAST)
+                }
+                decision.fresh
+            }
+            if (fresh.isEmpty()) return
+            val (single, rest) = SignalFreshness.split(fresh, MAX_NOTIFY)
+            if (rest.isNotEmpty()) notifySummary(context, rest)
+            single.forEach { notify(context, it) }
+        }
+
         fun savedCouple(context: Context): Pair<String, String>? {
             val p = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             val c = p.getString(K_COUPLE, null) ?: return null
@@ -146,6 +223,7 @@ class SignalCenter(private val app: LovelyyApplication) {
                 SignalKind.Question -> context.getString(R.string.signal_question_msg, who)
                 SignalKind.Note -> context.getString(R.string.signal_note_msg, who)
                 SignalKind.Event -> context.getString(R.string.signal_event_msg, who, s.text.orEmpty())
+                SignalKind.Wheel -> context.getString(R.string.signal_wheel_msg, who, s.text.orEmpty())
             }
         }
 
@@ -167,27 +245,48 @@ class SignalCenter(private val app: LovelyyApplication) {
             Build.VERSION.SDK_INT < 33 ||
                 ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
 
+        private fun route(kind: SignalKind) = when (kind) {
+            SignalKind.Heartbeat, SignalKind.Nudge -> DeepLink.HEARTBEAT
+            SignalKind.Mood -> DeepLink.MOOD
+            SignalKind.Question -> DeepLink.QUESTION
+            SignalKind.Note -> DeepLink.NOTES
+            SignalKind.Event -> DeepLink.PLANS
+            SignalKind.Wheel -> DeepLink.WHEEL
+        }
+
         fun notify(context: Context, s: Signal) {
+            // A tap opens the screen the signal is about.
+            val open = DeepLink.intent(context, route(s.kind), requestCode = 1000 + s.kind.ordinal)
+            post(context, s.id.hashCode(), message(context, s), open, if (s.kind == SignalKind.Nudge) NUDGE_PATTERN else HEARTBEAT_PATTERN)
+        }
+
+        /** "Bora sana 5 kalp daha gönderdi": the older fresh signals beyond [MAX_NOTIFY], in one notification. */
+        fun notifySummary(context: Context, rest: List<Signal>) {
+            val who = rest.last().fromName.ifBlank { context.getString(R.string.home_partner_fallback) }
+            val hearts = rest.all { it.kind == SignalKind.Heartbeat }
+            val text = context.getString(if (hearts) R.string.signal_summary_hearts else R.string.signal_summary_mixed, who, rest.size)
+            val kinds = rest.map { it.kind }.distinct()
+            val route = if (kinds.size == 1) route(kinds.single()) else null
+            val open = DeepLink.intent(context, route, requestCode = 1100)
+            post(context, "summary:${rest.last().id}".hashCode(), text, open, HEARTBEAT_PATTERN)
+        }
+
+        private fun post(context: Context, id: Int, text: String, open: PendingIntent, vibrate: LongArray) {
             ensureChannel(context)
             if (!canNotify(context)) return
-            val open = PendingIntent.getActivity(
-                context, 1,
-                Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
-                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
-            )
             val n = NotificationCompat.Builder(context, CHANNEL)
                 .setSmallIcon(R.drawable.ic_stat_heart)
                 .setColor(0xFFFFB38A.toInt())
                 .setContentTitle(context.getString(R.string.app_name))
-                .setContentText(message(context, s))
+                .setContentText(text)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setCategory(NotificationCompat.CATEGORY_MESSAGE)
-                .setVibrate(if (s.kind == SignalKind.Nudge) NUDGE_PATTERN else HEARTBEAT_PATTERN)
+                .setVibrate(vibrate)
                 .setAutoCancel(true)
                 .setContentIntent(open)
                 .build()
             try {
-                NotificationManagerCompat.from(context).notify(s.id.hashCode(), n)
+                NotificationManagerCompat.from(context).notify(id, n)
             } catch (_: SecurityException) {
             }
         }
@@ -204,7 +303,10 @@ class SignalCenter(private val app: LovelyyApplication) {
     }
 }
 
-/** Catches up on signals while the app is closed (no push on the Spark plan). */
+/**
+ * Catches up on signals while the app is closed (no push on the Spark plan). Runs every ~15
+ * minutes, plus a few one-time follow-ups right after the app goes to the background.
+ */
 class SignalWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
         val app = applicationContext as LovelyyApplication
@@ -212,14 +314,12 @@ class SignalWorker(context: Context, params: WorkerParameters) : CoroutineWorker
         val (coupleId, myUid) = SignalCenter.savedCouple(app) ?: return Result.success()
         if (app.signalCenter.appVisible) return Result.success()
         return try {
-            val last = SignalCenter.lastSeen(app)
-            val fresh = app.signalRepository.recent(coupleId).filter { it.to == myUid && it.at > last }.sortedBy { it.at }
-            if (fresh.isNotEmpty()) {
-                SignalCenter.markSeen(app, fresh.last().at)
-                fresh.takeLast(3).forEach { SignalCenter.notify(app, it) }
-            }
+            SignalCenter.deliver(app, myUid, app.signalRepository.recent(coupleId))
+            val step = inputData.getInt(K_STEP, -1)
+            if (step >= 0 && !app.signalCenter.appVisible) enqueueFollowUp(app, step + 1)
             Result.success()
         } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
             Timber.w(e, "Signal check failed, will retry")
             Result.retry()
         }
@@ -227,14 +327,40 @@ class SignalWorker(context: Context, params: WorkerParameters) : CoroutineWorker
 
     companion object {
         private const val WORK = "partner-signals-check"
+        private const val WORK_SOON = "partner-signals-soon"
+        private const val K_STEP = "step"
+        /** Delays between the follow-up checks after going to the background (~1, 3, 7, 15 min). */
+        private val FOLLOW_UP_MINUTES = longArrayOf(1, 2, 4, 8)
+
+        private fun network() = Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
 
         fun schedule(context: Context) {
             val request = PeriodicWorkRequestBuilder<SignalWorker>(15, TimeUnit.MINUTES)
-                .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+                .setConstraints(network())
                 .build()
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(WORK, ExistingPeriodicWorkPolicy.KEEP, request)
         }
 
-        fun cancel(context: Context) = WorkManager.getInstance(context).cancelUniqueWork(WORK)
+        /** App went to the background: check again soon, a few times, until the periodic check takes over. */
+        fun scheduleFollowUps(context: Context) = enqueueFollowUp(context, 0)
+
+        fun cancelFollowUps(context: Context) {
+            WorkManager.getInstance(context).cancelUniqueWork(WORK_SOON)
+        }
+
+        private fun enqueueFollowUp(context: Context, step: Int) {
+            if (step >= FOLLOW_UP_MINUTES.size) return
+            val request = OneTimeWorkRequestBuilder<SignalWorker>()
+                .setInitialDelay(FOLLOW_UP_MINUTES[step], TimeUnit.MINUTES)
+                .setConstraints(network())
+                .setInputData(workDataOf(K_STEP to step))
+                .build()
+            WorkManager.getInstance(context).enqueueUniqueWork(WORK_SOON, ExistingWorkPolicy.REPLACE, request)
+        }
+
+        fun cancel(context: Context) {
+            WorkManager.getInstance(context).cancelUniqueWork(WORK)
+            cancelFollowUps(context)
+        }
     }
 }

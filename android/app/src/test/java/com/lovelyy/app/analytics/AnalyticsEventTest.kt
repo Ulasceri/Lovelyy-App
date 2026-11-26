@@ -13,7 +13,25 @@ class AnalyticsEventTest {
         AnalyticsEvent.CatPlayed,
         AnalyticsEvent.CatPetted(strokes = 4),
         AnalyticsEvent.CatSlept,
+        AnalyticsEvent.StartDateSet,
+        AnalyticsEvent.CounterShared,
+        AnalyticsEvent.HeartbeatSent(emotion = "ozlem"),
+        AnalyticsEvent.NudgeSent,
+        AnalyticsEvent.MoodShared(mood = "mutlu", hasNote = true),
+        AnalyticsEvent.QuestionAnswered,
+        AnalyticsEvent.NoteAdded,
+        AnalyticsEvent.PlanAdded(yearly = true),
+        AnalyticsEvent.LocationSharingChanged(sharing = true),
+        AnalyticsEvent.LocationUpdated(cityOnly = true),
+        AnalyticsEvent.ProfileNameChanged,
+        AnalyticsEvent.DreamAdded(category = "seyahat"),
+        AnalyticsEvent.DreamCompleted,
+        AnalyticsEvent.WheelSpun(builtIn = true, items = 8),
+        AnalyticsEvent.WheelCreated,
+        AnalyticsEvent.CapsuleSealed(days = 81),
+        AnalyticsEvent.DrawingSaved(strokes = 12),
         AnalyticsEvent.ScreenView("home"),
+        AnalyticsEvent.ScreenView("day_counter"),
     )
 
     @Test
@@ -25,7 +43,8 @@ class AnalyticsEventTest {
 
     @Test
     fun eventNamesAreUnique() {
-        val names = all.map { it.name }
+        // One name per event type: ScreenView appears twice above (different screens), same name by design.
+        val names = all.distinctBy { it::class }.map { it.name }
         assertEquals(names.size, names.toSet().size)
     }
 

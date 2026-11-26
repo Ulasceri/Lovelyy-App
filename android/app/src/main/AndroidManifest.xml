@@ -5,6 +5,8 @@
     <!-- Heartbeats and nudges from the partner: notification + heartbeat vibration. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- Mesafe: only a rough (city level) location, only while the user shares it. -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <application
         android:name=".LovelyyApplication"
@@ -47,5 +49,44 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/cat_widget_info" />
         </receiver>
+
+        <!-- More home-screen widgets (approved design 15). -->
+        <receiver
+            android:name=".widget.CatWideWidgetProvider"
+            android:exported="false"
+            android:label="@string/widget_wide_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/cat_wide_widget_info" />
+        </receiver>
+        <receiver
+            android:name=".widget.DaysWidgetProvider"
+            android:exported="false"
+            android:label="@string/widget_days_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/days_widget_info" />
+        </receiver>
+        <receiver
+            android:name=".widget.DrawingWidgetProvider"
+            android:exported="false"
+            android:label="@string/widget_drawing_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/drawing_widget_info" />
+        </receiver>
+        <!-- The days widget's heart button. -->
+        <receiver
+            android:name=".widget.HeartReceiver"
+            android:exported="false" />
     </application>
 </manifest>
