@@ -1,9 +1,26 @@
 package com.lovelyy.app.ui.cat
 
 import android.os.Build
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
+import com.lovelyy.app.data.StreakExplainerSource
+import com.lovelyy.app.ui.components.Kit
+import com.lovelyy.app.ui.components.SvgStrokeIcon
+import com.lovelyy.app.ui.components.bounceClick
+import com.lovelyy.app.ui.theme.CatStripEnd
+import com.lovelyy.app.ui.theme.CatStripStart
 import android.view.HapticFeedbackConstants
 import android.view.TextureView
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
@@ -16,8 +33,6 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -32,7 +47,6 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -46,9 +60,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bedtime
 import androidx.compose.material.icons.filled.Bolt
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.SportsBaseball
 import androidx.compose.material.icons.filled.WaterDrop
@@ -90,7 +102,6 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -128,9 +139,13 @@ import java.time.LocalDate
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
-/** The whole cat block of Home: the living cat, its needs, the care buttons and the streak. */
+/**
+ * The whole cat block of Home (approved board "V2 · Anasayfa kedi kartı v2"): a strip with the name and the
+ * streak, the living cat with nothing drawn over it, the speech bubble below it, the needs, the care buttons and
+ * the streak status. The streak chip opens "Seri nedir?" ([StreakExplainerSheet]).
+ */
 @Composable
-fun CatSection(me: UserProfile, couple: Couple?, partner: UserProfile?, modifier: Modifier = Modifier, onOpenCare: () -> Unit = {}) {
+fun CatSection(me: UserProfile, couple: Couple?, partner: UserProfile?, modifier: Modifier = Modifier) {
     val coupleId = me.coupleId ?: return
     val app = lovelyyApp()
     val vm: CatViewModel = viewModel(key = "cat-$coupleId") { CatViewModel(app, coupleId, me.uid) }
@@ -144,6 +159,7 @@ fun CatSection(me: UserProfile, couple: Couple?, partner: UserProfile?, modifier
     val view = LocalView.current
     var banner by remember { mutableStateOf<String?>(null) }
     var naming by remember { mutableStateOf(false) }
+    var explainer by remember { mutableStateOf<StreakExplainerSource?>(null) }
 
     // Pause the videos when the app is in the background; free them when Home goes away.
     val lifecycle = LocalLifecycleOwner.current.lifecycle
@@ -180,6 +196,7 @@ fun CatSection(me: UserProfile, couple: Couple?, partner: UserProfile?, modifier
                 }
                 is CatEvent.Refused -> banner = refusalTexts(e.reason)
                 CatEvent.Failed -> banner = context.getString(R.string.cat_error)
+                CatEvent.FirstStreak -> explainer = StreakExplainerSource.Auto
             }
         }
     }
@@ -202,36 +219,45 @@ fun CatSection(me: UserProfile, couple: Couple?, partner: UserProfile?, modifier
         vm.act(me, members, type, strokes)
     }
 
+    val today = com.lovelyy.app.ui.coupleToday()
+    val streak = ui?.doc?.streak?.current(today) ?: 0
     Column(modifier) {
         val heroShape = RoundedCornerShape(28.dp)
+        // No clip on the card: the strip's buttons reach above it for a 48dp touch target. The video clips itself.
         Column(
             Modifier
                 .fillMaxWidth()
                 .softShadow(heroShape, 14.dp)
-                .clip(heroShape)
-                .background(CatBg),
+                .background(CatBg, heroShape),
         ) {
-            CatStage(
-                animator = animator,
-                sleepingPoster = ui?.levels?.sleeping == true,
+            CatStrip(
                 name = ui?.doc?.name,
-                streak = ui?.doc?.streak?.current(com.lovelyy.app.ui.coupleToday()) ?: 0,
-                bubble = mood?.let { stringResource(it.bubbleRes()) },
-                banner = banner,
+                streak = streak,
                 onNameClick = { naming = true },
-                onTap = {
-                    val clip = animator.currentClip
-                    if (ui?.levels?.sleeping != true && clip?.isBridge != true) {
-                        animator.play(CatClip.Surprised)
-                        view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
-                    }
+                onStreakClick = {
+                    vm.streakExplainerOpened(StreakExplainerSource.Chip)
+                    explainer = StreakExplainerSource.Chip
                 },
-                onPetting = { animator.setPetting(it) },
-                onStroke = { view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK) },
-                onPetDone = { strokes -> if (strokes > 0) vm.act(me, members, CatActionType.Pet, strokes) },
-                onStreakClick = onOpenCare,
-                footer = ui?.doc?.recent?.let { todayLineText(it, me.uid, partnerName) },
             )
+            BoxWithConstraints(Modifier.fillMaxWidth()) {
+                CatStage(
+                    animator = animator,
+                    sleepingPoster = ui?.levels?.sleeping == true,
+                    catName = displayCatName(ui?.doc?.name),
+                    onTap = {
+                        val clip = animator.currentClip
+                        if (ui?.levels?.sleeping != true && clip?.isBridge != true) {
+                            animator.play(CatClip.Surprised)
+                            view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                        }
+                    },
+                    onPetting = { animator.setPetting(it) },
+                    onStroke = { view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK) },
+                    onPetDone = { strokes -> if (strokes > 0) vm.act(me, members, CatActionType.Pet, strokes) },
+                    modifier = Modifier.height(CatCardGeometry.videoHeightDp(maxWidth.value).dp),
+                )
+            }
+            CatSpeech(bubble = mood?.let { stringResource(it.bubbleRes()) }, banner = banner)
             NeedsRow(ui?.levels)
         }
 
@@ -255,6 +281,17 @@ fun CatSection(me: UserProfile, couple: Couple?, partner: UserProfile?, modifier
                 modifier = Modifier.padding(top = 14.dp),
             )
         }
+    }
+
+    explainer?.let {
+        StreakExplainerSheet(
+            catName = displayCatName(ui?.doc?.name),
+            myName = me.displayName.ifBlank { stringResource(R.string.cat_you) },
+            partnerName = partnerName,
+            streak = streak,
+            bothCaredToday = ui?.doc?.streak?.lastCompleteDay == today.toString(),
+            onDismiss = { explainer = null },
+        )
     }
 
     // Renaming is optional; the cat starts out as DEFAULT_CAT_NAME.
@@ -289,28 +326,24 @@ internal fun CatActionType.clip(): CatClip? = when (this) {
 
 private data class Heart(val id: Long, val at: Offset, val drift: Float, val size: Float)
 
+/**
+ * The living cat: the square video cropped to [modifier]'s size, tap = surprise, stroke = petting with hearts.
+ * Nothing else is drawn over it (approved v2 boards); the name, streak, bubble and banners sit around it.
+ */
 @Composable
 internal fun CatStage(
     animator: CatAnimator,
     sleepingPoster: Boolean,
-    name: String?,
-    streak: Int,
-    bubble: String?,
-    banner: String?,
-    onNameClick: () -> Unit,
+    catName: String,
     onTap: () -> Unit,
     onPetting: (Boolean) -> Unit,
     onStroke: () -> Unit,
     onPetDone: (Int) -> Unit,
-    stageModifier: Modifier = Modifier.aspectRatio(STAGE_RATIO),
+    modifier: Modifier = Modifier,
+    /** The video's own clip: square on Home (the strip is above it), rounded on top on Kedi bakımı. */
+    shape: Shape = RectangleShape,
     /** Which part of the square video stays visible when the stage is wider than tall (0.5 = middle). */
     cropBias: Float = 0.5f,
-    showChips: Boolean = true,
-    bubbleTop: Dp = 64.dp,
-    bubbleEnd: Dp = 18.dp,
-    /** A small line pinned bottom-left ("Bugün: sen sevdin"), hidden while a banner shows. */
-    footer: String? = null,
-    onStreakClick: (() -> Unit)? = null,
 ) {
     val hearts = remember { mutableStateListOf<Heart>() }
     val density = LocalDensity.current
@@ -320,13 +353,14 @@ internal fun CatStage(
     val petting by rememberUpdatedState(onPetting)
     val stroke by rememberUpdatedState(onStroke)
     val petDone by rememberUpdatedState(onPetDone)
+    val label = stringResource(R.string.cat_video_label, catName)
 
     BoxWithConstraints(
-        Modifier
+        modifier
             .fillMaxWidth()
-            .then(stageModifier)
-            .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
+            .clip(shape)
             .background(CatBg)
+            .semantics { contentDescription = label }
             // Tap = surprise. Stroke = petting (hearts + purring + love).
             .pointerInput(Unit) {
                 awaitEachGesture {
@@ -370,7 +404,8 @@ internal fun CatStage(
             },
     ) {
         val side = maxWidth
-        // Videos are square; the stage is a bit wider than tall, so crop top and bottom evenly.
+        // Videos are square; the stage is wider than tall, so crop top and bottom (evenly by default; the cat
+        // sits in the middle of every clip, see CatCardGeometry).
         val shift = (side - maxHeight) * (0.5f - cropBias)
         Box(Modifier.requiredSize(side, side).offset(y = shift)) {
             if (!animator.started) {
@@ -393,90 +428,172 @@ internal fun CatStage(
         }
 
         hearts.forEach { h -> key(h.id) { FloatingHeart(h) { hearts.remove(h) } } }
+    }
+}
 
-        // Top: name tag and streak.
-        if (showChips) Row(
+// ---------- strip above the video ----------
+
+/**
+ * The strip above the video (board V2): the cat's name with a pencil (rename) and the streak chip ("Seri nedir?").
+ * Both buttons get a 48dp touch target that reaches [TOUCH_REACH] above the strip, outside the card, so the
+ * strip stays 36dp and the extra touch area never covers the cat.
+ */
+@Composable
+private fun CatStrip(name: String?, streak: Int, onNameClick: () -> Unit, onStreakClick: () -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .height(STRIP_HEIGHT)
+            .background(
+                Brush.horizontalGradient(listOf(CatStripStart, CatStripEnd)),
+                RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+            )
+            .padding(start = 16.dp, end = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        val renameLabel = stringResource(R.string.cat_rename_label)
+        Row(
             Modifier
-                .fillMaxWidth()
-                .padding(14.dp)
-                .zIndex(3f),
+                .weight(1f, fill = false)
+                .touchTargetAbove()
+                .widthIn(min = 48.dp)
+                .bounceClick(onClick = onNameClick)
+                .clearAndSetSemantics {
+                    contentDescription = renameLabel
+                    role = Role.Button
+                }
+                .padding(top = TOUCH_REACH),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Chip(onClick = onNameClick) {
-                Text(
-                    name?.takeIf { it.isNotBlank() } ?: stringResource(R.string.cat_unnamed),
-                    fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Brown,
-                )
-                Spacer(Modifier.width(6.dp))
-                Icon(Icons.Filled.Edit, null, Modifier.size(14.dp), tint = BrownSoft)
-            }
-            Spacer(Modifier.weight(1f))
-            Chip(onClick = onStreakClick, solid = true) {
-                Icon(Icons.Filled.LocalFireDepartment, null, Modifier.size(16.dp), tint = Color(0xFFE07A45))
-                Spacer(Modifier.width(4.dp))
-                Text(pluralStringResource(R.plurals.cat_streak_chip, streak.toInt(), streak), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Brown)
-            }
-        }
-
-        // What the cat "says", gently bobbing (from its mood).
-        if (bubble != null && banner == null) {
-            val bob by rememberInfiniteTransition(label = "bob").animateFloat(
-                0f, -4f, infiniteRepeatable(tween(1500, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "y",
-            )
             Text(
-                bubble,
-                fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Brown,
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(top = bubbleTop, end = bubbleEnd)
-                    .zIndex(3f)
-                    .graphicsLayer { translationY = bob.dp.toPx() }
-                    .softShadow(RoundedCornerShape(16.dp, 16.dp, 4.dp, 16.dp), 4.dp)
-                    .clip(RoundedCornerShape(16.dp, 16.dp, 4.dp, 16.dp))
-                    .background(CreamCard)
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-            )
-        }
-
-        if (footer != null && banner == null) {
-            Text(
-                footer,
-                fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Brown,
+                name?.takeIf { it.isNotBlank() } ?: stringResource(R.string.cat_unnamed),
+                fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 17.sp, color = Brown,
                 maxLines = 1, overflow = TextOverflow.Ellipsis,
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(start = 14.dp, end = 14.dp, bottom = 12.dp)
-                    .zIndex(3f)
-                    .clip(RoundedCornerShape(50))
-                    .background(CreamCard.copy(alpha = 0.9f))
-                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                modifier = Modifier.weight(1f, fill = false),
             )
+            Spacer(Modifier.width(6.dp))
+            SvgStrokeIcon(Kit.PENCIL_D, BrownSoft, Modifier.size(14.dp), strokeWidth = 2.2f)
         }
-
-        // Bottom: what just happened ("Deniz besledi 💛").
-        AnimatedVisibility(
-            visible = banner != null,
-            enter = fadeIn() + slideInVertically { it / 2 },
-            exit = fadeOut() + slideOutVertically { it / 2 },
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(14.dp)
-                .zIndex(3f),
+        Spacer(Modifier.width(8.dp))
+        val chipLabel = pluralStringResource(R.plurals.cat_streak_chip_label, streak, streak)
+        Box(
+            Modifier
+                .touchTargetAbove()
+                .widthIn(min = 48.dp)
+                .bounceClick(onClick = onStreakClick)
+                .clearAndSetSemantics {
+                    contentDescription = chipLabel
+                    role = Role.Button
+                }
+                .padding(top = TOUCH_REACH),
+            contentAlignment = Alignment.Center,
         ) {
-            var last by remember { mutableStateOf("") }
-            if (banner != null) last = banner
-            Text(
-                last,
-                style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier
+            Row(
+                Modifier
+                    .height(28.dp)
                     .clip(RoundedCornerShape(50))
-                    .background(MaterialTheme.colorScheme.surfaceContainerLowest.copy(alpha = 0.92f))
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-            )
+                    .background(CreamCard)
+                    .padding(horizontal = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                StreakFlame(16.dp)
+                Spacer(Modifier.width(5.dp))
+                Text(
+                    pluralStringResource(R.plurals.cat_streak_chip, streak, streak),
+                    fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Brown, maxLines = 1,
+                )
+            }
         }
+    }
+}
+
+/**
+ * Measures the content [TOUCH_TARGET] tall but reports only the strip's height, placing the extra [TOUCH_REACH]
+ * above the strip. The content pads itself down by [TOUCH_REACH] so it looks centred in the strip.
+ */
+private fun Modifier.touchTargetAbove(): Modifier = layout { measurable, constraints ->
+    val target = TOUCH_TARGET.roundToPx()
+    val visible = STRIP_HEIGHT.roundToPx().coerceIn(constraints.minHeight, constraints.maxHeight)
+    val placeable = measurable.measure(constraints.copy(minHeight = target, maxHeight = target))
+    layout(placeable.width, visible) { placeable.placeRelative(0, visible - target) }
+}
+
+// ---------- speech below the video ----------
+
+/**
+ * Below the video (board V2): what the cat "says" (from its mood) in a bubble whose tail points up at the cat, or
+ * for a few seconds what just happened ("Deniz besledi", "Mırmır uyuyor"), which takes the bubble's place.
+ */
+@Composable
+internal fun CatSpeech(bubble: String?, banner: String?) {
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .height(SPEECH_HEIGHT)
+            .padding(horizontal = 16.dp),
+        contentAlignment = Alignment.TopCenter,
+    ) {
+        AnimatedContent(
+            targetState = banner?.let { Speech(it, isBanner = true) } ?: bubble?.let { Speech(it, isBanner = false) },
+            transitionSpec = { fadeIn() togetherWith fadeOut() },
+            contentAlignment = Alignment.TopCenter,
+            label = "speech",
+        ) { speech ->
+            when {
+                speech == null -> Spacer(Modifier.fillMaxWidth())
+                speech.isBanner -> Box(Modifier.fillMaxWidth().height(SPEECH_HEIGHT), contentAlignment = Alignment.Center) {
+                    Text(
+                        speech.text,
+                        fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 13.sp, lineHeight = 15.sp, color = Brown,
+                        textAlign = TextAlign.Center,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(50))
+                            .background(CreamCard.copy(alpha = 0.92f))
+                            .padding(horizontal = 14.dp, vertical = 2.dp),
+                    )
+                }
+                else -> SpeechBubble(speech.text)
+            }
+        }
+    }
+}
+
+private data class Speech(val text: String, val isBanner: Boolean)
+
+@Composable
+private fun SpeechBubble(text: String) {
+    // A gentle bob that never lets the tail touch the video.
+    val bob by rememberInfiniteTransition(label = "bob").animateFloat(
+        0f, -2f, infiniteRepeatable(tween(1500, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "y",
+    )
+    val shape = RoundedCornerShape(15.dp)
+    Box(
+        Modifier
+            .padding(top = 7.dp)
+            .graphicsLayer { translationY = bob.dp.toPx() },
+        contentAlignment = Alignment.TopCenter,
+    ) {
+        // The tail: a rounded square turned 45°, half hidden under the bubble, pointing up at the cat.
+        Box(
+            Modifier
+                .offset(y = (-5).dp)
+                .size(12.dp)
+                .graphicsLayer { rotationZ = 45f }
+                .clip(RoundedCornerShape(3.dp))
+                .background(CreamCard),
+        )
+        Text(
+            text,
+            fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 14.sp, lineHeight = 19.sp, color = Brown,
+            maxLines = 1, overflow = TextOverflow.Ellipsis,
+            modifier = Modifier
+                .softShadow(shape, 4.dp)
+                .clip(shape)
+                .background(CreamCard)
+                .padding(horizontal = 14.dp, vertical = 5.dp),
+        )
     }
 }
 
@@ -513,24 +630,13 @@ private fun FloatingHeart(h: Heart, onDone: () -> Unit) {
     )
 }
 
-@Composable
-private fun Chip(onClick: (() -> Unit)? = null, solid: Boolean = false, content: @Composable () -> Unit) {
-    Row(
-        Modifier
-            .clip(RoundedCornerShape(50))
-            .background(CreamCard.copy(alpha = if (solid) 1f else 0.85f))
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(horizontal = 12.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) { content() }
-}
-
 // ---------- needs ----------
 
 @Composable
 private fun NeedsRow(levels: CatLevels?) {
     Row(
-        Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 16.dp),
+        // Top 8dp (was 12): those 4dp went to the video, see CatCardGeometry.NEEDS_TRIM_DP.
+        Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         NeedMeter(stringResource(R.string.need_hunger), levels?.hunger, Modifier.weight(1f))
@@ -755,5 +861,8 @@ internal fun NameCatDialog(initial: String, canDismiss: Boolean, onDismiss: () -
     )
 }
 
-internal const val STAGE_RATIO = 1.12f
 private const val STROKE_DP = 70
+private val STRIP_HEIGHT = CatCardGeometry.STRIP_DP.dp
+private val SPEECH_HEIGHT = CatCardGeometry.SPEECH_DP.dp
+private val TOUCH_TARGET = 48.dp
+private val TOUCH_REACH = TOUCH_TARGET - STRIP_HEIGHT
