@@ -94,9 +94,11 @@ class DreamRepository(private val db: FirebaseFirestore) {
         awaitClose { reg.remove() }
     }
 
-    private fun DocumentSnapshot.toDream(): Dream? = Dream(
+    private fun DocumentSnapshot.toDream(): Dream? {
+        val title = getString("title") ?: return null
+        return Dream(
         id = id,
-        title = getString("title") ?: return null,
+        title = title,
         category = DreamCategory.of(getString("category")),
         goal = getString("goal").orEmpty(),
         by = getString("by").orEmpty(),
@@ -105,7 +107,8 @@ class DreamRepository(private val db: FirebaseFirestore) {
         doneAt = getLong("doneAt"),
         updatedAt = getLong("updatedAt"),
         updatedBy = getString("updatedBy"),
-    )
+        )
+    }
 
     companion object {
         const val MAX_TITLE = 80
