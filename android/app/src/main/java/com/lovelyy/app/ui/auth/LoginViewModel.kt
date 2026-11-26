@@ -82,6 +82,7 @@ class LoginViewModel(
                 auth.currentUser?.let { user ->
                     runCatching { users.setNameIfBlank(user.uid, typedName) }
                 }
+                auth.clearPendingSignUpName()
             } else {
                 auth.signInWithEmail(typedEmail, typedPassword)
             }

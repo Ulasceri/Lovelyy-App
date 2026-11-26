@@ -43,9 +43,26 @@ class AuthRepository(private val auth: FirebaseAuth) {
         auth.sendPasswordResetEmail(email.trim()).await()
     }
 
+    /**
+     * The name typed on the e-mail sign-up form, while that sign-up is running. A new Firebase user has no
+     * display name at the moment the auth state changes, so without this the user doc was created with a blank
+     * name and the "Sana ne diyelim?" step flashed before the typed name arrived.
+     */
+    @Volatile
+    var pendingSignUpName: String? = null
+        private set
+
+    fun clearPendingSignUpName() { pendingSignUpName = null }
+
     suspend fun signUpWithEmail(name: String, email: String, password: String) = wrap {
-        val result = auth.createUserWithEmailAndPassword(email.trim(), password).await()
-        result.user?.updateProfile(userProfileChangeRequest { displayName = name.trim() })?.await()
+        pendingSignUpName = name.trim()
+        try {
+            val result = auth.createUserWithEmailAndPassword(email.trim(), password).await()
+            result.user?.updateProfile(userProfileChangeRequest { displayName = name.trim() })?.await()
+        } catch (e: Exception) {
+            if (auth.currentUser == null) pendingSignUpName = null
+            throw e
+        }
     }
 
     /**
