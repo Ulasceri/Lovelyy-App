@@ -189,7 +189,8 @@ fun CatCareScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBac
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         CenteredTopBar(catName, onBack) {
-            RoundSvgButton(SHIRT_D, stringResource(R.string.cc_accessories), onAccessories)
+            // The wardrobe comes back with the accessories (CareRewards.WEAR_ON_CAT).
+            if (CareRewards.WEAR_ON_CAT) RoundSvgButton(SHIRT_D, stringResource(R.string.cc_accessories), onAccessories)
         }
 
         // Hero: the living cat. The stage is short, so keep the head and ears in view.
@@ -222,7 +223,7 @@ fun CatCareScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBac
                 stageModifier = Modifier.height(196.dp),
                 cropBias = 0.3f,
                 showChips = false,
-                wearing = ui?.doc?.let { CareRewards.worn(it.wearing, it.streak.best) },
+                wearing = ui?.doc?.let { CareRewards.shown(it.wearing, it.streak.best) },
                 bubbleTop = 16.dp,
                 bubbleEnd = 16.dp,
                 footer = todayLine,
@@ -251,7 +252,7 @@ fun CatCareScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBac
         StreakCard(
             current = streak?.current(today) ?: 0,
             best = streak?.best ?: 0,
-            wearing = ui?.doc?.let { CareRewards.worn(it.wearing, it.streak.best) },
+            wearing = ui?.doc?.let { CareRewards.shown(it.wearing, it.streak.best) },
             onWear = { a -> vm.wear(a) },
             onLocked = { a ->
                 banner = context.resources.getQuantityString(R.plurals.cc_locked_hint, a.day.toInt(), context.getString(accessoryNameRes(a)), a.day)
@@ -392,13 +393,14 @@ private fun StreakCard(current: Int, best: Int, wearing: Accessory?, onWear: (Ac
         Box(Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)).background(Track)) {
             Box(Modifier.fillMaxWidth(progress).height(8.dp).clip(RoundedCornerShape(4.dp)).background(StreakGreen))
         }
-        if (Accessory.entries.any { CareRewards.unlocked(it, best) }) {
+        if (CareRewards.WEAR_ON_CAT && Accessory.entries.any { CareRewards.unlocked(it, best) }) {
             Text(stringResource(R.string.cc_wear_hint), fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, color = BrownSoft)
         }
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Accessory.entries.forEach { a ->
                 AccessoryBadge(a, CareRewards.unlocked(a, best), a == wearing, Modifier.weight(1f)) {
-                    if (CareRewards.unlocked(a, best)) onWear(if (a == wearing) null else a) else onLocked(a)
+                    // Unlocked accessories are badges only while they can't be worn.
+                    if (!CareRewards.unlocked(a, best)) onLocked(a) else if (CareRewards.WEAR_ON_CAT) onWear(if (a == wearing) null else a)
                 }
             }
         }

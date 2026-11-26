@@ -230,7 +230,7 @@ fun CatSection(me: UserProfile, couple: Couple?, partner: UserProfile?, modifier
                 onStroke = { view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK) },
                 onPetDone = { strokes -> if (strokes > 0) vm.act(me, members, CatActionType.Pet, strokes) },
                 onStreakClick = onOpenCare,
-                wearing = ui?.doc?.let { com.lovelyy.app.data.CareRewards.worn(it.wearing, it.streak.best) },
+                wearing = ui?.doc?.let { com.lovelyy.app.data.CareRewards.shown(it.wearing, it.streak.best) },
                 footer = ui?.doc?.recent?.let { todayLineText(it, me.uid, partnerName) },
             )
             NeedsRow(ui?.levels)

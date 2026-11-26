@@ -43,6 +43,13 @@ class CareRewardsTest {
     }
 
     @Test
+    fun catShowsNoAccessoryWhileWearingIsOff() {
+        org.junit.Assert.assertNull(CareRewards.shown("Kurdele", best = 99, enabled = false))
+        org.junit.Assert.assertEquals(CareRewards.Accessory.Kurdele, CareRewards.shown("Kurdele", best = 7, enabled = true))
+        org.junit.Assert.assertNull(CareRewards.shown("Sapka", best = 7, enabled = true))
+    }
+
+    @org.junit.Test
     fun wornAccessoryMustBeUnlocked() {
         org.junit.Assert.assertEquals(CareRewards.Accessory.Kurdele, CareRewards.worn("Kurdele", best = 7))
         org.junit.Assert.assertNull(CareRewards.worn("Sapka", best = 7))

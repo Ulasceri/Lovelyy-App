@@ -85,7 +85,7 @@ fun AccessoriesScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit
     val doc = ui?.doc
     val best = doc?.streak?.best ?: 0
     val current = doc?.streak?.current(LocalDate.now()) ?: 0
-    val worn = doc?.let { CareRewards.worn(it.wearing, best) }
+    val worn = doc?.let { CareRewards.shown(it.wearing, best) }
     val partnerName = partner?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.home_partner_fallback)
     val catName = displayCatName(doc?.name)
     var selName by rememberSaveable { mutableStateOf<String?>(null) }

@@ -15,6 +15,16 @@ object CareRewards {
     fun worn(wearing: String?, best: Int): Accessory? =
         Accessory.entries.firstOrNull { it.name == wearing }?.takeIf { unlocked(it, best) }
 
+    /**
+     * Off until the accessories are baked into the cat's video clips (Ulaş, 2026-11-26): a drawing on top of the
+     * video stays still while the cat breathes and moves, which looks broken. The streak and the unlocked badges stay.
+     */
+    const val WEAR_ON_CAT = false
+
+    /** What the cat actually shows: [worn] while [WEAR_ON_CAT] is on, otherwise nothing. */
+    fun shown(wearing: String?, best: Int, enabled: Boolean = WEAR_ON_CAT): Accessory? =
+        if (enabled) worn(wearing, best) else null
+
     /** The next accessory to work towards, or null when all are unlocked. */
     fun next(current: Int, best: Int): Accessory? =
         Accessory.entries.firstOrNull { it.day > current && !unlocked(it, best) }
