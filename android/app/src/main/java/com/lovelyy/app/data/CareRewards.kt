@@ -17,7 +17,7 @@ object CareRewards {
 
     /**
      * Off until the accessories are baked into the cat's video clips (Ulaş, 2026-11-26): a drawing on top of the
-     * video stays still while the cat breathes and moves, which looks broken. The streak and the unlocked badges stay.
+     * video stays still while the cat breathes and moves, which looks broken. The streak stays; the badges and wardrobe are hidden.
      */
     const val WEAR_ON_CAT = false
 

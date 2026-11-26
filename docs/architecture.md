@@ -91,8 +91,8 @@ heartbeat with the signed-in user. The drawing widget shows a 420 px PNG rendere
 Taps open their screen: widgets and notifications pass a `DeepLink` route (`MainActivity.kt`) that Home pushes.
 The cat doc has `wearing` (an unlocked accessory, chosen on Kedi bakımı); `ui/cat/CatAccessory.kt` draws it
 over the cat while the idle clip plays. **Turned off for now** (`CareRewards.WEAR_ON_CAT = false`, Ulaş 2026-11-26):
-the drawing stays still while the cat breathes and moves. The streak and the unlocked badges stay; the wardrobe
-button is hidden. Accessories come back baked into the video clips (see tools/cat-animation). Unsealed capsule letters are kept as a draft on the phone.
+the drawing stays still while the cat breathes and moves. The streak stays (its card shows the best streak);
+the accessory badges and the wardrobe button are hidden. Accessories come back baked into the video clips (see tools/cat-animation). Unsealed capsule letters are kept as a draft on the phone.
 
 # Step 3: redesigned screens + first three features
 

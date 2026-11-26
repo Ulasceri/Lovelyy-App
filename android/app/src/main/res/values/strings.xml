@@ -560,6 +560,10 @@
         <item quantity="one">%1$s için %2$d gün kaldı</item>
         <item quantity="other">%1$s için %2$d gün kaldı</item>
     </plurals>
+    <plurals name="cc_streak_best">
+        <item quantity="one">En uzun seri: %1$d gün</item>
+        <item quantity="other">En uzun seri: %1$d gün</item>
+    </plurals>
     <string name="cc_streak_all">Tüm aksesuarlar açıldı</string>
     <string name="cc_streak_chip">%1$d / %2$d</string>
     <string name="cc_day">%1$d. gün</string>

@@ -375,8 +375,12 @@ private fun StreakCard(current: Int, best: Int, wearing: Accessory?, onWear: (Ac
             Column(Modifier.weight(1f)) {
                 Text(pluralStringResource(R.plurals.cc_streak_title, current.toInt(), current), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Brown)
                 Text(
-                    if (next != null) pluralStringResource(R.plurals.cc_streak_next, (next.day - current).toInt(), accessoryName(next), next.day - current)
-                    else stringResource(R.string.cc_streak_all),
+                    when {
+                        // Without accessories there is nothing to name: show the best streak instead.
+                        !CareRewards.WEAR_ON_CAT -> pluralStringResource(R.plurals.cc_streak_best, best.toInt(), best)
+                        next != null -> pluralStringResource(R.plurals.cc_streak_next, (next.day - current).toInt(), accessoryName(next), next.day - current)
+                        else -> stringResource(R.string.cc_streak_all)
+                    },
                     fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, color = BrownSoft,
                     maxLines = 1, overflow = TextOverflow.Ellipsis,
                 )
@@ -393,14 +397,14 @@ private fun StreakCard(current: Int, best: Int, wearing: Accessory?, onWear: (Ac
         Box(Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)).background(Track)) {
             Box(Modifier.fillMaxWidth(progress).height(8.dp).clip(RoundedCornerShape(4.dp)).background(StreakGreen))
         }
+        // The badges come back with the accessories (CareRewards.WEAR_ON_CAT); without them they mean nothing.
         if (CareRewards.WEAR_ON_CAT && Accessory.entries.any { CareRewards.unlocked(it, best) }) {
             Text(stringResource(R.string.cc_wear_hint), fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, color = BrownSoft)
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        if (CareRewards.WEAR_ON_CAT) Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Accessory.entries.forEach { a ->
                 AccessoryBadge(a, CareRewards.unlocked(a, best), a == wearing, Modifier.weight(1f)) {
-                    // Unlocked accessories are badges only while they can't be worn.
-                    if (!CareRewards.unlocked(a, best)) onLocked(a) else if (CareRewards.WEAR_ON_CAT) onWear(if (a == wearing) null else a)
+                    if (CareRewards.unlocked(a, best)) onWear(if (a == wearing) null else a) else onLocked(a)
                 }
             }
         }
