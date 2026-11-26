@@ -1,11 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Temporary icon: a peach heart. Will be replaced by the cat icon later. -->
+<!-- Lovelyy logo: two cats sitting side by side, their tails forming a heart.
+     Source drawing: assets/brand/lovelyy-icon.svg -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path
-        android:fillColor="#FFB38A"
-        android:pathData="M54,76 C54,76 32,62 32,46 C32,38.3 37.8,33 44.5,33 C48.8,33 52.2,35.3 54,38.6 C55.8,35.3 59.2,33 63.5,33 C70.2,33 76,38.3 76,46 C76,62 54,76 54,76 Z" />
+    <group android:pivotX="54" android:pivotY="54" android:scaleX="0.84" android:scaleY="0.84">
+        <path android:fillColor="#FFB38A" android:pathData="M18.5,68 a10.5,12.5 0 1,0 21.0,0 a10.5,12.5 0 1,0 -21.0,0 Z" />
+        <path android:fillColor="#FFB38A" android:pathData="M20.2,50 a8.8,8.8 0 1,0 17.6,0 a8.8,8.8 0 1,0 -17.6,0 Z" />
+        <path android:fillColor="#FFB38A" android:strokeColor="#FFB38A" android:strokeWidth="2.5" android:strokeLineJoin="round" android:pathData="M21.5,46 L22,37.5 L27.5,42.5 Z" />
+        <path android:fillColor="#FFB38A" android:strokeColor="#FFB38A" android:strokeWidth="2.5" android:strokeLineJoin="round" android:pathData="M36.5,46 L36,37.5 L30.5,42.5 Z" />
+        <path android:fillColor="#5FB39E" android:pathData="M68.5,68 a10.5,12.5 0 1,0 21.0,0 a10.5,12.5 0 1,0 -21.0,0 Z" />
+        <path android:fillColor="#5FB39E" android:pathData="M70.2,50 a8.8,8.8 0 1,0 17.6,0 a8.8,8.8 0 1,0 -17.6,0 Z" />
+        <path android:fillColor="#5FB39E" android:strokeColor="#5FB39E" android:strokeWidth="2.5" android:strokeLineJoin="round" android:pathData="M71.5,46 L72,37.5 L77.5,42.5 Z" />
+        <path android:fillColor="#5FB39E" android:strokeColor="#5FB39E" android:strokeWidth="2.5" android:strokeLineJoin="round" android:pathData="M86.5,46 L86,37.5 L80.5,42.5 Z" />
+        <path android:strokeColor="#FFB38A" android:strokeWidth="5" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M36,77 C45,80 51,78 54,73 C46,67 42,60 45,55.5 C47.5,52 52.5,53 54,58" />
+        <path android:strokeColor="#5FB39E" android:strokeWidth="5" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M72,77 C63,80 57,78 54,73 C62,67 66,60 63,55.5 C60.5,52 55.5,53 54,58" />
+    </group>
 </vector>
