@@ -67,11 +67,6 @@ class CatRepository(private val db: FirebaseFirestore) {
         }.await()
     }
 
-    /** Puts an unlocked accessory on the cat (null takes it off). Both partners see it. */
-    suspend fun setWearing(coupleId: String, accessory: String?) {
-        catRef(coupleId).set(mapOf("wearing" to accessory), com.google.firebase.firestore.SetOptions.merge()).await()
-    }
-
     companion object {
         const val MAX_NAME = 20
         const val MAX_RECENT = 10
@@ -102,7 +97,6 @@ internal fun CatDoc.toMap(): Map<String, Any?> = mapOf(
         "careDay" to streak.careDay,
         "careBy" to streak.careBy,
     ),
-    "wearing" to wearing,
 )
 
 private fun Any?.millis(): Long? = when (this) {
@@ -146,6 +140,5 @@ internal fun DocumentSnapshot.toCatDoc(): CatDoc {
             careDay = s?.get("careDay") as? String,
             careBy = (s?.get("careBy") as? List<String>).orEmpty(),
         ),
-        wearing = getString("wearing"),
     )
 }

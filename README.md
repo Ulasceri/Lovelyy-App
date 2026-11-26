@@ -14,7 +14,7 @@ Android uygulaması Kotlin + Jetpack Compose + Material 3 ile yazılır, arka u�
 | Partnerle 6 haneli kodla eşleşme; eşleşme ekranının sağ üstündeki hesap düğmesinden çıkış ve hesap silme (eşleşmeden de hesap silinebilir) | Hazır |
 | Eşleşme sonrası: "Eşleştiniz" ekranı, bildirim ve konum izni ön ekranları (izin penceresi sadece düğmeye basınca açılır) | Hazır |
 | Anasayfa (Yuva / Anılar / Planlar / Biz) ve alt gezinme çubuğu | Hazır |
-| Ortak animasyonlu kedi: ana sayfa + kedi bakımı ekranı, seri ve aksesuarlar | Hazır (kısa videolar `assets/cat/` içinde, ExoPlayer ile oynar) |
+| Ortak animasyonlu kedi: ana sayfa + kedi bakımı ekranı, bakım serisi | Hazır (kısa videolar `assets/cat/` içinde, ExoPlayer ile oynar) |
 | Gün sayacı, kalp atışı, ruh hali, günün sorusu, notlar | Hazır |
 | Planlar (takvim + özel günler), hayaller listesi, karar çarkı | Hazır |
 | Anılar: canlı çizim, zaman kapsülü | Hazır |
@@ -23,7 +23,7 @@ Android uygulaması Kotlin + Jetpack Compose + Material 3 ile yazılır, arka u�
 | Analytics, Crashlytics, Performance, Timber katmanı | Hazır, bkz. [docs/analytics.md](docs/analytics.md) |
 | Güvenlik: koleksiyon bazlı Firestore kuralları, sinyal sınırı (saatte 15 / günde 60, Console'daki `config/limits`'ten değişir), App Check (Play Integrity) | Hazır; kurallar yayınlanmalı, App Check konsolda kaydedilmeli, bkz. [docs/security.md](docs/security.md) ve [todo.md](todo.md) |
 | Geçmiş ekranları (ruh hali, önceki sorular, kalp atışı, çark), arama | Hazır |
-| Çizimlerimiz (kayıtlı çizimler, silme), açılmış mektuplar, aksesuarlar, bildirimler | Hazır |
+| Çizimlerimiz (kayıtlı çizimler, silme), açılmış mektuplar, bildirimler | Hazır |
 | Hesap (giriş yöntemi, şifre sıfırlama, çıkış, hesap silme) ve eşleşmeyi kaldırma; Biz sekmesinde "Kullanım verisi" anahtarı (analitik/hata/performans kapatılabilir) | Hazır; hesap silince profil, eşleşme kodu, ortak veriler ve telefondaki yerel veriler silinir; eşleşme kaldırılınca ortak veriler iki taraftan da kalıcı silinir (yeni Firestore kuralları yayınlanmalı) |
 | Henüz tasarlanıp kodlanmamış ekranlar | Arayüzde **"Yakında"** olarak görünür |
 

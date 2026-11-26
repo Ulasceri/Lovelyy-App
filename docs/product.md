@@ -10,7 +10,7 @@ take care of together. Around the cat are small daily rituals that keep the coup
 | 1 | Login (Google + email), partner pairing with a code, home screen skeleton | **this step** |
 | 2 | The cat: name, needs (hunger, thirst, sleep, love), feed / play / pet, animations, home widget | next |
 | 3+ | Day counter, heartbeat push, live drawing + widget, daily question, mood, shared piggy bank, distance, notes, calendar + special days, food wheel | later |
-| 3+ | "Thinking of you" nudge, cat-care streak (unlocks accessories), milestone celebrations, time-capsule letters, bucket list | later |
+| 3+ | "Thinking of you" nudge, cat-care streak, milestone celebrations, time-capsule letters, bucket list | later |
 
 Out of v1: love plant, photo album.
 

@@ -44,7 +44,6 @@ object InnerScreens {
     const val SEARCH = "search"
     const val DRAWINGS = "saved_drawings"
     const val LETTERS = "opened_letters"
-    const val ACCESSORIES = "accessories"
     const val INBOX = "inbox"
     const val ACCOUNT = "account"
     const val UNPAIR = "unpair"

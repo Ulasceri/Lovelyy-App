@@ -44,7 +44,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Brush
 import androidx.compose.material.icons.rounded.CalendarMonth
-import androidx.compose.material.icons.rounded.Checkroom
+import androidx.compose.material.icons.rounded.Pets
 import androidx.compose.material.icons.rounded.EditNote
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.Groups
@@ -117,7 +117,6 @@ import com.lovelyy.app.ui.components.bounceClick
 import com.lovelyy.app.ui.components.softShadow
 import com.lovelyy.app.analytics.InnerScreens
 import com.lovelyy.app.ui.capsule.LettersScreen
-import com.lovelyy.app.ui.cat.AccessoriesScreen
 import com.lovelyy.app.ui.drawing.DrawingsScreen
 import com.lovelyy.app.ui.history.HeartbeatHistoryScreen
 import com.lovelyy.app.ui.history.MoodHistoryScreen
@@ -178,7 +177,6 @@ private object Routes {
     const val SEARCH = "search" // "search:<scope>"
     const val DRAWINGS = "drawings"
     const val LETTERS = "letters" // "letters" or "letters:<capsule id>"
-    const val ACCESSORIES = "accessories"
     const val INBOX = "inbox"
     const val ACCOUNT = "account"
     const val UNPAIR = "unpair"
@@ -241,7 +239,6 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
                 Routes.SEARCH -> InnerScreens.SEARCH
                 Routes.DRAWINGS -> InnerScreens.DRAWINGS
                 Routes.LETTERS -> InnerScreens.LETTERS
-                Routes.ACCESSORIES -> InnerScreens.ACCESSORIES
                 Routes.INBOX -> InnerScreens.INBOX
                 Routes.ACCOUNT -> InnerScreens.ACCOUNT
                 Routes.UNPAIR -> InnerScreens.UNPAIR
@@ -340,7 +337,7 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
                     Routes.MOOD -> MoodScreen(me, partner, moods, onBack = ::pop, onHistory = { push(Routes.MOOD_HISTORY) })
                     Routes.QUESTION -> QuestionScreen(me, couple, partner, onBack = ::pop, onHistory = { push(Routes.QUESTION_HISTORY) })
                     Routes.NOTES -> NotesScreen(me, partner, onBack = ::pop, onSearch = { push("${Routes.SEARCH}:notes") }, openId = route.substringAfter(':', "").ifEmpty { null })
-                    Routes.CAT -> CatCareScreen(me, couple, partner, onBack = ::pop, onAccessories = { push(Routes.ACCESSORIES) })
+                    Routes.CAT -> CatCareScreen(me, couple, partner, onBack = ::pop)
                     Routes.DISTANCE -> DistanceScreen(me, partner, onBack = ::pop)
                     Routes.DREAMS -> DreamsScreen(me, partner, onBack = ::pop, onSearch = { push("${Routes.SEARCH}:dreams") }, openId = route.substringAfter(':', "").ifEmpty { null })
                     Routes.WHEEL -> WheelScreen(me, partner, onBack = ::pop, onHistory = { push(Routes.WHEEL_HISTORY) })
@@ -360,7 +357,6 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
                     )
                     Routes.DRAWINGS -> DrawingsScreen(me, partner, onBack = ::pop, onNew = { returnTo(Routes.DRAWING) })
                     Routes.LETTERS -> LettersScreen(me, partner, route.substringAfter(':', "").ifEmpty { null }, onBack = ::pop)
-                    Routes.ACCESSORIES -> AccessoriesScreen(me, partner, onBack = ::pop)
                     Routes.INBOX -> InboxScreen(me, partner, onBack = ::pop, onOpen = { r -> if (r == PLANS_TAB) { stack.clear(); tab = Tab.Planlar } else push(r) })
                     Routes.ACCOUNT -> AccountScreen(me, couple, partner, onBack = ::pop)
                     Routes.UNPAIR -> UnpairScreen(me, partner, onBack = ::pop)
@@ -372,7 +368,7 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
             val routeKey = top?.substringBefore(':')
             val navTab = when (routeKey) {
                 null -> tab
-                Routes.COUNTER, Routes.CAT, Routes.ACCESSORIES, Routes.INBOX -> Tab.Yuva
+                Routes.COUNTER, Routes.CAT, Routes.INBOX -> Tab.Yuva
                 Routes.MOOD, Routes.QUESTION, Routes.DISTANCE, Routes.WIDGETS,
                 Routes.MOOD_HISTORY, Routes.QUESTION_HISTORY, Routes.ACCOUNT, Routes.UNPAIR -> Tab.Biz
                 Routes.NOTES, Routes.CAPSULE, Routes.DRAWING, Routes.DRAWINGS, Routes.LETTERS -> Tab.Anilar
@@ -517,7 +513,7 @@ private fun YuvaTab(
             CornerItem(Icons.Rounded.Place, R.string.feature_distance, MintTint, Routes.DISTANCE),
             CornerItem(Icons.Rounded.HourglassTop, R.string.feature_capsule, PeachTint, Routes.CAPSULE),
             CornerItem(Icons.Rounded.Star, R.string.feature_bucket, MintTint, Routes.DREAMS),
-            CornerItem(Icons.Rounded.Checkroom, R.string.feature_wardrobe, PeachTint, Routes.CAT),
+            CornerItem(Icons.Rounded.Pets, R.string.feature_cat_care, PeachTint, Routes.CAT),
         )
         corner.chunked(3).forEach { row ->
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(bottom = 10.dp)) {

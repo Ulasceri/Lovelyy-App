@@ -177,10 +177,10 @@
     <string name="home_mood_share">Paylaş</string>
     <string name="home_mood_change">Değiştir</string>
     <string name="feature_calendar">Takvim</string>
+    <string name="feature_cat_care">Kedi bakımı</string>
     <string name="feature_food">Ne yesek?</string>
     <string name="feature_capsule">Zaman kapsülü</string>
     <string name="feature_bucket">Hayaller</string>
-    <string name="feature_wardrobe">Kedi dolabı</string>
     <string name="biz_since">%1$s tarihinden beri</string>
     <string name="biz_notifications">Bildirim ayarları</string>
     <string name="biz_profile_soon">Profil fotoğrafı ve ayarlar sonraki adımlarda geliyor.</string>
@@ -536,7 +536,6 @@
     <string name="p_pick_date">Tarih seç</string>
 
     <!-- Kedi bakımı (approved design 14) -->
-    <string name="cc_accessories">Aksesuarlar</string>
     <string name="cc_today">Bugün: %1$s</string>
     <string name="cc_today_none">Bugün henüz kimse ilgilenmedi</string>
     <string name="cc_me_feed">sen besledin</string>
@@ -556,25 +555,10 @@
         <item quantity="one">%1$d gün bakım serisi</item>
         <item quantity="other">%1$d gün bakım serisi</item>
     </plurals>
-    <plurals name="cc_streak_next">
-        <item quantity="one">%1$s için %2$d gün kaldı</item>
-        <item quantity="other">%1$s için %2$d gün kaldı</item>
+    <plurals name="cc_streak_best">
+        <item quantity="one">En uzun seri: %1$d gün</item>
+        <item quantity="other">En uzun seri: %1$d gün</item>
     </plurals>
-    <string name="cc_streak_all">Tüm aksesuarlar açıldı</string>
-    <string name="cc_streak_chip">%1$d / %2$d</string>
-    <string name="cc_day">%1$d. gün</string>
-    <string name="cc_acc_kurdele">Kurdele</string>
-    <string name="cc_acc_papyon">Papyon</string>
-    <string name="cc_acc_sapka">Şapka</string>
-    <string name="cc_acc_gozluk">Gözlük</string>
-    <plurals name="cc_locked_hint">
-        <item quantity="one">%1$s %2$d günlük seride açılır</item>
-        <item quantity="other">%1$s %2$d günlük seride açılır</item>
-    </plurals>
-    <string name="cc_locked">%1$s, kilitli</string>
-    <string name="cc_unlocked">%1$s, açıldı</string>
-    <string name="cc_worn">%1$s, kedinin üstünde</string>
-    <string name="cc_wear_hint">Açılan bir aksesuara dokun, kedin onu taksın.</string>
 
     <!-- Biz: profil ve ayarlar (approved design 10) -->
     <string name="pf_title">Biz</string>
@@ -960,34 +944,6 @@
         <item quantity="other">%1$d gün mühürlü kaldı</item>
     </plurals>
 
-    <!-- Accessories (board 32) -->
-    <string name="ac_acc_kurdele">Kurdeleyi</string>
-    <string name="ac_acc_papyon">Papyonu</string>
-    <string name="ac_acc_sapka">Şapkayı</string>
-    <string name="ac_acc_gozluk">Gözlüğü</string>
-    <string name="ac_cat_desc">%1$s, ortak kediniz</string>
-    <string name="ac_preview">Önizleme: %1$s</string>
-    <string name="ac_preview_locked">Önizleme: %1$s (kilitli)</string>
-    <string name="ac_worn_label">%1$s takılı</string>
-    <plurals name="ac_streak">
-        <item quantity="one">%1$d gün seri</item>
-        <item quantity="other">%1$d gün seri</item>
-    </plurals>
-    <string name="ac_locked">Kilitli</string>
-    <string name="ac_open">Açık</string>
-    <string name="ac_worn">Takılı</string>
-    <string name="ac_opened_day">%1$d. günde açıldı</string>
-    <plurals name="ac_days_left">
-        <item quantity="one">%1$d gün kaldı</item>
-        <item quantity="other">%1$d gün kaldı</item>
-    </plurals>
-    <string name="ac_note">Aksesuarlar, %1$s ikinizin de baktığı günlerin serisiyle açılır. Taktığını %2$s de görür.</string>
-    <plurals name="ac_opens_in">
-        <item quantity="one">%1$d gün sonra açılır</item>
-        <item quantity="other">%1$d gün sonra açılır</item>
-    </plurals>
-    <string name="ac_take_off">%1$s çıkar</string>
-    <string name="ac_put_on_named">%1$s %2$s tak</string>
 
     <!-- Inbox (board 26) -->
     <string name="ib_title">Bildirimler</string>
@@ -1041,8 +997,8 @@
     <string name="un_what">Kaldırırsan ne olur?</string>
     <string name="un_cat">%1$s veda eder</string>
     <plurals name="un_cat_sub">
-        <item quantity="one">%1$s, %2$d günlük bakım serisi ve açtığınız aksesuarlar silinir.</item>
-        <item quantity="other">%1$s, %2$d günlük bakım serisi ve açtığınız aksesuarlar silinir.</item>
+        <item quantity="one">%1$s, %2$d günlük bakım serisi silinir.</item>
+        <item quantity="other">%1$s, %2$d günlük bakım serisi silinir.</item>
     </plurals>
     <string name="un_data">Ortak her şey silinir</string>
     <string name="un_data_sub">Notlar, anılar, çizimler, mektuplar, hayaller ve takvim ikiniz için de kalıcı olarak silinir.</string>

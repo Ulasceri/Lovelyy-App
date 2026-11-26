@@ -37,10 +37,10 @@ iOS comes later (`ios/` is a stub). Product: [docs/product.md](docs/product.md).
 
 **Built (designed + approved):** Karşılama, the try-it intro (onboarding), Giriş, Eşleşme, the post-pairing
 flow (Eşleştiniz + notification and location primers), Anasayfa with the bottom nav (Yuva, Anılar,
-Planlar, Biz), the cat and Kedi bakımı (streak, accessories), day counter, heartbeat, mood, daily question,
+Planlar, Biz), the cat and Kedi bakımı (care streak; accessories were removed 2026-11-26), day counter, heartbeat, mood, daily question,
 notes, calendar, bucket list, decision wheel, live drawing, time capsule, distance, profile/settings,
 4 home-screen widgets, telemetry, and the second design round (mood/question/heartbeat/wheel history, search,
-saved drawings, opened letters, accessories, inbox, account, unpair screen), and the pairing screen's
+saved drawings, opened letters, inbox, account, unpair screen), and the pairing screen's
 account sheet (sign out / delete the account before pairing, for Google Play's in-app deletion rule).
 Unpairing deletes the shared data for both partners (Ulaş, 2026-11-26; `LeaveRepository`, see docs/architecture.md).
 **Not designed yet = "Yakında" placeholder** (`home_soon` string).

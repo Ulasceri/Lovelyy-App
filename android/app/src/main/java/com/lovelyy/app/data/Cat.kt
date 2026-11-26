@@ -24,8 +24,6 @@ data class CatDoc(
     val lastAction: CatAction? = null,
     val recent: List<CatAction> = emptyList(),
     val streak: CareStreak = CareStreak(),
-    /** The accessory the cat wears ([CareRewards.Accessory] name), chosen on Kedi bakımı. */
-    val wearing: String? = null,
 )
 
 /** The name every cat starts with; the couple can rename it later. */
@@ -48,7 +46,7 @@ enum class CatActionType { Feed, Water, Play, Pet, Sleep, Wake, Name }
 
 /**
  * Shared daily care streak: the streak grows by one for every day on which BOTH partners
- * took care of the cat. (Future accessories unlock with it.)
+ * took care of the cat.
  */
 data class CareStreak(
     val count: Int = 0,

@@ -7,7 +7,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,7 +18,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
@@ -35,8 +33,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
@@ -58,7 +54,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lovelyy.app.R
 import com.lovelyy.app.data.CareRewards
-import com.lovelyy.app.data.CareRewards.Accessory
 import com.lovelyy.app.data.CatAction
 import com.lovelyy.app.data.displayCatName
 import com.lovelyy.app.data.CatActionType
@@ -67,7 +62,6 @@ import com.lovelyy.app.data.Couple
 import com.lovelyy.app.data.UserProfile
 import com.lovelyy.app.ui.components.CenteredTopBar
 import com.lovelyy.app.ui.components.HEART_D
-import com.lovelyy.app.ui.components.RoundSvgButton
 import com.lovelyy.app.ui.components.SvgStrokeIcon
 import com.lovelyy.app.ui.components.bounceClick
 import com.lovelyy.app.ui.components.drawSvg
@@ -78,11 +72,9 @@ import com.lovelyy.app.ui.theme.Brown
 import com.lovelyy.app.ui.theme.BrownSoft
 import com.lovelyy.app.ui.theme.CatBg
 import com.lovelyy.app.ui.theme.CreamCard
-import com.lovelyy.app.ui.theme.Mint
 import com.lovelyy.app.ui.theme.NeedLow
 import com.lovelyy.app.ui.theme.NeedOk
 import com.lovelyy.app.ui.theme.Peach
-import com.lovelyy.app.ui.theme.PeachSoft
 import com.lovelyy.app.ui.theme.Quicksand
 import kotlinx.coroutines.delay
 import java.time.LocalDate
@@ -90,20 +82,15 @@ import kotlin.math.roundToInt
 
 private val Track = Color(0xFFF3EAE3)
 private val ButtonIdle = Color(0xFFF6EEE8)
-private val StreakGreen = Color(0xFF3E9C82)
-private val LockedRing = Color(0xFFB8A69D)
 
-private const val SHIRT_D = "M8 4l4 2 4-2 5 4-3 3-2-1v10H8V10l-2 1-3-3z"
 private const val BOWL_D = "M3 12h18a9 6 0 0 1-18 0z M8.5 9.5c0-1 .8-2 2-2M13 9c0-1 .8-2 2-2"
 private const val DROP_D = "M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"
 private const val MOON_D = "M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"
 private const val FLAME_D = "M12 21c-4 0-6-2.7-6-6 0-4 4-6 4-10 3 2 4 4 4 6 1-1 1.5-2 1.5-3 2 2 2.5 4.5 2.5 7 0 3.3-2 6-6 6z"
-private const val GIFT_D = "M4 10h16v10H4z M3 7h18v3H3zM12 7v13M12 7c-1.5-3-5-3-5-1s3 1 5 1zm0 0c1.5-3 5-3 5-1s-3 1-5 1z"
-private const val LOCK_D = "M7.5 11h9a2.5 2.5 0 0 1 2.5 2.5v4a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 5 17.5v-4A2.5 2.5 0 0 1 7.5 11z M8 11V8a4 4 0 0 1 8 0v3"
 
 /** Kedi bakımı (approved design 14): the cat up close, its four needs with a button each, and the care streak. */
 @Composable
-fun CatCareScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBack: () -> Unit, onAccessories: () -> Unit) {
+fun CatCareScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBack: () -> Unit) {
     val coupleId = me.coupleId ?: return
     val app = lovelyyApp()
     val vm: CatViewModel = viewModel(key = "cat-$coupleId") { CatViewModel(app, coupleId, me.uid) }
@@ -188,9 +175,7 @@ fun CatCareScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBac
             .padding(top = 20.dp, bottom = 140.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        CenteredTopBar(catName, onBack) {
-            RoundSvgButton(SHIRT_D, stringResource(R.string.cc_accessories), onAccessories)
-        }
+        CenteredTopBar(catName, onBack)
 
         // Hero: the living cat. The stage is short, so keep the head and ears in view.
         val heroShape = RoundedCornerShape(28.dp)
@@ -222,7 +207,6 @@ fun CatCareScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBac
                 stageModifier = Modifier.height(196.dp),
                 cropBias = 0.3f,
                 showChips = false,
-                wearing = ui?.doc?.let { CareRewards.worn(it.wearing, it.streak.best) },
                 bubbleTop = 16.dp,
                 bubbleEnd = 16.dp,
                 footer = todayLine,
@@ -251,12 +235,6 @@ fun CatCareScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBac
         StreakCard(
             current = streak?.current(today) ?: 0,
             best = streak?.best ?: 0,
-            wearing = ui?.doc?.let { CareRewards.worn(it.wearing, it.streak.best) },
-            onWear = { a -> vm.wear(a) },
-            onLocked = { a ->
-                banner = context.resources.getQuantityString(R.plurals.cc_locked_hint, a.day.toInt(), context.getString(accessoryNameRes(a)), a.day)
-                view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-            },
         )
     }
 
@@ -358,93 +336,25 @@ private fun NeedCard(
 }
 
 @Composable
-private fun StreakCard(current: Int, best: Int, wearing: Accessory?, onWear: (Accessory?) -> Unit, onLocked: (Accessory) -> Unit) {
+private fun StreakCard(current: Int, best: Int) {
     val shape = RoundedCornerShape(24.dp)
-    val next = CareRewards.next(current, best)
-    Column(
+    Row(
         Modifier.fillMaxWidth().softShadow(shape, 6.dp).clip(shape).background(CreamCard).padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            val flame = remember { svgPath(FLAME_D) }
-            Canvas(Modifier.size(24.dp)) {
-                drawSvg(flame, 24f, Peach)
-                drawSvg(flame, 24f, Color(0xFFE07A45), strokeWidth = 1.6f)
-            }
-            Column(Modifier.weight(1f)) {
-                Text(pluralStringResource(R.plurals.cc_streak_title, current.toInt(), current), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Brown)
-                Text(
-                    if (next != null) pluralStringResource(R.plurals.cc_streak_next, (next.day - current).toInt(), accessoryName(next), next.day - current)
-                    else stringResource(R.string.cc_streak_all),
-                    fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, color = BrownSoft,
-                    maxLines = 1, overflow = TextOverflow.Ellipsis,
-                )
-            }
-            if (next != null) {
-                Text(
-                    stringResource(R.string.cc_streak_chip, current, next.day),
-                    fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Brown, maxLines = 1,
-                    modifier = Modifier.clip(RoundedCornerShape(50)).background(PeachSoft).padding(horizontal = 12.dp, vertical = 7.dp),
-                )
-            }
+        val flame = remember { svgPath(FLAME_D) }
+        Canvas(Modifier.size(24.dp)) {
+            drawSvg(flame, 24f, Peach)
+            drawSvg(flame, 24f, Color(0xFFE07A45), strokeWidth = 1.6f)
         }
-        val progress by animateFloatAsState(CareRewards.progress(current, best), label = "streak")
-        Box(Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)).background(Track)) {
-            Box(Modifier.fillMaxWidth(progress).height(8.dp).clip(RoundedCornerShape(4.dp)).background(StreakGreen))
-        }
-        if (Accessory.entries.any { CareRewards.unlocked(it, best) }) {
-            Text(stringResource(R.string.cc_wear_hint), fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, color = BrownSoft)
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            Accessory.entries.forEach { a ->
-                AccessoryBadge(a, CareRewards.unlocked(a, best), a == wearing, Modifier.weight(1f)) {
-                    if (CareRewards.unlocked(a, best)) onWear(if (a == wearing) null else a) else onLocked(a)
-                }
-            }
+        Column(Modifier.weight(1f)) {
+            Text(pluralStringResource(R.plurals.cc_streak_title, current.toInt(), current), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Brown)
+            Text(
+                pluralStringResource(R.plurals.cc_streak_best, best.toInt(), best),
+                fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, color = BrownSoft,
+                maxLines = 1, overflow = TextOverflow.Ellipsis,
+            )
         }
     }
-}
-
-@Composable
-private fun AccessoryBadge(a: Accessory, unlocked: Boolean, worn: Boolean, modifier: Modifier, onClick: () -> Unit) {
-    val name = accessoryName(a)
-    val label = stringResource(if (worn) R.string.cc_worn else if (unlocked) R.string.cc_unlocked else R.string.cc_locked, name) + ", " + stringResource(R.string.cc_day, a.day)
-    Column(
-        modifier.clearAndSetSemantics { contentDescription = label }.bounceClick(onClick = onClick),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        if (unlocked) {
-            Box(
-                Modifier.size(48.dp).clip(CircleShape).background(if (worn) Peach else Mint)
-                    .then(if (worn) Modifier.border(3.dp, Brown, CircleShape) else Modifier),
-                contentAlignment = Alignment.Center,
-            ) {
-                SvgStrokeIcon(if (worn) com.lovelyy.app.ui.components.Kit.CHECK_D else GIFT_D, Brown, Modifier.size(22.dp))
-            }
-        } else {
-            Box(contentAlignment = Alignment.Center) {
-                Canvas(Modifier.size(48.dp)) {
-                    val w = 2.dp.toPx()
-                    drawCircle(
-                        LockedRing, radius = size.minDimension / 2 - w / 2,
-                        style = Stroke(w, pathEffect = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 4.dp.toPx()))),
-                    )
-                }
-                SvgStrokeIcon(LOCK_D, BrownSoft, Modifier.size(18.dp))
-            }
-        }
-        Text(name, fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Brown, maxLines = 1)
-        Text(stringResource(R.string.cc_day, a.day), fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 11.sp, color = BrownSoft)
-    }
-}
-
-@Composable
-private fun accessoryName(a: Accessory): String = stringResource(accessoryNameRes(a))
-
-internal fun accessoryNameRes(a: Accessory): Int = when (a) {
-    Accessory.Kurdele -> R.string.cc_acc_kurdele
-    Accessory.Papyon -> R.string.cc_acc_papyon
-    Accessory.Sapka -> R.string.cc_acc_sapka
-    Accessory.Gozluk -> R.string.cc_acc_gozluk
 }
