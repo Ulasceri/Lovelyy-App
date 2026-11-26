@@ -1091,8 +1091,8 @@
     <string name="plus_price_first_year_fallback" translatable="false">₺399,99</string>
     <string name="plus_price_monthly_fallback" translatable="false">₺79,99</string>
     <string name="plus_price_gift_fallback" translatable="false">₺499,99</string>
-    <string name="plus_terms_url" translatable="false">https://lovelyy.app/terms</string>
-    <string name="plus_privacy_url" translatable="false">https://lovelyy.app/privacy</string>
+    <string name="plus_terms_url" translatable="false">https://lovelyy-native.web.app/kullanim-sartlari.html</string>
+    <string name="plus_privacy_url" translatable="false">https://lovelyy-native.web.app/gizlilik.html</string>
     <string name="plus_trial_title">14 gün Plus ikinize hediye</string>
     <string name="plus_trial_body">Kart yok, ödeme yok. 14 gün sonra kendiliğinden biter, ücretsiz haliyle devam edersiniz.</string>
     <string name="plus_trial_start">Başlayalım</string>

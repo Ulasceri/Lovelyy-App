@@ -198,6 +198,13 @@ Screen-specific components (in dedicated files, `private`):
 - **Code card** (`CodeCard`): white 24dp card, 14dp shadow, "EŞLEŞME KODUN" (YOUR PAIRING CODE) label, copy button 44dp / 14dp (`MintInk` icon), time counter (`Schedule` icon), "bekleniyor" (waiting) Mint pulse dot.
 - **Couple avatars** (`CoupleAvatars`): two 84dp avatars, dashed line between them + 36dp beating heart.
 - **Coming soon placeholder** (`ComingSoon`): 96dp `PeachTint` icon circle (44dp icon), 24sp Bold title, 15sp Medium `BrownSoft` description, centered.
+- **Lovelyy Plus blocks** (`ui/plus/PlusParts.kt`, `PlusCards.kt`; boards Plus P1-P10):
+  - `PlusPill(text, fontSize=13)`: fully round `Brown` pill with a `Cream` sparkle icon and `Cream` Bold text ("Plus", "Deneme", plan name). Also used on the widget showcase ("Plus ile") and, as `widget_plus_pill.xml`, on the locked wide widget.
+  - `BenefitRow(icon, tint, title, sub)`: 40dp tinted icon circle + 15sp Bold title + 12sp SemiBold `BrownSoft` line (paywall, trial gift, lock sheet).
+  - `PlanOption(selected, title, sub, price, priceSub, onClick, strikePrice, badge)`: radio plan card (radius 20dp, min 64dp, role RadioButton); selected = `PeachTint` + 2.5dp `PeachDeep` border, otherwise `CreamCard` + 1.5dp `Outline`; optional `Brown` badge on the top edge (offer countdown), price right-aligned with a struck-through old price when the first-year offer applies.
+  - `BizPlusCard(status, onClick, showMore)`: `SoftCard` 16dp on the Biz tab and P8; trial = days left (26sp Bold) + 10dp `Sand` track with a `Peach` fill (day/14); paid = plan pill + renew/end date (20sp Bold), active state in `Kit.Green`.
+  - `HomePlusCard(title, body, action, onAction, onClose, footnote)`: gentle `PeachSoft` card (24dp) under the care buttons, 44dp close target, 44dp `Peach` action; closing hides it for the day (trial day 12-13 and the takeover hint).
+  - `PlusLockSheet` / `TakeoverSheet` (`PlusSheets.kt`): bottom sheets with a preview of the locked feature and one `PeachButton`.
 
 ---
 
@@ -280,6 +287,14 @@ The app navigates via `AppState` (no NavController): `LovelyyRoot.kt`. The `scre
 | Anılar tab | `HomeScreen` | `home` | **Yakında** (`ComingSoon`) |
 | Planlar tab | `HomeScreen` | `home` | **Yakında** (`ComingSoon`) |
 | Center heart (send heartbeat) | `BottomNav` | - | **Yakında** (`onHeart = soon`); visuals (`heartbeat/EmotionVisual.kt`) are ready |
+| Plus trial gift (P1, step after "Eşleştiniz") | `onboarding/PairedFlow.kt`, `plus/PlusTrialGift.kt` | `plus_trial_gift` | Done (board Plus P1) |
+| Plus cards (P2a Biz, P2b Home day 12-13 / takeover hint) | `plus/PlusCards.kt` | (part of `home`) | Done |
+| Paywall (P3, trial end / lock / management) | `plus/PaywallScreen.kt` | `plus_paywall` | Done; overlay without bottom nav, never shown during heartbeat, drawing or letter writing |
+| Plus lock sheet (P4, locked widget / feature) | `plus/PlusSheets.kt` | `plus_lock` | Done |
+| Gift Plus (P6a) | `plus/PlusGiftScreen.kt` | `plus_gift` | Done |
+| Plus opened celebration (P6b) | `plus/PlusCelebration.kt` | `plus_celebration` | Done |
+| Plus management (P8, P8b bought by partner) | `plus/PlusManageScreen.kt` | `plus_management` | Done; debug builds show a test box |
+| Takeover sheet (P10) | `plus/PlusSheets.kt` | `plus_takeover` | Done |
 
 ### Designed on the canvas (missing or partial in code; approval/status unverified in code)
 Approved canvas boards: 1 Karşılama (Welcome) · 2 Giriş (Login) · 3a/3b Eşleşme (Pairing) · 4 Anasayfa (Home; first open + after scrolling down) · 5 Gün sayacı (Day counter) · 6 Kalp atışı + dürtme (Heartbeat + nudge) · 7 Ruh hali (Mood) · 8 Günün sorusu (Question of the day) · 9 Mesafe (Distance) · 10 Biz sekmesi (Us tab: profile + settings) · 11 Planlar sekmesi (Plans tab: calendar + special days) · 12 Hayaller listesi (Dreams list) · 13 Karar çarkı (Decision wheel) · 14 Kedi bakımı (Cat care) · 15 Ana ekran widget'ları (Home screen widgets) · 16 Anılar sekmesi (Memories tab) · 17 Canlı çizim (Live drawing) · 18 Notlar (Notes) · 19 Zaman kapsülü (Time capsule).

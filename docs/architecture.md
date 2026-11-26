@@ -24,7 +24,7 @@ fully decides the screen, so the back stack can't get out of sync with the data.
 |---|---|---|
 | `users/{uid}` | displayName, photoUrl, coupleId, pairCode, createdAt | self; partner can read |
 | `pairCodes/{CODE}` | ownerUid, createdAt | any signed-in user can *get* by exact code (never list); expires after 24h; one use |
-| `couples/{coupleId}` | members [A, B], createdAt, startDate | the two members only; members can't be changed |
+| `couples/{coupleId}` | members [A, B], createdAt, startDate, plus (Lovelyy Plus map, see below) | the two members only; members can't be changed |
 | `couples/{id}/**` | every future shared feature (cat, notes, mood...) | the two members only |
 
 ### Pairing flow
@@ -207,9 +207,91 @@ the screen is split by a slanted seam into the partner's side (mint) and your si
   Firestore. "Giriş yap" on Karşılama and "Atla" go straight to the form.
 - **After pairing** (`PairedFlow`): the `AppState.JustPaired` state. `OnboardingPrefs` marks a user when they
   see the pairing screen on this phone; once they have a couple, `JustPaired` is shown instead of `Home`
-  until the flow ends. People who were paired before never see it. Steps: Eşleştiniz, then a primer for
+  until the flow ends. People who were paired before never see it. Steps: Eşleştiniz, the Plus trial gift (P1),
+  then a primer for
   notifications (Android 13+) and one for location; a permission that is already granted skips its primer.
   The system window opens only from the primer's main button. Allowing location shares it the same way as
   the Mesafe screen (city and distance only).
 
 No names appear in onboarding (product decision): the copy says "Sevgilin" and "Sen".
+
+# Lovelyy Plus (subscription core)
+
+Approved design: canvas section "Tur 3 · Lovelyy Plus" (boards P1-P10). One entitlement covers **both
+partners**; the couple gets a 14-day trial when they pair; after that yearly or monthly, or a 1-year gift.
+
+## Data: `couples/{id}.plus` (a map on the couple doc)
+
+| Field | Type | Meaning |
+|---|---|---|
+| `trialStart` | int (ms) | Trial start. Set once (P1 "Başlayalım", or Home for couples paired before Plus) in a transaction; the rules keep it within a day of server time and never let it change |
+| `until` | int (ms) or null | End of the paid period (null = never bought) |
+| `source` | `trial` / `sub` / `gift` | Where Plus comes from |
+| `product` | string | `lovelyy_plus:yearly`, `lovelyy_plus:monthly`, `lovelyy_plus_gift_year` (`PlusPlan.key`) |
+| `buyerUid` | member uid or null | Who bought it; only this signed-in member may change the purchase fields |
+| `autoRenew` | bool or null | Last renewal state the buyer's phone saw in Google Play |
+| `orderToken` | string | Google Play purchase token (stable across renewals), kept for a later server check |
+| `giftNote` | string ≤ 140 | Optional note sent with a gift, shown once in P6b |
+
+The couple doc is already observed by `AppViewModel`, so `Couple.plus` arrives with it; `PlusRepository` only
+writes (`ensureTrial` transaction, `write`). Unpairing deletes the couple doc and the map with it; a buyer whose
+subscription still runs gets it written into their next couple by the sync below.
+
+## Rules: `data/Plus.kt` → `PlusRules` (pure, `PlusRulesTest`)
+
+- `isPlus` = trial running (14 days) or paid and running; a renewing subscription keeps Plus 3 days past its
+  stored end (`RENEW_GRACE_MS`) so the partner doesn't lose Plus before the buyer's phone writes the renewal.
+- `showDay12Card`: trial days 12 and 13, closable per day (P2b).
+- `shouldShowTrialEndPaywall`: trial ended and nothing bought, at most once per couple day, and after two
+  closes in a row it stays away 7 days (counters in `PlusPrefs`, local). Only asked on a home tab.
+- `firstYearOfferActive`: the 48 h after the trial ended (yearly shows the `first-year` offer and a countdown).
+- `canPurchase` / `purchaseBlocked`: no second purchase while Plus is paid, active and auto-renewing; a running
+  non-renewing period (gift, cancelled subscription) can only be bought again on its last day.
+- `canPartnerTakeOver`: the partner who didn't buy, on the last day of a non-renewing paid period or after it
+  ended; never while the buyer's subscription renews (P8b button, P10 sheet, small Home card first).
+- `shouldCelebrate`: P6b once per purchase (`celebrationKey` = source + buyer + token) for the other partner.
+- `subscriptionEnd`: Play doesn't give the app the expiry, so the buyer's phone computes whole periods from the
+  purchase time; `sync` rewrites it (and `autoRenew=false` when the subscription is gone) once per app run.
+
+## Billing: `billing/BillingRepository.kt` (Play Billing 7, `billing-ktx`)
+
+Product ids (`PlusProducts`, must match Play Console exactly):
+
+| Play Console | Id | Notes |
+|---|---|---|
+| Subscription | `lovelyy_plus` | base plans `yearly` (₺499,99/yıl) and `monthly` (₺79,99/ay), auto-renewing |
+| Offer on `yearly` | `first-year` | first year ₺399,99, then the base price; the app only offers it in the 48 h window |
+| In-app product | `lovelyy_plus_gift_year` | one-time ₺499,99, "1 year of Plus"; consumed after it is recorded so it can be bought again |
+
+Flow (`ui/plus/PlusViewModel`, one keyed instance `plus-<coupleId>`): `launch` opens Play's window (the plan is
+put in the obfuscated profile id because purchases don't name the base plan) → `PurchasesUpdatedListener` →
+`PlusRules.afterPurchase` written to Firestore → **then** acknowledge (subscription) / consume (gift), so a
+purchase that never reached Firestore is refunded by Google instead of being lost. Restore and the once-per-run
+sync use `queryPurchasesAsync`. If products can't be loaded the screens show the string-resource prices and a
+purchase shows a friendly error.
+
+**Debug fake purchase**: debug builds skip Google Play when `-Pplus.fakeBilling=true` is passed, or
+automatically when the products can't be loaded (emulator, no Play listing yet): the purchase is written with a
+`debug-…` token. Plus management (P8) shows a debug box: "+1 gün" moves Plus time forward (`PlusClock`, debug
+only), "Gerçek zaman", "Yenilemeyi kapat" (to try takeover / second purchase) and "Satın alımı sıfırla".
+
+## UI: `ui/plus/`
+
+| Board | Code | Where |
+|---|---|---|
+| P1 Deneme hediyesi | `PlusTrialGiftScreen` | step of `PairedFlow` after Eşleştiniz, before the permission primers (no names) |
+| P2a Biz kartı | `BizPlusCard` | Biz tab under the couple card → P8 |
+| P2b 12. gün kartı | `HomePlusCard` | Yuva under the care buttons (also used for the takeover hint) |
+| P3 Paywall | `PaywallScreen` | full-screen overlay in `HomeScreen` (`paywallSource`), automatic only on a home tab |
+| P4 Kilit | `PlusLockSheet` | overlay; opened through `LocalPlus.openLock(feature)` or a locked widget tap |
+| P6a / P6b | `PlusGiftScreen` (route `plus_gift`) / `PlusCelebration` (overlay) | |
+| P8 / P8b | `PlusManageScreen` (route `plus`) | buyer vs. partner view |
+| P10 | `TakeoverSheet` | overlay, only when `canPartnerTakeOver` |
+
+`LocalPlus` (`PlusAccess`: map, time, `isPlus`, `openLock`, `openPlans`) is provided by `HomeScreen` for every
+screen under it: later Plus features (free-tier limits, streak protection, decorations) plug in there.
+Automatic Plus screens never open over the heartbeat, the live drawing or a letter being written (those are
+inner screens), and basic cat care is never locked.
+
+Widgets: `WidgetData.savePlus` stores `PlusRules.activeUntil`; without Plus the wide cat widget shows "Plus ile"
+and opens P4, and the days widget's heart opens P4 instead of sending (the day counter itself stays free).
