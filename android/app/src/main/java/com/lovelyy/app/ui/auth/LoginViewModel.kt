@@ -38,6 +38,9 @@ class LoginViewModel(
         resetSent = false
     }
 
+    /** Called when a field is edited, so a stale error doesn't linger until resubmit. */
+    fun clearError() { if (error != null) error = null }
+
     fun google(activityContext: Context) = launchAction { auth.signInWithGoogle(activityContext) }
 
     fun submitEmail() {
