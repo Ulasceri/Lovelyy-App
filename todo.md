@@ -1,6 +1,5 @@
 # Yapılacaklar (elle yapılacak Console adımları)
 
-- [ ] Merge'den sonra firebase/firestore.rules dosyasını Firebase Console > Firestore > Rules'a yapıştırıp yayınla.
 - [ ] Firebase Console > App Check'te com.lovelyy.app'i Play Integrity ile kaydet (Play app signing SHA-256).
 - [ ] Emülatörün logcat'teki App Check debug token'ını Console > App Check > Manage debug tokens'a ekle.
 - [ ] App Check'i, Play internal testing sürümü doğrulanmış istek gösterene kadar zorunlu (enforce) yapma.
