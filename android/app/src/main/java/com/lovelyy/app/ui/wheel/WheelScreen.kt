@@ -68,6 +68,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lovelyy.app.LovelyyApplication
 import com.lovelyy.app.R
 import com.lovelyy.app.analytics.AnalyticsEvent
+import com.lovelyy.app.data.ItemGoneException
 import com.lovelyy.app.data.SignalKind
 import com.lovelyy.app.data.UserProfile
 import com.lovelyy.app.data.WheelSpin
@@ -116,11 +117,12 @@ class WheelViewModel(private val app: LovelyyApplication, private val coupleId: 
         .catch { Timber.w(it, "Wheels unavailable") }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
-    fun save(id: String?, label: String, items: List<String>) {
+    /** [onGone]: the edited custom wheel was deleted by the partner meanwhile (it is not re-created). */
+    fun save(id: String?, label: String, items: List<String>, onGone: () -> Unit = {}) {
         viewModelScope.launch {
             runCatching { app.wheelRepository.save(coupleId, id, label, items) }
                 .onSuccess { if (id == null) Telemetry.track(AnalyticsEvent.WheelCreated) }
-                .onFailure { Timber.w(it, "Saving the wheel failed") }
+                .onFailure { Timber.w(it, "Saving the wheel failed"); if (it is ItemGoneException) onGone() }
         }
     }
 
@@ -181,7 +183,8 @@ fun WheelScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onHi
         }
     }
     var showAll by remember { mutableStateOf(false) }
-    var adding by remember { mutableStateOf(false) }
+    // The wheel the "add option" sheet was opened for (null: closed).
+    var addingTo by remember { mutableStateOf<String?>(null) }
     var creating by remember { mutableStateOf(false) }
 
     // "Emin misin?" before deleting.
@@ -215,7 +218,10 @@ fun WheelScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onHi
         }
     }
 
-    fun saveItems(newItems: List<String>) = vm.save(wheel.id, wheel.label, newItems)
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val goneText = stringResource(R.string.gone_wheel)
+    val showGone = { android.widget.Toast.makeText(context, goneText, android.widget.Toast.LENGTH_SHORT).show() }
+    fun saveItems(newItems: List<String>) = vm.save(wheel.id, wheel.label, newItems, showGone)
 
     Column(
         Modifier
@@ -313,7 +319,7 @@ fun WheelScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onHi
                         )
                     }
                 }
-                if (items.size < WheelMath.MAX_ITEMS) DashedPill(stringResource(R.string.wh_add)) { adding = true }
+                if (items.size < WheelMath.MAX_ITEMS) DashedPill(stringResource(R.string.wh_add)) { addingTo = wheel.id }
             }
             // Edited built-in → back to default; custom → delete.
             if (wheel.builtIn && saved.containsKey(wheel.id)) {
@@ -324,10 +330,19 @@ fun WheelScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onHi
         }
     }
 
-    if (adding) {
-        AddOptionSheet(onDismiss = { adding = false }) { text ->
-            adding = false
-            if (text.isNotBlank() && items.none { it.equals(text.trim(), ignoreCase = true) }) saveItems(items + text.trim())
+    addingTo?.let { targetId ->
+        // Add to the wheel the sheet was opened for; if the partner deleted it meanwhile, close and say so
+        // (never fall back to another wheel or re-create it).
+        val target = wheels.firstOrNull { it.id == targetId }
+        if (target == null) {
+            androidx.compose.runtime.LaunchedEffect(targetId) { addingTo = null; showGone() }
+        } else {
+            AddOptionSheet(onDismiss = { addingTo = null }) { text ->
+                addingTo = null
+                if (text.isNotBlank() && target.items.none { it.equals(text.trim(), ignoreCase = true) }) {
+                    vm.save(target.id, target.label, target.items + text.trim(), showGone)
+                }
+            }
         }
     }
     if (creating) {

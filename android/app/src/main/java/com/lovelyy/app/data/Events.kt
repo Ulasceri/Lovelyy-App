@@ -57,17 +57,22 @@ class EventRepository(private val db: FirebaseFirestore) {
     private fun events(coupleId: String) =
         db.collection(Paths.COUPLES).document(coupleId).collection(Paths.EVENTS)
 
+    /**
+     * Adds a plan ([id] null) or edits one. Editing never re-creates a plan the partner deleted meanwhile
+     * (throws [ItemGoneException]) and keeps the original creator (by/byName/at).
+     */
     suspend fun save(coupleId: String, me: UserProfile, id: String?, title: String, date: LocalDate, emoji: String, yearly: Boolean) {
         val data = mapOf(
             "title" to title.trim().take(MAX_TITLE),
             "date" to date.toString(),
             "emoji" to emoji,
             "yearly" to yearly,
-            "by" to me.uid,
-            "byName" to me.displayName,
-            "at" to System.currentTimeMillis(),
         )
-        if (id == null) events(coupleId).add(data).await() else events(coupleId).document(id).set(data).await()
+        if (id == null) {
+            events(coupleId).add(data + mapOf("by" to me.uid, "byName" to me.displayName, "at" to System.currentTimeMillis())).await()
+        } else {
+            events(coupleId).document(id).updateExisting(data)
+        }
     }
 
     suspend fun delete(coupleId: String, id: String) {

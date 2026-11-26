@@ -1,6 +1,9 @@
 package com.lovelyy.app.data
 
+import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.firestore.FirebaseFirestoreException
+import kotlinx.coroutines.tasks.await
 
 /** Collection names. Keep in sync with firebase/firestore.rules. */
 object Paths {
@@ -41,3 +44,19 @@ internal fun DocumentSnapshot.toCouple(): Couple? =
         createdAt = getTimestamp("createdAt"),
         startDate = getTimestamp("startDate"),
     )
+
+/** The shared item being edited was deleted (usually by the partner) before the edit reached the server. */
+class ItemGoneException(cause: Throwable? = null) : Exception("Item was deleted", cause)
+
+/**
+ * Edits an existing document without ever re-creating it: update() fails with NOT_FOUND when the document
+ * is gone, which is turned into [ItemGoneException] so screens can tell the user instead of failing silently.
+ */
+internal suspend fun DocumentReference.updateExisting(data: Map<String, Any?>) {
+    try {
+        update(data).await()
+    } catch (e: FirebaseFirestoreException) {
+        if (e.code == FirebaseFirestoreException.Code.NOT_FOUND) throw ItemGoneException(e)
+        throw e
+    }
+}

@@ -54,6 +54,7 @@ import com.lovelyy.app.data.DayCounter
 import com.lovelyy.app.data.Dream
 import com.lovelyy.app.data.DreamCategory
 import com.lovelyy.app.data.DreamRepository
+import com.lovelyy.app.data.ItemGoneException
 import com.lovelyy.app.data.UserProfile
 import com.lovelyy.app.telemetry.Telemetry
 import com.lovelyy.app.ui.components.ChoicePill
@@ -90,19 +91,20 @@ class DreamsViewModel(private val app: LovelyyApplication, private val coupleId:
         .catch { Timber.w(it, "Dreams unavailable") }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
-    fun save(me: UserProfile, id: String?, title: String, category: DreamCategory, goal: String) {
+    /** [onGone]: the edited dream was deleted by the partner meanwhile (it is not re-created). */
+    fun save(me: UserProfile, id: String?, title: String, category: DreamCategory, goal: String, onGone: () -> Unit) {
         viewModelScope.launch {
             runCatching { app.dreamRepository.save(coupleId, me, id, title, category, goal) }
                 .onSuccess { if (id == null) Telemetry.track(AnalyticsEvent.DreamAdded(category.key)) }
-                .onFailure { Timber.w(it, "Saving the dream failed") }
+                .onFailure { Timber.w(it, "Saving the dream failed"); if (it is ItemGoneException) onGone() }
         }
     }
 
-    fun setDone(id: String, done: Boolean) {
+    fun setDone(id: String, done: Boolean, onGone: () -> Unit) {
         viewModelScope.launch {
             runCatching { app.dreamRepository.setDone(coupleId, id, done) }
                 .onSuccess { if (done) Telemetry.track(AnalyticsEvent.DreamCompleted) }
-                .onFailure { Timber.w(it, "Updating the dream failed") }
+                .onFailure { Timber.w(it, "Updating the dream failed"); if (it is ItemGoneException) onGone() }
         }
     }
 
@@ -134,6 +136,16 @@ fun DreamsScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onS
             onConfirm = { act(); askDelete = null },
             onDismiss = { askDelete = null },
         )
+    }
+
+    // The partner deleted the dream that is open here: close the sheet and say so.
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val goneText = stringResource(R.string.gone_dream)
+    val showGone = { android.widget.Toast.makeText(context, goneText, android.widget.Toast.LENGTH_SHORT).show() }
+    val editingId = editing?.dream?.id
+    androidx.compose.runtime.LaunchedEffect(dreams, editingId) {
+        val list = dreams
+        if (editingId != null && list != null && list.none { it.id == editingId }) { editing = null; showGone() }
     }
 
     val all = dreams.orEmpty()
@@ -173,11 +185,11 @@ fun DreamsScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onS
         }
 
         DreamList(stringResource(R.string.dr_next), open, stringResource(if (done.isEmpty()) R.string.dr_empty else R.string.dr_empty_next), me, partnerName,
-            onToggle = { d -> haptic.performHapticFeedback(HapticFeedbackType.LongPress); vm.setDone(d.id, true) },
+            onToggle = { d -> haptic.performHapticFeedback(HapticFeedbackType.LongPress); vm.setDone(d.id, true, showGone) },
             onOpen = { editing = Editing(it) })
         if (done.isNotEmpty() || all.isNotEmpty()) {
             DreamList(stringResource(R.string.dr_done), done, stringResource(R.string.dr_none_done), me, partnerName,
-                onToggle = { d -> vm.setDone(d.id, false) },
+                onToggle = { d -> vm.setDone(d.id, false, showGone) },
                 onOpen = { editing = Editing(it) })
         }
 
@@ -188,7 +200,7 @@ fun DreamsScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onS
         DreamEditor(
             dream = e.dream,
             onDismiss = { editing = null },
-            onSave = { title, cat, goal -> vm.save(me, e.dream?.id, title, cat, goal); editing = null },
+            onSave = { title, cat, goal -> vm.save(me, e.dream?.id, title, cat, goal, showGone); editing = null },
             onDelete = e.dream?.let { d -> { askDelete = { vm.delete(d.id); editing = null } } },
         )
     }
