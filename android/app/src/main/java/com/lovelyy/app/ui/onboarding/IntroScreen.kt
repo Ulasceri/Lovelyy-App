@@ -206,6 +206,8 @@ fun IntroScreen(onBack: () -> Unit, onDone: (skipped: Boolean, tried: Int) -> Un
             Text(
                 stringResource(when (page) { 0 -> R.string.onb_cat_title; 1 -> R.string.onb_heart_title; else -> R.string.onb_draw_title }),
                 fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 30.sp, lineHeight = 35.sp, color = Brown,
+                // Two lines on every page, so the stage keeps its height when a longer title wraps.
+                minLines = 2,
             )
             Spacer(Modifier.height(10.dp))
             Text(
