@@ -91,7 +91,7 @@ internal fun StreakExplainerSheet(
     streak: Int,
     bothCaredToday: Boolean,
     onDismiss: () -> Unit,
-    showPlusNote: Boolean = true,
+    showPlusNote: Boolean = false,
 ) {
     val sheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
