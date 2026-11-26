@@ -1,5 +1,6 @@
 package com.lovelyy.app.ui.history
 
+import com.lovelyy.app.text.AppLocale
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
@@ -32,7 +33,6 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 /** Shared pieces of the history, search and inbox boards (20-33). */
 internal val Muted = Color(0xFF75655E)
@@ -44,11 +44,10 @@ internal val DangerTint = Color(0xFFFBE3D9)
 internal val PeachBubble = Color(0xFFFFF1E8)
 internal val MintBubble = Color(0xFFE6F5F0)
 internal val Highlight = Color(0xFFFFE2A8)
-internal val TR = Locale.forLanguageTag("tr")
-private val DAY_TITLE: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMMM EEEE", TR)
-internal val DAY_MONTH: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMMM", TR)
-internal val DAY_MONTH_YEAR: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy", TR)
-internal val TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm", TR)
+private val DAY_TITLE: DateTimeFormatter get() = AppLocale.formatter("dMMMMEEEE")
+internal val DAY_MONTH: DateTimeFormatter get() = AppLocale.formatter("dMMMM")
+internal val DAY_MONTH_YEAR: DateTimeFormatter get() = AppLocale.formatter("dMMMMy")
+internal val TIME: DateTimeFormatter get() = AppLocale.formatter("jm")
 
 internal fun Long.localDate(): LocalDate = Instant.ofEpochMilli(this).atZone(ZoneId.systemDefault()).toLocalDate()
 internal fun Long.clock(): String = Instant.ofEpochMilli(this).atZone(ZoneId.systemDefault()).format(TIME)

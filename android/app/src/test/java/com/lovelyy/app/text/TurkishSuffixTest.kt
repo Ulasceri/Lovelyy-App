@@ -1,9 +1,27 @@
 package com.lovelyy.app.text
 
+import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Before
 import org.junit.Test
+import java.util.Locale
 
 class TurkishSuffixTest {
+    private val original = Locale.getDefault()
+
+    @Before
+    fun turkishUi() = Locale.setDefault(Locale.forLanguageTag("tr-TR"))
+
+    @After
+    fun restore() = Locale.setDefault(original)
+
+    @Test
+    fun otherLanguagesLeaveNamesUnchanged() {
+        Locale.setDefault(Locale.ENGLISH)
+        assertEquals("Elif", TurkishSuffix.dative("Elif"))
+        assertEquals("Elif", TurkishSuffix.locative("Elif"))
+    }
+
     @Test
     fun dative() {
         assertEquals("Elif'e", TurkishSuffix.dative("Elif"))

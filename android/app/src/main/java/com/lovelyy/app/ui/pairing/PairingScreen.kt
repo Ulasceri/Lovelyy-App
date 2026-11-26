@@ -71,6 +71,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -416,7 +417,7 @@ private fun EnterPage(
         }
         Text(
             if (input.isNotEmpty() && input.length < PairingRepository.CODE_LENGTH)
-                stringResource(R.string.pair_enter_hint_short, PairingRepository.CODE_LENGTH - input.length)
+                pluralStringResource(R.plurals.pair_enter_hint_short, (PairingRepository.CODE_LENGTH - input.length).toInt(), PairingRepository.CODE_LENGTH - input.length)
             else stringResource(R.string.pair_enter_hint_ttl),
             fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = BrownSoft,
             textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 14.dp),

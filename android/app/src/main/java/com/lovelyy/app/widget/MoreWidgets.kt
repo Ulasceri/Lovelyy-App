@@ -110,7 +110,7 @@ object DaysWidget {
         views.setTextViewText(R.id.days_partner, c?.partnerName?.trim()?.firstOrNull()?.uppercase() ?: "")
         views.setTextViewText(
             R.id.days_count,
-            if (c?.startMillis != null) context.getString(R.string.widget_days, c.days()) else context.getString(R.string.widget_open_app),
+            if (c?.startMillis != null) context.resources.getQuantityString(R.plurals.widget_days, (c.days()).toInt(), c.days()) else context.getString(R.string.widget_open_app),
         )
         val heart = PendingIntent.getBroadcast(
             context, 1, Intent(context, HeartReceiver::class.java).setAction(ACTION_HEART),

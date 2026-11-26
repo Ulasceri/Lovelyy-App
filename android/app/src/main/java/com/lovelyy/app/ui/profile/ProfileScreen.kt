@@ -39,6 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
@@ -189,7 +190,7 @@ fun ProfileScreen(
                         fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = CellLabel,
                     )
                     Text(
-                        stringResource(R.string.pf_together, DayCounter.together(startMillis, System.currentTimeMillis()).days),
+                        pluralStringResource(R.plurals.pf_together, (DayCounter.together(startMillis, System.currentTimeMillis()).days).toInt(), DayCounter.together(startMillis, System.currentTimeMillis()).days),
                         fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Brown,
                     )
                 } else {

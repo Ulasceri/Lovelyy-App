@@ -26,6 +26,14 @@ Android uygulaması Kotlin + Jetpack Compose + Material 3 ile yazılır, arka u�
 | Hesap (giriş yöntemi, şifre sıfırlama, çıkış, hesap silme) ve eşleşmeyi kaldırma | Hazır; eşleşme kaldırılınca ortak veriler iki taraftan da kalıcı silinir (yeni Firestore kuralları yayınlanmalı) |
 | Henüz tasarlanıp kodlanmamış ekranlar | Arayüzde **"Yakında"** olarak görünür |
 
+## Localization
+
+Arayüz metinleri tamamen `android/app/src/main/res/values/strings.xml` içindedir (Türkçe varsayılan; çeviri henüz yok).
+Sayılar `<plurals>` ile, tarihler `text/AppLocale.kt` ile yerel dile göre biçimlenir. Yeni dil eklemek için:
+`res/values-xx/strings.xml` oluştur (tüm anahtarlar, plurals ve `cal_weekdays_short` dahil), `res/xml/locales_config.xml`
+dosyasına dili ekle, Quicksand'in kapsamadığı alfabeler için yedek yazı tipi düşün. Ayrıntılar, kalan işler
+(günlük soru listesi hâlâ kodda, varsayılan kedi adı Firestore verisi) ve doğrulama notları: [docs/LOCALIZATION.md](docs/LOCALIZATION.md).
+
 ## Teknoloji
 
 - Kotlin 2.1, Android Gradle Plugin 8.10, `minSdk 26`, `compileSdk/targetSdk 35`, Java 17

@@ -1,5 +1,6 @@
 package com.lovelyy.app.ui.notes
 
+import com.lovelyy.app.text.AppLocale
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -89,11 +90,8 @@ import timber.log.Timber
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
-import java.util.Locale
 
-private val TR = Locale.forLanguageTag("tr-TR")
 private val FootInk = Color(0xFF5F524C)
 private val FieldBorder = Color(0xFFF0E2D8)
 
@@ -327,7 +325,7 @@ private fun NoteCard(n: Note, mine: Boolean, myName: String, partnerName: String
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             val who = if (mine) myName else n.byName.ifBlank { partnerName }
             Box(Modifier.size(22.dp).clip(CircleShape).background(if (mine) Peach else Mint), contentAlignment = Alignment.Center) {
-                Text(who.trim().firstOrNull()?.uppercase(TR) ?: "?", fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 11.sp, color = Brown)
+                Text(who.trim().firstOrNull()?.uppercase(AppLocale.current()) ?: "?", fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 11.sp, color = Brown)
             }
             Text(noteTime(n.at), fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, color = FootInk)
         }
@@ -339,13 +337,13 @@ private fun NoteCard(n: Note, mine: Boolean, myName: String, partnerName: String
 private fun noteTime(at: Long): String {
     val dt = Instant.ofEpochMilli(at).atZone(ZoneId.systemDefault())
     val days = ChronoUnit.DAYS.between(dt.toLocalDate(), LocalDate.now())
-    val hm = dt.format(DateTimeFormatter.ofPattern("HH:mm", TR))
+    val hm = dt.format(AppLocale.formatter("jm"))
     return when {
         days <= 0L -> stringResource(R.string.n_today, hm)
         days == 1L -> stringResource(R.string.n_yesterday, hm)
-        days < 7L -> dt.format(DateTimeFormatter.ofPattern("EEEE", TR))
-        dt.year == LocalDate.now().year -> dt.format(DateTimeFormatter.ofPattern("d MMMM", TR))
-        else -> dt.format(DateTimeFormatter.ofPattern("d MMMM yyyy", TR))
+        days < 7L -> dt.format(AppLocale.formatter("EEEE"))
+        dt.year == LocalDate.now().year -> dt.format(AppLocale.formatter("dMMMM"))
+        else -> dt.format(AppLocale.formatter("dMMMMy"))
     }
 }
 
