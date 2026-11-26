@@ -39,14 +39,16 @@ class NoteRepository(private val db: FirebaseFirestore) {
         ).await()
     }
 
+    /** Throws [ItemGoneException] if the partner deleted the note meanwhile. */
     suspend fun update(coupleId: String, id: String, text: String, color: Int) {
-        notes(coupleId).document(id).update(
+        notes(coupleId).document(id).updateExisting(
             mapOf("text" to text.trim().take(MAX_NOTE), "color" to color.coerceIn(0, NOTE_COLORS - 1)),
-        ).await()
+        )
     }
 
+    /** Throws [ItemGoneException] if the partner deleted the note meanwhile. */
     suspend fun setPinned(coupleId: String, id: String, pinned: Boolean) {
-        notes(coupleId).document(id).update("pinned", pinned).await()
+        notes(coupleId).document(id).updateExisting(mapOf("pinned" to pinned))
     }
 
     suspend fun delete(coupleId: String, id: String) {

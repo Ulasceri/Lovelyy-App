@@ -710,5 +710,9 @@
     <string name="del_plan_body">Plan ikinizin takviminden de kalkar. Geri alınamaz.</string>
     <string name="del_wheel_title">Bu çark silinsin mi?</string>
     <string name="del_wheel_body">Çark ve seçenekleri ikinizde de silinir. Geri alınamaz.</string>
+    <string name="gone_plan">Bu plan partnerin tarafından silinmiş</string>
+    <string name="gone_note">Bu not partnerin tarafından silinmiş</string>
+    <string name="gone_dream">Bu hayal partnerin tarafından silinmiş</string>
+    <string name="gone_wheel">Bu çark partnerin tarafından silinmiş</string>
     <string name="tc_draft_kept">Mektubun taslak olarak saklandı</string>
 </resources>

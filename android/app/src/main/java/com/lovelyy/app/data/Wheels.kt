@@ -121,14 +121,21 @@ class WheelRepository(private val db: FirebaseFirestore) {
     private fun wheels(coupleId: String) =
         db.collection(Paths.COUPLES).document(coupleId).collection(Paths.WHEELS)
 
-    /** Creates or replaces a wheel. Built-in ids are kept, so editing "yemek" overrides the default. */
+    /**
+     * Creates or edits a wheel. Built-in ids are kept, so the first edit of "yemek" creates its document and
+     * overrides the default. A custom wheel the partner deleted is never re-created ([ItemGoneException]).
+     */
     suspend fun save(coupleId: String, id: String?, label: String, items: List<String>) {
         val data = mapOf(
             "label" to label.trim().take(MAX_LABEL),
             "items" to items.map { it.trim().take(MAX_ITEM) }.filter { it.isNotEmpty() }.distinct().take(WheelMath.MAX_ITEMS),
             "at" to System.currentTimeMillis(),
         )
-        if (id == null) wheels(coupleId).add(data).await() else wheels(coupleId).document(id).set(data).await()
+        when {
+            id == null -> wheels(coupleId).add(data).await()
+            createsOnEdit(id) -> wheels(coupleId).document(id).set(data).await()
+            else -> wheels(coupleId).document(id).updateExisting(data)
+        }
     }
 
     suspend fun delete(coupleId: String, id: String) {
@@ -157,5 +164,8 @@ class WheelRepository(private val db: FirebaseFirestore) {
         const val MAX_LABEL = 24
         const val MAX_ITEM = 20
         val BUILT_IN_IDS = listOf("yemek", "gezi", "izle")
+
+        /** Only built-in wheels may be (re)created by an edit; custom ones must still exist. */
+        fun createsOnEdit(id: String) = id in BUILT_IN_IDS
     }
 }

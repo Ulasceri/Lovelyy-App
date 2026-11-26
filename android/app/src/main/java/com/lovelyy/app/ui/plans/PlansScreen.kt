@@ -67,6 +67,7 @@ import com.lovelyy.app.data.CalendarMath
 import com.lovelyy.app.data.Couple
 import com.lovelyy.app.data.DayCounter
 import com.lovelyy.app.data.EventRepository
+import com.lovelyy.app.data.ItemGoneException
 import com.lovelyy.app.data.SignalKind
 import com.lovelyy.app.data.UserProfile
 import com.lovelyy.app.telemetry.Telemetry
@@ -115,7 +116,8 @@ class PlansViewModel(private val app: LovelyyApplication, private val coupleId: 
         .catch { Timber.w(it, "Calendar unavailable") }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
-    fun save(me: UserProfile, partner: UserProfile?, id: String?, title: String, date: LocalDate, yearly: Boolean) {
+    /** [onGone]: the edited plan was deleted by the partner meanwhile (it is not re-created). */
+    fun save(me: UserProfile, partner: UserProfile?, id: String?, title: String, date: LocalDate, yearly: Boolean, onGone: () -> Unit) {
         viewModelScope.launch {
             runCatching { app.eventRepository.save(coupleId, me, id, title, date, "", yearly) }
                 .onSuccess {
@@ -126,7 +128,7 @@ class PlansViewModel(private val app: LovelyyApplication, private val coupleId: 
                         }
                     }
                 }
-                .onFailure { Timber.w(it, "Saving the plan failed") }
+                .onFailure { Timber.w(it, "Saving the plan failed"); if (it is ItemGoneException) onGone() }
         }
     }
 
@@ -284,12 +286,22 @@ fun PlansScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBucke
         }
     }
 
+    // The partner deleted the plan that is open here: close the sheet and say so (never re-create it).
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val goneText = stringResource(R.string.gone_plan)
+    val showGone = { android.widget.Toast.makeText(context, goneText, android.widget.Toast.LENGTH_SHORT).show() }
+    val editingId = editing?.event?.takeIf { !it.builtIn }?.id
+    androidx.compose.runtime.LaunchedEffect(stored, editingId) {
+        val list = stored
+        if (editingId != null && list != null && list.none { it.id == editingId }) { editing = null; showGone() }
+    }
+
     editing?.let { ed ->
         PlanEditor(
             event = ed.event,
             initialDate = ed.date,
             onDismiss = { editing = null },
-            onSave = { title, date, yearly -> vm.save(me, partner, ed.event?.id, title, date, yearly); editing = null },
+            onSave = { title, date, yearly -> vm.save(me, partner, ed.event?.id, title, date, yearly, showGone); editing = null },
             onDelete = ed.event?.let { e -> { askDelete = { vm.delete(e.id); editing = null } } },
         )
     }

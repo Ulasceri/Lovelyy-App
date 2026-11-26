@@ -57,6 +57,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lovelyy.app.LovelyyApplication
 import com.lovelyy.app.R
 import com.lovelyy.app.analytics.AnalyticsEvent
+import com.lovelyy.app.data.ItemGoneException
 import com.lovelyy.app.data.Note
 import com.lovelyy.app.data.NoteRepository
 import com.lovelyy.app.data.SignalKind
@@ -107,7 +108,8 @@ class NotesViewModel(private val app: LovelyyApplication, private val coupleId: 
         .catch { Timber.w(it, "Notes unavailable") }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
-    fun save(me: UserProfile, partner: UserProfile?, id: String?, text: String, color: Int, pinned: Boolean, wasPinned: Boolean) {
+    /** [onGone]: the edited note was deleted by the partner meanwhile. */
+    fun save(me: UserProfile, partner: UserProfile?, id: String?, text: String, color: Int, pinned: Boolean, wasPinned: Boolean, onGone: () -> Unit) {
         viewModelScope.launch {
             runCatching {
                 val repo = app.noteRepository
@@ -119,7 +121,7 @@ class NotesViewModel(private val app: LovelyyApplication, private val coupleId: 
                     repo.update(coupleId, id, text, color)
                     if (pinned != wasPinned) repo.setPinned(coupleId, id, pinned)
                 }
-            }.onFailure { Timber.w(it, "Saving the note failed") }
+            }.onFailure { Timber.w(it, "Saving the note failed"); if (it is ItemGoneException) onGone() }
         }
     }
 
@@ -231,13 +233,23 @@ fun NotesScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onSe
         }
     }
 
+    // The partner deleted the note that is open here: close the sheet and say so.
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val goneText = stringResource(R.string.gone_note)
+    val showGone = { android.widget.Toast.makeText(context, goneText, android.widget.Toast.LENGTH_SHORT).show() }
+    val editingId = editing?.id
+    androidx.compose.runtime.LaunchedEffect(notes, editingId) {
+        val list = notes
+        if (editingId != null && list != null && list.none { it.id == editingId }) { editing = null; showGone() }
+    }
+
     if (creating || editing != null) {
         val n = editing
         NoteEditor(
             note = n,
             onDismiss = { creating = false; editing = null },
             onSave = { text, color, pinned ->
-                vm.save(me, partner, n?.id, text, color, pinned, n?.pinned == true)
+                vm.save(me, partner, n?.id, text, color, pinned, n?.pinned == true, showGone)
                 creating = false; editing = null
             },
             onDelete = n?.let { note -> { askDelete = { vm.delete(note.id); editing = null } } },

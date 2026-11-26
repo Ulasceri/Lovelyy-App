@@ -35,6 +35,7 @@ class DreamRepository(private val db: FirebaseFirestore) {
     private fun dreams(coupleId: String) =
         db.collection(Paths.COUPLES).document(coupleId).collection(Paths.DREAMS)
 
+    /** Adds ([id] null) or edits a dream; editing throws [ItemGoneException] if the partner deleted it meanwhile. */
     suspend fun save(coupleId: String, me: UserProfile, id: String?, title: String, category: DreamCategory, goal: String) {
         val data = mapOf(
             "title" to title.trim().take(MAX_TITLE),
@@ -46,12 +47,13 @@ class DreamRepository(private val db: FirebaseFirestore) {
                 data + mapOf("by" to me.uid, "byName" to me.displayName, "at" to System.currentTimeMillis(), "doneAt" to null),
             ).await()
         } else {
-            dreams(coupleId).document(id).update(data).await()
+            dreams(coupleId).document(id).updateExisting(data)
         }
     }
 
+    /** Throws [ItemGoneException] if the partner deleted the dream meanwhile. */
     suspend fun setDone(coupleId: String, id: String, done: Boolean) {
-        dreams(coupleId).document(id).update("doneAt", if (done) System.currentTimeMillis() else null).await()
+        dreams(coupleId).document(id).updateExisting(mapOf("doneAt" to if (done) System.currentTimeMillis() else null))
     }
 
     suspend fun delete(coupleId: String, id: String) {
