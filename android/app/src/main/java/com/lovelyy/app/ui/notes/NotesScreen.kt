@@ -59,6 +59,7 @@ import com.lovelyy.app.R
 import com.lovelyy.app.analytics.AnalyticsEvent
 import com.lovelyy.app.data.ItemGoneException
 import com.lovelyy.app.data.Note
+import com.lovelyy.app.data.NoteConflictException
 import com.lovelyy.app.data.NoteRepository
 import com.lovelyy.app.data.SignalKind
 import com.lovelyy.app.data.UserProfile
@@ -108,20 +109,39 @@ class NotesViewModel(private val app: LovelyyApplication, private val coupleId: 
         .catch { Timber.w(it, "Notes unavailable") }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
-    /** [onGone]: the edited note was deleted by the partner meanwhile. */
-    fun save(me: UserProfile, partner: UserProfile?, id: String?, text: String, color: Int, pinned: Boolean, wasPinned: Boolean, onGone: () -> Unit) {
+    /**
+     * [opened]: the note as it was when the editor opened (null for a new note). [onGone]: the partner deleted
+     * it meanwhile. [onConflict]: the partner changed it meanwhile; gets the server version. [force] overwrites.
+     */
+    fun save(
+        me: UserProfile,
+        partner: UserProfile?,
+        opened: Note?,
+        text: String,
+        color: Int,
+        pinned: Boolean,
+        force: Boolean = false,
+        onGone: () -> Unit,
+        onConflict: (Note) -> Unit,
+    ) {
         viewModelScope.launch {
             runCatching {
                 val repo = app.noteRepository
-                if (id == null) {
+                if (opened == null) {
                     repo.add(coupleId, me, text, color)
                     Telemetry.track(AnalyticsEvent.NoteAdded)
                     if (partner != null) runCatching { app.signalRepository.send(coupleId, me, partner.uid, SignalKind.Note) }
                 } else {
-                    repo.update(coupleId, id, text, color)
-                    if (pinned != wasPinned) repo.setPinned(coupleId, id, pinned)
+                    repo.update(coupleId, me, opened, text, color, force)
+                    if (pinned != opened.pinned) repo.setPinned(coupleId, opened.id, pinned)
                 }
-            }.onFailure { Timber.w(it, "Saving the note failed"); if (it is ItemGoneException) onGone() }
+            }.onFailure {
+                when (it) {
+                    is NoteConflictException -> onConflict(it.current)
+                    is ItemGoneException -> { Timber.w(it, "Saving the note failed"); onGone() }
+                    else -> Timber.w(it, "Saving the note failed")
+                }
+            }
         }
     }
 
@@ -243,19 +263,41 @@ fun NotesScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onSe
         if (editingId != null && list != null && list.none { it.id == editingId }) { editing = null; showGone() }
     }
 
-    if (creating || editing != null) {
-        val n = editing
-        NoteEditor(
-            note = n,
-            onDismiss = { creating = false; editing = null },
-            onSave = { text, color, pinned ->
-                vm.save(me, partner, n?.id, text, color, pinned, n?.pinned == true, showGone)
-                creating = false; editing = null
+    // The partner changed the note while it was open here: ask before overwriting their version.
+    var conflict by remember { mutableStateOf<NoteConflict?>(null) }
+    conflict?.let { c ->
+        com.lovelyy.app.ui.components.ConfirmDialog(
+            title = stringResource(R.string.n_conflict_title),
+            body = stringResource(R.string.n_conflict_body, partnerName),
+            confirm = stringResource(R.string.n_conflict_overwrite),
+            onConfirm = {
+                conflict = null
+                vm.save(me, partner, c.current, c.text, c.color, c.pinned, force = true, onGone = showGone, onConflict = {})
             },
-            onDelete = n?.let { note -> { askDelete = { vm.delete(note.id); editing = null } } },
+            // Keep the partner's version: reopen the editor with their text.
+            onDismiss = { conflict = null; editing = c.current },
         )
     }
+
+    if (creating || editing != null) {
+        val n = editing
+        // key(): a reopened editor (after a conflict) starts from the partner's new text, not the old draft.
+        androidx.compose.runtime.key(n?.id, n?.updatedAt, n?.text) {
+            NoteEditor(
+                note = n,
+                onDismiss = { creating = false; editing = null },
+                onSave = { text, color, pinned ->
+                    vm.save(me, partner, n, text, color, pinned, onGone = showGone, onConflict = { current -> conflict = NoteConflict(current, text, color, pinned) })
+                    creating = false; editing = null
+                },
+                onDelete = n?.let { note -> { askDelete = { vm.delete(note.id); editing = null } } },
+            )
+        }
+    }
 }
+
+/** An edit that hit a partner's newer change: [current] is the server version, the rest is my unsaved edit. */
+private data class NoteConflict(val current: Note, val text: String, val color: Int, val pinned: Boolean)
 
 @Composable
 private fun NoteCard(n: Note, mine: Boolean, myName: String, partnerName: String, onClick: () -> Unit) {

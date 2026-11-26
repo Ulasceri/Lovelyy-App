@@ -415,6 +415,7 @@
     <string name="q_locked">Sen cevaplayınca açılır. Önce bakmak yok!</string>
     <string name="q_partner_pending">Cevaplayınca burada görünecek.</string>
     <string name="q_send">Cevabımı gönder</string>
+    <string name="q_answers_locked">İkiniz de cevapladınız, cevaplar kilitlendi 🔒</string>
     <string name="q_sent">Cevabın %1$s ulaştı</string>
     <string name="q_failed">Gönderilemedi, tekrar dene</string>
 
@@ -437,6 +438,9 @@
     <string name="n_unpin">Sabitlemeyi kaldır</string>
     <string name="n_delete">Sil</string>
     <string name="n_save">Kaydet</string>
+    <string name="n_conflict_title">Bu not az önce değişti</string>
+    <string name="n_conflict_body">Sen düzenlerken %1$s bu notu değiştirdi. Kaydedersen onun yazdıkları silinir.</string>
+    <string name="n_conflict_overwrite">Yine de kaydet</string>
 
     <!-- Planlar: takvim + özel günler (approved design 11) -->
     <string name="p_title">Planlar</string>

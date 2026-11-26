@@ -1,6 +1,8 @@
 package com.lovelyy.app.data
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.LocalDate
 
@@ -26,5 +28,14 @@ class QuestionMathTest {
     fun brokenStreakIsZero() {
         assertEquals(0, QuestionMath.streak(listOf(day(2, true)), today))
         assertEquals(0, QuestionMath.streak(emptyList(), today))
+    }
+
+    @Test
+    fun answerEditableUntilPartnerAnswers() {
+        assertFalse(QuestionMath.isLocked(emptySet(), "a"))
+        assertFalse(QuestionMath.isLocked(setOf("a"), "a"))
+        // The partner answered first: my first answer is still allowed.
+        assertFalse(QuestionMath.isLocked(setOf("b"), "a"))
+        assertTrue(QuestionMath.isLocked(setOf("a", "b"), "a"))
     }
 }

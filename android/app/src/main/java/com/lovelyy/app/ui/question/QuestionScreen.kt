@@ -45,6 +45,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
@@ -150,6 +151,9 @@ fun QuestionScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBa
     var state by remember { mutableStateOf(0) } // 0 ready, 1 sending, 3 failed
     LaunchedEffect(state) { if (state == 3) { delay(2200); state = 0 } }
     val answered = mine != null
+    // Once both answered, the answers are locked: no more edits (the repository enforces it too).
+    val locked = QuestionMath.isLocked(todayDoc?.answers?.keys.orEmpty(), me.uid)
+    LaunchedEffect(locked, mine?.text) { if (locked && mine != null) text = mine.text }
     val unchanged = answered && text.trim() == mine?.text
 
     Column(
@@ -200,6 +204,7 @@ fun QuestionScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBa
             BasicTextField(
                 value = text,
                 onValueChange = { text = it.take(QuestionRepository.MAX_ANSWER) },
+                readOnly = locked,
                 interactionSource = interaction,
                 cursorBrush = SolidColor(PeachDeep),
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
@@ -253,38 +258,47 @@ fun QuestionScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBa
             }
         }
 
-        val btnShape = RoundedCornerShape(28.dp)
-        val canSend = state == 0 && text.isNotBlank() && !unchanged
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .height(56.dp)
-                .softShadow(btnShape, 12.dp, Peach)
-                .clip(btnShape)
-                .background(Peach)
-                .semantics { role = Role.Button }
-                .bounceClick(enabled = canSend, pressedScale = 0.97f) {
-                    focus.clearFocus()
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    state = 1
-                    scope.launch {
-                        val ok = vm.answer(me, partner, text)
-                        state = if (ok) 0 else 3
-                        if (ok) text = text.trim()
-                    }
-                },
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            SvgIcon(HEART_D, Brown, Modifier.size(20.dp))
+        if (locked) {
             Text(
-                when {
-                    state == 3 -> stringResource(R.string.q_failed)
-                    unchanged -> stringResource(R.string.q_sent, TurkishSuffix.dative(partnerName))
-                    else -> stringResource(R.string.q_send)
-                },
-                fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 17.sp, color = Brown, modifier = Modifier.padding(start = 10.dp),
+                stringResource(R.string.q_answers_locked),
+                fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = BrownSoft,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 6.dp),
+                textAlign = TextAlign.Center,
             )
+        } else {
+            val btnShape = RoundedCornerShape(28.dp)
+            val canSend = state == 0 && text.isNotBlank() && !unchanged
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .softShadow(btnShape, 12.dp, Peach)
+                    .clip(btnShape)
+                    .background(Peach)
+                    .semantics { role = Role.Button }
+                    .bounceClick(enabled = canSend, pressedScale = 0.97f) {
+                        focus.clearFocus()
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        state = 1
+                        scope.launch {
+                            val ok = vm.answer(me, partner, text)
+                            state = if (ok) 0 else 3
+                            if (ok) text = text.trim()
+                        }
+                    },
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                SvgIcon(HEART_D, Brown, Modifier.size(20.dp))
+                Text(
+                    when {
+                        state == 3 -> stringResource(R.string.q_failed)
+                        unchanged -> stringResource(R.string.q_sent, TurkishSuffix.dative(partnerName))
+                        else -> stringResource(R.string.q_send)
+                    },
+                    fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 17.sp, color = Brown, modifier = Modifier.padding(start = 10.dp),
+                )
+            }
         }
     }
 }

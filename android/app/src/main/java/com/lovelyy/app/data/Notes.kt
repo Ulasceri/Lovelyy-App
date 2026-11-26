@@ -1,7 +1,9 @@
 package com.lovelyy.app.data
 
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -19,7 +21,33 @@ data class Note(
     val by: String,
     val byName: String,
     val at: Long,
+    /** Last text/color edit (millis) and who made it; null on notes written before these fields existed. */
+    val updatedAt: Long? = null,
+    val updatedBy: String? = null,
 )
+
+/** The partner changed the note after this edit was opened. [current] is the version on the server now. */
+class NoteConflictException(val current: Note) : Exception("Note changed meanwhile")
+
+/** Pure rules for notes (unit-tested in NoteRulesTest). */
+object NoteRules {
+    /**
+     * True if saving an edit would silently overwrite someone else's change: the server version differs
+     * from the one the editor was opened with ([openedText], [openedUpdatedAt]) and the last edit was not
+     * mine. Old notes have no updatedAt on either side, so then only the text is compared.
+     */
+    fun isConflict(
+        openedText: String,
+        openedUpdatedAt: Long?,
+        serverText: String,
+        serverUpdatedAt: Long?,
+        serverUpdatedBy: String?,
+        me: String,
+    ): Boolean {
+        val changed = openedUpdatedAt != serverUpdatedAt || openedText != serverText
+        return changed && serverUpdatedBy != me
+    }
+}
 
 class NoteRepository(private val db: FirebaseFirestore) {
 
@@ -39,11 +67,39 @@ class NoteRepository(private val db: FirebaseFirestore) {
         ).await()
     }
 
-    /** Throws [ItemGoneException] if the partner deleted the note meanwhile. */
-    suspend fun update(coupleId: String, id: String, text: String, color: Int) {
-        notes(coupleId).document(id).updateExisting(
-            mapOf("text" to text.trim().take(MAX_NOTE), "color" to color.coerceIn(0, NOTE_COLORS - 1)),
+    /**
+     * Saves an edit of [opened] (the note as it was when the editor opened). Throws [ItemGoneException] if
+     * the partner deleted it meanwhile, and [NoteConflictException] if the partner changed it meanwhile,
+     * unless [force] (the user chose to overwrite). Offline, a transaction can't run; then the edit is
+     * written as before, without the conflict check.
+     */
+    suspend fun update(coupleId: String, me: UserProfile, opened: Note, text: String, color: Int, force: Boolean = false) {
+        val ref = notes(coupleId).document(opened.id)
+        val data = mapOf(
+            "text" to text.trim().take(MAX_NOTE),
+            "color" to color.coerceIn(0, NOTE_COLORS - 1),
+            "updatedAt" to System.currentTimeMillis(),
+            "updatedBy" to me.uid,
         )
+        try {
+            db.runTransaction { tx ->
+                val snap = tx.get(ref)
+                if (!snap.exists()) throw ItemGoneException()
+                val current = snap.toNote() ?: throw ItemGoneException()
+                if (!force && NoteRules.isConflict(opened.text, opened.updatedAt, current.text, current.updatedAt, current.updatedBy, me.uid)) {
+                    throw NoteConflictException(current)
+                }
+                tx.update(ref, data)
+                null
+            }.await()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            e.causeOf<ItemGoneException>()?.let { throw it }
+            e.causeOf<NoteConflictException>()?.let { throw it }
+            if (!e.isOffline()) throw e
+            ref.updateExisting(data)
+        }
     }
 
     /** Throws [ItemGoneException] if the partner deleted the note meanwhile. */
@@ -61,22 +117,24 @@ class NoteRepository(private val db: FirebaseFirestore) {
             if (err != null) {
                 close(err)
             } else if (snap != null) {
-                val list = snap.documents.mapNotNull { d ->
-                    Note(
-                        id = d.id,
-                        text = d.getString("text") ?: return@mapNotNull null,
-                        color = (d.getLong("color") ?: 0L).toInt(),
-                        pinned = d.getBoolean("pinned") == true,
-                        by = d.getString("by").orEmpty(),
-                        byName = d.getString("byName").orEmpty(),
-                        at = d.getLong("at") ?: 0L,
-                    )
-                }
+                val list = snap.documents.mapNotNull { it.toNote() }
                 trySend(list.sortedWith(compareByDescending<Note> { it.pinned }.thenByDescending { it.at }))
             }
         }
         awaitClose { reg.remove() }
     }
+
+    private fun DocumentSnapshot.toNote(): Note? = Note(
+        id = id,
+        text = getString("text") ?: return null,
+        color = (getLong("color") ?: 0L).toInt(),
+        pinned = getBoolean("pinned") == true,
+        by = getString("by").orEmpty(),
+        byName = getString("byName").orEmpty(),
+        at = getLong("at") ?: 0L,
+        updatedAt = getLong("updatedAt"),
+        updatedBy = getString("updatedBy"),
+    )
 
     companion object {
         const val MAX_NOTE = 1000
