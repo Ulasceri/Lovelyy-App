@@ -99,7 +99,7 @@ class AppViewModel(private val app: LovelyyApplication) : ViewModel() {
                 emit(cached ?: AppState.Loading)
                 // Don't wait for the network before listening: the cached profile shows the home screen at once.
                 viewModelScope.launch {
-                    runCatching { users.ensureUserDoc(firebaseUser) }.onFailure { Timber.e(it, "Creating the user doc failed") }
+                    runCatching { users.ensureUserDoc(firebaseUser, auth.pendingSignUpName) }.onFailure { Timber.e(it, "Creating the user doc failed") }
                 }
                 emitAll(
                     users.observeUser(firebaseUser.uid).flatMapLatest { me ->
