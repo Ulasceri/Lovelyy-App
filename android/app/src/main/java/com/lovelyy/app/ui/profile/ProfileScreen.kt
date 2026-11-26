@@ -111,7 +111,9 @@ fun ProfileScreen(
     onDistance: () -> Unit,
     onCounter: () -> Unit,
     onWidgets: () -> Unit,
-    onSoon: () -> Unit,
+    onInbox: () -> Unit,
+    onAccount: () -> Unit,
+    onUnpair: () -> Unit,
 ) {
     val coupleId = me.coupleId ?: return
     val app = lovelyyApp()
@@ -158,7 +160,7 @@ fun ProfileScreen(
                 Text(stringResource(R.string.pf_title), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = Brown)
                 Text(stringResource(R.string.pf_subtitle), fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = BrownSoft)
             }
-            RoundSvgButton(BELL_D, stringResource(R.string.pf_bell), onSoon)
+            RoundSvgButton(BELL_D, stringResource(R.string.pf_bell), onInbox)
         }
 
         // The couple card.
@@ -221,11 +223,10 @@ fun ProfileScreen(
                 onClick = onWidgets,
             )
             SettingRow(PENCIL_D, stringResource(R.string.pf_cat_name), catUi?.doc?.name?.takeIf { it.isNotBlank() } ?: "–") { naming = true }
-            SettingRow(PEOPLE_D, stringResource(R.string.pf_account), stringResource(if (google) R.string.pf_account_google else R.string.pf_account_email), onClick = onSoon)
+            SettingRow(PEOPLE_D, stringResource(R.string.pf_account), stringResource(if (google) R.string.pf_account_google else R.string.pf_account_email), onClick = onAccount)
         }
         SettingsCard {
-            // Unpairing deletes shared data and needs new security rules: it comes in a later step.
-            SettingRow(X_D, stringResource(R.string.pf_unpair), "", color = Danger, onClick = onSoon)
+            SettingRow(X_D, stringResource(R.string.pf_unpair), "", color = Danger, onClick = onUnpair)
             SettingRow(LOGOUT_D, stringResource(R.string.sign_out), "") { confirmSignOut = true }
         }
     }

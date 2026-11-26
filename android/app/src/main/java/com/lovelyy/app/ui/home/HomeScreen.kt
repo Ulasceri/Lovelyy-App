@@ -114,6 +114,18 @@ import com.lovelyy.app.ui.components.SoftCard
 import com.lovelyy.app.ui.components.bounceClick
 import com.lovelyy.app.ui.components.softShadow
 import com.lovelyy.app.analytics.InnerScreens
+import com.lovelyy.app.ui.capsule.LettersScreen
+import com.lovelyy.app.ui.cat.AccessoriesScreen
+import com.lovelyy.app.ui.drawing.DrawingsScreen
+import com.lovelyy.app.ui.history.HeartbeatHistoryScreen
+import com.lovelyy.app.ui.history.MoodHistoryScreen
+import com.lovelyy.app.ui.history.QuestionHistoryScreen
+import com.lovelyy.app.ui.history.WheelHistoryScreen
+import com.lovelyy.app.ui.inbox.InboxScreen
+import com.lovelyy.app.ui.profile.AccountScreen
+import com.lovelyy.app.ui.profile.UnpairScreen
+import com.lovelyy.app.ui.search.SearchScope
+import com.lovelyy.app.ui.search.SearchScreen
 import com.lovelyy.app.telemetry.Telemetry
 import com.lovelyy.app.ui.counter.CounterScreen
 import com.lovelyy.app.ui.heartbeat.EmotionVisual
@@ -157,6 +169,17 @@ private object Routes {
     const val CAPSULE = "capsule"
     const val DRAWING = "drawing"
     const val WIDGETS = "widgets"
+    const val MOOD_HISTORY = "mood_history"
+    const val QUESTION_HISTORY = "question_history"
+    const val HEARTBEAT_HISTORY = "heartbeat_history"
+    const val WHEEL_HISTORY = "wheel_history"
+    const val SEARCH = "search" // "search:<scope>"
+    const val DRAWINGS = "drawings"
+    const val LETTERS = "letters" // "letters" or "letters:<capsule id>"
+    const val ACCESSORIES = "accessories"
+    const val INBOX = "inbox"
+    const val ACCOUNT = "account"
+    const val UNPAIR = "unpair"
 }
 
 /** Everything after pairing: the home tabs and the inner screens. */
@@ -175,6 +198,11 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
         stack.add(route)
     }
     fun pop() { if (stack.isNotEmpty()) stack.removeAt(stack.lastIndex) }
+    /** Leaves the current screen for [route]: back to it when it is right underneath, else opens it. */
+    fun returnTo(route: String) {
+        pop()
+        if (stack.lastOrNull()?.substringBefore(':') != route) push(route)
+    }
     BackHandler(enabled = stack.isNotEmpty()) { pop() }
 
     // Widget and notification taps open their screen (DeepLink routes match Routes).
@@ -204,6 +232,17 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
                 Routes.CAPSULE -> InnerScreens.CAPSULE
                 Routes.DRAWING -> InnerScreens.DRAWING
                 Routes.WIDGETS -> InnerScreens.WIDGETS
+                Routes.MOOD_HISTORY -> InnerScreens.MOOD_HISTORY
+                Routes.QUESTION_HISTORY -> InnerScreens.QUESTION_HISTORY
+                Routes.HEARTBEAT_HISTORY -> InnerScreens.HEARTBEAT_HISTORY
+                Routes.WHEEL_HISTORY -> InnerScreens.WHEEL_HISTORY
+                Routes.SEARCH -> InnerScreens.SEARCH
+                Routes.DRAWINGS -> InnerScreens.DRAWINGS
+                Routes.LETTERS -> InnerScreens.LETTERS
+                Routes.ACCESSORIES -> InnerScreens.ACCESSORIES
+                Routes.INBOX -> InnerScreens.INBOX
+                Routes.ACCOUNT -> InnerScreens.ACCOUNT
+                Routes.UNPAIR -> InnerScreens.UNPAIR
                 else -> when (tab) {
                     Tab.Anilar -> InnerScreens.MEMORIES
                     Tab.Planlar -> InnerScreens.PLANS
@@ -267,7 +306,7 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
                                 onDrawing = { push(Routes.DRAWING) },
                                 onNotes = { push(Routes.NOTES) },
                                 onCapsule = { push(Routes.CAPSULE) },
-                                onSearch = soon,
+                                onSearch = { push("${Routes.SEARCH}:memories") },
                             )
                             Tab.Planlar -> PlansScreen(me, couple, partner, onBucket = { push(Routes.DREAMS) }, onWheel = { push(Routes.WHEEL) })
                             Tab.Biz -> ProfileScreen(
@@ -277,22 +316,40 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
                                 onDistance = { push(Routes.DISTANCE) },
                                 onCounter = { push(Routes.COUNTER) },
                                 onWidgets = { push(Routes.WIDGETS) },
-                                onSoon = soon,
+                                onInbox = { push(Routes.INBOX) },
+                                onAccount = { push(Routes.ACCOUNT) },
+                                onUnpair = { push(Routes.UNPAIR) },
                             )
                         }
                     }
                     Routes.COUNTER -> CounterScreen(me, couple, partner, onBack = ::pop)
-                    Routes.MOOD -> MoodScreen(me, partner, moods, onBack = ::pop, onHistory = soon)
-                    Routes.QUESTION -> QuestionScreen(me, couple, partner, onBack = ::pop, onHistory = soon)
-                    Routes.NOTES -> NotesScreen(me, partner, onBack = ::pop, onSearch = soon)
-                    Routes.CAT -> CatCareScreen(me, couple, partner, onBack = ::pop, onAccessories = soon)
+                    Routes.MOOD -> MoodScreen(me, partner, moods, onBack = ::pop, onHistory = { push(Routes.MOOD_HISTORY) })
+                    Routes.QUESTION -> QuestionScreen(me, couple, partner, onBack = ::pop, onHistory = { push(Routes.QUESTION_HISTORY) })
+                    Routes.NOTES -> NotesScreen(me, partner, onBack = ::pop, onSearch = { push("${Routes.SEARCH}:notes") })
+                    Routes.CAT -> CatCareScreen(me, couple, partner, onBack = ::pop, onAccessories = { push(Routes.ACCESSORIES) })
                     Routes.DISTANCE -> DistanceScreen(me, partner, onBack = ::pop)
-                    Routes.DREAMS -> DreamsScreen(me, partner, onBack = ::pop, onSearch = soon)
-                    Routes.WHEEL -> WheelScreen(me, partner, onBack = ::pop, onHistory = soon)
-                    Routes.CAPSULE -> CapsuleScreen(me, partner, onBack = ::pop, onOpenedList = soon)
-                    Routes.DRAWING -> DrawingScreen(me, partner, onBack = ::pop, onOld = soon)
+                    Routes.DREAMS -> DreamsScreen(me, partner, onBack = ::pop, onSearch = { push("${Routes.SEARCH}:dreams") })
+                    Routes.WHEEL -> WheelScreen(me, partner, onBack = ::pop, onHistory = { push(Routes.WHEEL_HISTORY) })
+                    Routes.CAPSULE -> CapsuleScreen(me, partner, onBack = ::pop, onOpenedList = { push(Routes.LETTERS) })
+                    Routes.DRAWING -> DrawingScreen(me, partner, onBack = ::pop, onOld = { push(Routes.DRAWINGS) })
                     Routes.WIDGETS -> WidgetsScreen(me, couple, partner)
-                    Routes.HEARTBEAT -> HeartbeatScreen(me, partner, Emotion.of(route.substringAfter(':', "")), onHistory = soon)
+                    Routes.HEARTBEAT -> HeartbeatScreen(me, partner, Emotion.of(route.substringAfter(':', "")), onHistory = { push(Routes.HEARTBEAT_HISTORY) })
+                    Routes.MOOD_HISTORY -> MoodHistoryScreen(me, partner, onBack = ::pop)
+                    Routes.QUESTION_HISTORY -> QuestionHistoryScreen(me, partner, onBack = ::pop, onAnswer = { returnTo(Routes.QUESTION) })
+                    Routes.HEARTBEAT_HISTORY -> HeartbeatHistoryScreen(me, partner, onBack = ::pop)
+                    Routes.WHEEL_HISTORY -> WheelHistoryScreen(me, partner, onBack = ::pop)
+                    Routes.SEARCH -> SearchScreen(
+                        me, partner, SearchScope.of(route.substringAfter(':', "")), onBack = ::pop,
+                        onNote = { returnTo(Routes.NOTES) },
+                        onDream = { returnTo(Routes.DREAMS) },
+                        onLetter = { id -> push("${Routes.LETTERS}:$id") },
+                    )
+                    Routes.DRAWINGS -> DrawingsScreen(me, partner, onBack = ::pop, onNew = { returnTo(Routes.DRAWING) })
+                    Routes.LETTERS -> LettersScreen(me, partner, route.substringAfter(':', "").ifEmpty { null }, onBack = ::pop)
+                    Routes.ACCESSORIES -> AccessoriesScreen(me, partner, onBack = ::pop)
+                    Routes.INBOX -> InboxScreen(me, partner, onBack = ::pop, onOpen = { r -> if (r == PLANS_TAB) { stack.clear(); tab = Tab.Planlar } else push(r) })
+                    Routes.ACCOUNT -> AccountScreen(me, couple, partner, onBack = ::pop)
+                    Routes.UNPAIR -> UnpairScreen(me, partner, onBack = ::pop)
                 }
             }
         }
@@ -301,15 +358,17 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
             val routeKey = top?.substringBefore(':')
             val navTab = when (routeKey) {
                 null -> tab
-                Routes.COUNTER, Routes.CAT -> Tab.Yuva
-                Routes.MOOD, Routes.QUESTION, Routes.DISTANCE, Routes.WIDGETS -> Tab.Biz
-                Routes.NOTES, Routes.CAPSULE, Routes.DRAWING -> Tab.Anilar
-                Routes.DREAMS, Routes.WHEEL -> Tab.Planlar
+                Routes.COUNTER, Routes.CAT, Routes.ACCESSORIES, Routes.INBOX -> Tab.Yuva
+                Routes.MOOD, Routes.QUESTION, Routes.DISTANCE, Routes.WIDGETS,
+                Routes.MOOD_HISTORY, Routes.QUESTION_HISTORY, Routes.ACCOUNT, Routes.UNPAIR -> Tab.Biz
+                Routes.NOTES, Routes.CAPSULE, Routes.DRAWING, Routes.DRAWINGS, Routes.LETTERS -> Tab.Anilar
+                Routes.DREAMS, Routes.WHEEL, Routes.WHEEL_HISTORY -> Tab.Planlar
+                Routes.SEARCH -> if (top?.substringAfter(':') == "dreams") Tab.Planlar else Tab.Anilar
                 else -> null
             }
             BottomNav(
                 navTab,
-                heartActive = routeKey == Routes.HEARTBEAT,
+                heartActive = routeKey == Routes.HEARTBEAT || routeKey == Routes.HEARTBEAT_HISTORY,
                 onTab = { stack.clear(); tab = it },
                 onHeart = { push(Routes.HEARTBEAT) },
             )
@@ -411,7 +470,7 @@ private fun YuvaTab(
             .padding(horizontal = 20.dp)
             .padding(top = 16.dp, bottom = 120.dp),
     ) {
-        Header(me, partnerName, startMillis, onDays = { open(Routes.COUNTER) }, onBell = soon)
+        Header(me, partnerName, startMillis, onDays = { open(Routes.COUNTER) }, onBell = { open(Routes.INBOX) })
 
         CatSection(me, couple, partner, Modifier.padding(top = 16.dp), onOpenCare = { open(Routes.CAT) })
 

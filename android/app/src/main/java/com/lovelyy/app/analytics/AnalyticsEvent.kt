@@ -130,6 +130,27 @@ sealed interface AnalyticsEvent {
         override val params: Map<String, Any> get() = mapOf("strokes" to strokes)
     }
 
+    /** A saved drawing was deleted from Çizimlerimiz (for both partners). */
+    data object DrawingDeleted : AnalyticsEvent {
+        override val name = "drawing_deleted"
+    }
+
+    /** An accessory was put on the cat ([accessory] is the fixed accessory id, e.g. "Papyon") or taken off (null). */
+    data class AccessoryWorn(val accessory: String?) : AnalyticsEvent {
+        override val name = "accessory_worn"
+        override val params: Map<String, Any> get() = mapOf("accessory" to (accessory ?: "none"))
+    }
+
+    /** Bildirimler: "mark all read" was tapped. */
+    data object InboxReadAll : AnalyticsEvent {
+        override val name = "inbox_read_all"
+    }
+
+    /** A password reset mail was sent from Hesap. */
+    data object PasswordResetSent : AnalyticsEvent {
+        override val name = "password_reset_sent"
+    }
+
     /**
      * A screen was shown. [screenName] is a fixed route name like "home", never anything dynamic.
      * Sent as the standard `screen_view` event, so it shows up in the Screens report.

@@ -48,4 +48,13 @@ class TurkishSuffixTest {
         assertEquals("Ankara'da", TurkishSuffix.locative("Ankara"))
         assertEquals("Ahmet'te", TurkishSuffix.locative("Ahmet"))
     }
+
+    @Test
+    fun accusative() {
+        org.junit.Assert.assertEquals("Elif'i", TurkishSuffix.accusative("Elif"))
+        org.junit.Assert.assertEquals("Ulaş'ı", TurkishSuffix.accusative("Ulaş"))
+        org.junit.Assert.assertEquals("Ayşe'yi", TurkishSuffix.accusative("Ayşe"))
+        org.junit.Assert.assertEquals("Doğu'yu", TurkishSuffix.accusative("Doğu"))
+        org.junit.Assert.assertEquals("Gül'ü", TurkishSuffix.accusative("Gül"))
+    }
 }

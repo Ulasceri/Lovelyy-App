@@ -271,7 +271,7 @@ private fun subtitle(d: Dream): String {
 }
 
 @Composable
-private fun categoryLabel(c: DreamCategory): String = stringResource(
+internal fun categoryLabel(c: DreamCategory): String = stringResource(
     when (c) {
         DreamCategory.Seyahat -> R.string.dr_cat_seyahat
         DreamCategory.Deneyim -> R.string.dr_cat_deneyim

@@ -438,7 +438,7 @@ private fun AccessoryBadge(a: Accessory, unlocked: Boolean, worn: Boolean, modif
 @Composable
 private fun accessoryName(a: Accessory): String = stringResource(accessoryNameRes(a))
 
-private fun accessoryNameRes(a: Accessory): Int = when (a) {
+internal fun accessoryNameRes(a: Accessory): Int = when (a) {
     Accessory.Kurdele -> R.string.cc_acc_kurdele
     Accessory.Papyon -> R.string.cc_acc_papyon
     Accessory.Sapka -> R.string.cc_acc_sapka

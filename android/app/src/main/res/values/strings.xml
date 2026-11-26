@@ -718,4 +718,173 @@
     <string name="gone_dream">Bu hayal partnerin tarafından silinmiş</string>
     <string name="gone_wheel">Bu çark partnerin tarafından silinmiş</string>
     <string name="tc_draft_kept">Mektubun taslak olarak saklandı</string>
+
+    <!-- Shared -->
+    <string name="action_back">Geri</string>
+
+    <!-- History screens (boards 20-23) -->
+    <string name="hi_today">Bugün</string>
+    <string name="hi_yesterday">Dün</string>
+    <string name="hi_in">Gelen</string>
+    <string name="hi_out">Giden</string>
+    <string name="hi_all">Tümü</string>
+    <string name="hi_sent">Gönderdiklerim</string>
+    <string name="hi_received">Gelenler</string>
+    <string name="hi_mood_title">Ruh hali geçmişi</string>
+    <string name="hi_last_30">Son 30 gün</string>
+    <string name="hi_mon">Pzt</string>
+    <string name="hi_tue">Sal</string>
+    <string name="hi_wed">Çar</string>
+    <string name="hi_thu">Per</string>
+    <string name="hi_fri">Cum</string>
+    <string name="hi_sat">Cmt</string>
+    <string name="hi_sun">Paz</string>
+    <string name="hi_left_face">soldaki yüz sen</string>
+    <string name="hi_right_face">sağdaki yüz %1$s</string>
+    <string name="hi_mood_empty">Burada ikinizin paylaştığı ruh halleri gün gün birikecek. Bugünkünü paylaşarak başlayabilirsin.</string>
+    <string name="hi_today_long">%1$s · bugün</string>
+    <string name="hi_q_title">Önceki sorular</string>
+    <string name="hi_q_count">%1$d soru birlikte cevaplandı</string>
+    <string name="hi_q_partner_done">%1$s cevapladı</string>
+    <string name="hi_q_answer">Cevapla</string>
+    <string name="hi_q_empty">Birlikte cevapladığınız sorular burada duracak.</string>
+    <string name="hi_q_no_answer">Cevap yok</string>
+    <string name="hi_q_hidden">O gün cevaplamadığın için bu cevap gizli kaldı.</string>
+    <string name="hi_hb_title">Kalp atışı geçmişi</string>
+    <string name="hi_hb_empty">Gönderdiğiniz kalp atışları ve dürtmeler burada görünecek.</string>
+    <string name="hi_hb_nudge_out">Sen %1$s dürttün</string>
+    <string name="hi_hb_nudge_in">%1$s seni dürttü</string>
+    <string name="hi_hb_out">Sen %1$s %2$s gönderdin</string>
+    <string name="hi_hb_in">%1$s sana %2$s gönderdi</string>
+    <string name="hi_hb_kind_nudge">Dürtme</string>
+    <string name="hi_hb_kind_beat">Kalp atışı</string>
+    <string name="hi_wheel_title">Çark geçmişi</string>
+    <string name="hi_wheel_empty">Çarkı çevirdiğinizde sonuçlar burada birikecek.</string>
+    <string name="hi_wheel_by_me">Sen çevirdin</string>
+    <string name="hi_wheel_by">%1$s çevirdi</string>
+
+    <!-- Search (boards 24-25) -->
+    <string name="se_hint">Notlarda, hayallerde ve anılarda ara</string>
+    <string name="se_start">Bir kelime yaz; notlarınızda, hayallerinizde ve açılmış mektuplarınızda arayalım.</string>
+    <string name="se_notes">Notlar</string>
+    <string name="se_dreams">Hayaller</string>
+    <string name="se_memories">Anılar</string>
+    <string name="se_count">“%1$s” için %2$d sonuç</string>
+    <string name="se_by_me">Sen yazdın</string>
+    <string name="se_by">%1$s yazdı</string>
+    <string name="se_dream_done">Gerçekleşti</string>
+    <string name="se_dream_next">Sırada</string>
+    <string name="se_letter_me">Senin mektubun</string>
+    <string name="se_letter_by">%1$s mektubu</string>
+    <string name="se_none_title">“%1$s” için bir şey bulamadık</string>
+    <string name="se_none_body">Başka bir kelime dene. Mühürlü mektuplar, günü gelene kadar aramada çıkmaz.</string>
+    <string name="se_clear">Aramayı temizle</string>
+
+    <!-- Saved drawings (boards 28-29) -->
+    <string name="dg_title">Çizimlerimiz</string>
+    <string name="dg_count">%1$d çizim</string>
+    <string name="dg_sub">Canlı çizimden kaydettikleriniz</string>
+    <string name="dg_empty">Henüz kaydedilmiş çizim yok. Canlı çizimde “Anılara kaydet” dediğiniz her resim burada durur.</string>
+    <string name="dg_new">Yeni çizim başlat</string>
+    <string name="dg_tile">%1$s tarihli çizim</string>
+    <string name="dg_together">Birlikte çizdiniz</string>
+    <string name="dg_by_me">Sen çizdin</string>
+    <string name="dg_by">%1$s çizdi</string>
+    <string name="dg_newer">Daha yeni</string>
+    <string name="dg_older">Daha eski</string>
+    <string name="dg_delete">Çizimi sil</string>
+    <string name="dg_delete_title">Bu çizim silinsin mi?</string>
+    <string name="dg_delete_body">Çizim ikinizin galerisinden de kalıcı olarak silinir. Bu işlem geri alınamaz.</string>
+    <string name="dg_delete_yes">Sil</string>
+    <string name="dg_delete_failed">Çizim silinemedi, biraz sonra tekrar dene.</string>
+
+    <!-- Opened letters (boards 30-31) -->
+    <string name="ol_title">Açılmış mektuplar</string>
+    <string name="ol_intro">Günü gelip açılan %1$d mektubunuz burada duruyor.</string>
+    <string name="ol_none">Henüz günü gelen bir mektup yok.</string>
+    <string name="ol_empty">Zaman kapsülüne bir mektup yazın; günü gelince burada okursunuz.</string>
+    <string name="ol_opened_on">%1$s açıldı</string>
+    <string name="ol_read">Oku</string>
+    <string name="ol_waiting">%1$d mühürlü mektup sırasını bekliyor</string>
+    <string name="ol_nearest">En yakını %1$d gün sonra açılacak</string>
+    <string name="ol_from">%1$s sana</string>
+    <string name="ol_from_me">Senden %1$s</string>
+    <string name="ol_written_on">%1$s yazıldı</string>
+    <string name="ol_sealed_days">%1$d gün mühürlü kaldı</string>
+
+    <!-- Accessories (board 32) -->
+    <string name="ac_acc_kurdele">Kurdeleyi</string>
+    <string name="ac_acc_papyon">Papyonu</string>
+    <string name="ac_acc_sapka">Şapkayı</string>
+    <string name="ac_acc_gozluk">Gözlüğü</string>
+    <string name="ac_cat_desc">%1$s, ortak kediniz</string>
+    <string name="ac_preview">Önizleme: %1$s</string>
+    <string name="ac_preview_locked">Önizleme: %1$s (kilitli)</string>
+    <string name="ac_worn_label">%1$s takılı</string>
+    <string name="ac_streak">%1$d gün seri</string>
+    <string name="ac_locked">Kilitli</string>
+    <string name="ac_open">Açık</string>
+    <string name="ac_worn">Takılı</string>
+    <string name="ac_opened_day">%1$d. günde açıldı</string>
+    <string name="ac_days_left">%1$d gün kaldı</string>
+    <string name="ac_note">Aksesuarlar, %1$s ikinizin de baktığı günlerin serisiyle açılır. Taktığını %2$s de görür.</string>
+    <string name="ac_note_cat">kedinize</string>
+    <string name="ac_opens_in">%1$d gün sonra açılır</string>
+    <string name="ac_take_off">%1$s çıkar</string>
+    <string name="ac_put_on_named">%1$s %2$s tak</string>
+    <string name="ac_put_on">%1$s tak</string>
+
+    <!-- Inbox (board 26) -->
+    <string name="ib_title">Bildirimler</string>
+    <string name="ib_read_all">Tümünü okundu işaretle</string>
+    <string name="ib_new">%1$d yeni</string>
+    <string name="ib_unread">Okunmadı</string>
+    <string name="ib_empty">%1$s bir şey gönderdiğinde burada görünecek.</string>
+    <string name="ib_mood">%1$s ruh halini paylaştı: %2$s</string>
+    <string name="ib_question">%1$s günün sorusunu cevapladı</string>
+    <string name="ib_question_sub">Sen de cevapla, cevabı açılsın.</string>
+    <string name="ib_note">%1$s yeni bir not bıraktı</string>
+    <string name="ib_event">%1$s takvime bir şey ekledi</string>
+    <string name="ib_wheel">%1$s çarkı çevirdi: %2$s</string>
+    <string name="ib_wheel_sub">“%1$s” çarkı</string>
+
+    <!-- Account (board 33) -->
+    <string name="acc_paired">%1$s ile eşleşmiş</string>
+    <string name="acc_paired_days">%1$s ile eşleşmiş · %2$d gündür birlikte</string>
+    <string name="acc_login">Giriş bilgileri</string>
+    <string name="acc_method">Giriş yöntemi</string>
+    <string name="acc_method_google">Google</string>
+    <string name="acc_method_email">E-posta ve şifre</string>
+    <string name="acc_email">E-posta</string>
+    <string name="acc_password">Şifreyi değiştir</string>
+    <string name="acc_password_google">Google ile giriş yaptığın için şifren Google hesabından yönetilir.</string>
+    <string name="acc_reset_title">Şifre sıfırlama bağlantısı</string>
+    <string name="acc_reset_body">%1$s adresine bir bağlantı gönderelim, yeni şifreni oradan belirlersin.</string>
+    <string name="acc_reset_send">Gönder</string>
+    <string name="acc_reset_sent">Bağlantı %1$s adresine gönderildi</string>
+    <string name="acc_reset_failed">Bağlantı gönderilemedi, biraz sonra tekrar dene.</string>
+    <string name="acc_session">Oturum</string>
+    <string name="acc_sign_out_sub">Yalnızca bu telefondan çıkarsın. Eşleşmen ve verileriniz yerinde durur.</string>
+    <string name="acc_danger">Tehlikeli bölge</string>
+    <string name="acc_delete">Hesabı sil</string>
+    <string name="acc_delete_sub">Hesabın silinir, %1$s ile eşleşmen kalkar. Geri alınamaz; silmeden önce senden onay isteriz.</string>
+    <string name="acc_delete_pending">Hesap silme çok yakında açılacak. Ortak verilerin ne olacağına karar veriyoruz.</string>
+
+    <!-- Unpair (board 34) -->
+    <string name="un_title">%1$s ile eşleşmeyi kaldırmak üzeresin</string>
+    <string name="un_what">Kaldırırsan ne olur?</string>
+    <string name="un_cat">%1$s veda eder</string>
+    <string name="un_cat_sub">%1$s, %2$d günlük bakım serisi ve açtığınız aksesuarlar silinir.</string>
+    <string name="un_data">Ortak her şey silinir</string>
+    <string name="un_data_sub">Notlar, anılar, çizimler, mektuplar, hayaller ve takvim ikiniz için de kalıcı olarak silinir.</string>
+    <string name="un_partner">%1$s haberdar olur</string>
+    <string name="un_partner_sub">%1$s eşleşmenin kaldırıldığı bildirilir.</string>
+    <string name="un_account">Hesabın durur</string>
+    <string name="un_account_sub">Hesabın açık kalır. Yeni bir kodla yeniden eşleşebilirsin, ama silinenler geri gelmez.</string>
+    <string name="un_type_before">"Onaylamak için "</string>
+    <string name="un_type_after">" yaz"</string>
+    <string name="un_field">Onay kelimesi</string>
+    <string name="un_button">Eşleşmeyi kalıcı olarak kaldır</string>
+    <string name="un_keep">Vazgeç, eşleşme kalsın</string>
+    <string name="un_pending">Eşleşmeyi kaldırma çok yakında açılacak. Ortak verilerin ne olacağına karar veriyoruz.</string>
 </resources>

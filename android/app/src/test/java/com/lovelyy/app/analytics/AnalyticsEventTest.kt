@@ -30,6 +30,11 @@ class AnalyticsEventTest {
         AnalyticsEvent.WheelCreated,
         AnalyticsEvent.CapsuleSealed(days = 81),
         AnalyticsEvent.DrawingSaved(strokes = 12),
+        AnalyticsEvent.DrawingDeleted,
+        AnalyticsEvent.AccessoryWorn("Papyon"),
+        AnalyticsEvent.AccessoryWorn(null),
+        AnalyticsEvent.InboxReadAll,
+        AnalyticsEvent.PasswordResetSent,
         AnalyticsEvent.ScreenView("home"),
         AnalyticsEvent.ScreenView("day_counter"),
     )

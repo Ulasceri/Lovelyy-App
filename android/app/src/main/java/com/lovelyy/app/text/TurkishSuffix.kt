@@ -22,6 +22,19 @@ object TurkishSuffix {
         return n + "'" + (if (endsWithVowel(n)) "y" else "") + e
     }
 
+    /** Belirtme hâli (-i/-ı/-u/-ü): "Elif'i", "Ulaş'ı", "Ayşe'yi", "Doğu'yu". */
+    fun accusative(name: String): String {
+        val n = name.trim()
+        if (n.isEmpty()) return n
+        val i = when (lastVowel(n) ?: 'e') {
+            'a', 'ı' -> "ı"
+            'o', 'u' -> "u"
+            'ö', 'ü' -> "ü"
+            else -> "i"
+        }
+        return n + "'" + (if (endsWithVowel(n)) "y" else "") + i
+    }
+
     /** İlgi hâli (-in/-ın/-un/-ün): "Elif'in", "Ulaş'ın", "Ayşe'nin", "Doğu'nun". */
     fun genitive(name: String): String {
         val n = name.trim()

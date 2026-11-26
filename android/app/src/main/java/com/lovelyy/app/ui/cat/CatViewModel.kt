@@ -85,7 +85,9 @@ class CatViewModel(private val app: LovelyyApplication, private val coupleId: St
     /** Puts an unlocked accessory on the cat for both partners (null takes it off). */
     fun wear(a: com.lovelyy.app.data.CareRewards.Accessory?) {
         viewModelScope.launch {
-            runCatching { repo.setWearing(coupleId, a?.name) }.onFailure { Timber.w(it, "Changing the accessory failed") }
+            runCatching { repo.setWearing(coupleId, a?.name) }
+                .onSuccess { Telemetry.track(AnalyticsEvent.AccessoryWorn(a?.name)) }
+                .onFailure { Timber.w(it, "Changing the accessory failed") }
         }
     }
 
