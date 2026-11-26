@@ -47,6 +47,7 @@ import androidx.compose.material.icons.rounded.PersonOutline
 import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -55,6 +56,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -265,6 +267,9 @@ private fun LoginContent(
     onSubmit: () -> Unit,
 ) {
     var showPassword by remember { mutableStateOf(false) }
+    // Name hint appears once the user has been in the name field and left it still empty.
+    var nameFocused by remember { mutableStateOf(false) }
+    var nameLeft by remember { mutableStateOf(false) }
     // Scrollable (the keyboard can cover the form) but at least screen-tall, so the
     // greeting sits on top and the actions sit in the lower half (one-hand use).
     BoxWithConstraints(Modifier.fillMaxSize().safeDrawingPadding()) {
@@ -327,9 +332,21 @@ private fun LoginContent(
                 if (signUp) {
                     DesignField(
                         name, onName, stringResource(R.string.field_name_ph),
+                        modifier = Modifier.onFocusChanged {
+                            if (nameFocused && !it.isFocused) nameLeft = true
+                            nameFocused = it.isFocused
+                        },
                         leadingIcon = Icons.Rounded.PersonOutline,
                         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words, imeAction = ImeAction.Next),
                     )
+                    if (nameLeft && name.isBlank()) {
+                        Text(
+                            stringResource(R.string.field_name_hint),
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(start = 4.dp),
+                        )
+                    }
                 }
                 DesignField(
                     email, onEmail, stringResource(R.string.field_email_ph),

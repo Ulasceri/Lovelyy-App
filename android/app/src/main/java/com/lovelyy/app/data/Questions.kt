@@ -4,6 +4,7 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.SetOptions
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -78,8 +79,18 @@ object QuestionBank {
     )
 }
 
+/** Both partners answered the day's question, so my answer can no longer change. */
+class AnswersLockedException : Exception("Both partners answered; answers are locked")
+
 /** Pure helpers for the question screen (unit-tested in QuestionMathTest). */
 object QuestionMath {
+    /**
+     * My answer can be changed only until the partner has answered too: once both answered
+     * ([answeredUids] has mine and someone else's), the answers are locked. A first answer is always allowed.
+     */
+    fun isLocked(answeredUids: Collection<String>, me: String): Boolean =
+        me in answeredUids && answeredUids.any { it != me }
+
     /**
      * Days in a row on which both partners answered, ending today (or yesterday, while today
      * is still open). [days] can be in any order.
@@ -98,22 +109,40 @@ class QuestionRepository(private val db: FirebaseFirestore) {
     private fun questions(coupleId: String) =
         db.collection(Paths.COUPLES).document(coupleId).collection(Paths.QUESTIONS)
 
+    /**
+     * Saves my answer for [day]. Throws [AnswersLockedException] if I already answered and the partner has
+     * answered too (see [QuestionMath.isLocked]); checked in a transaction because both phones may race.
+     * Offline, a transaction can't run; then the answer is written as before, and the screen's own lock
+     * (it hides editing once both answers are visible) is the only guard.
+     */
     suspend fun answer(coupleId: String, day: LocalDate, me: UserProfile, text: String) {
-        val key = day.toString()
-        questions(coupleId).document(key).set(
-            mapOf(
-                "question" to QuestionBank.forDay(day),
-                "answers" to mapOf(
-                    me.uid to mapOf(
-                        "name" to me.displayName,
-                        "text" to text.trim().take(MAX_ANSWER),
-                        "at" to System.currentTimeMillis(),
-                    ),
+        val ref = questions(coupleId).document(day.toString())
+        val data = mapOf(
+            "question" to QuestionBank.forDay(day),
+            "answers" to mapOf(
+                me.uid to mapOf(
+                    "name" to me.displayName,
+                    "text" to text.trim().take(MAX_ANSWER),
+                    "at" to System.currentTimeMillis(),
                 ),
-                "updatedAt" to FieldValue.serverTimestamp(),
             ),
-            SetOptions.merge(),
-        ).await()
+            "updatedAt" to FieldValue.serverTimestamp(),
+        )
+        try {
+            db.runTransaction { tx ->
+                val snap = tx.get(ref)
+                val answered = (snap.get("answers") as? Map<*, *>)?.keys?.filterIsInstance<String>().orEmpty()
+                if (QuestionMath.isLocked(answered, me.uid)) throw AnswersLockedException()
+                tx.set(ref, data, SetOptions.merge())
+                null
+            }.await()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            e.causeOf<AnswersLockedException>()?.let { throw it }
+            if (!e.isOffline()) throw e
+            ref.set(data, SetOptions.merge()).await()
+        }
     }
 
     /** The days of the last [limit] days that have answers, newest first. */
