@@ -99,6 +99,8 @@ import com.lovelyy.app.ui.theme.Peach
 import com.lovelyy.app.ui.theme.Quicksand
 import com.lovelyy.app.widget.DrawingWidget
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
@@ -146,13 +148,25 @@ class DrawingViewModel(private val app: LovelyyApplication, private val coupleId
         viewModelScope.launch { runCatching { app.drawingRepository.delete(coupleId, mine.id) }.onFailure { Timber.w(it, "Undo failed") } }
     }
 
+    private val _saving = MutableStateFlow(false)
+    val saving: StateFlow<Boolean> = _saving
+
     fun save(me: UserProfile, onDone: () -> Unit) {
         val current = strokes.value.orEmpty()
-        if (current.isEmpty()) return
+        if (current.isEmpty() || !_saving.compareAndSet(false, true)) return
         viewModelScope.launch {
-            runCatching { app.drawingRepository.saveAndClear(coupleId, me, current) }
-                .onSuccess { Telemetry.track(AnalyticsEvent.DrawingSaved(current.size)); onDone() }
-                .onFailure { Timber.w(it, "Saving the drawing failed") }
+            try {
+                // false = the partner saved this canvas first; it is cleared already, so just carry on quietly.
+                val saved = app.drawingRepository.saveAndClear(coupleId, me, current)
+                if (saved) Telemetry.track(AnalyticsEvent.DrawingSaved(current.size))
+                onDone()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.w(e, "Saving the drawing failed")
+            } finally {
+                _saving.value = false
+            }
         }
     }
 }
@@ -166,6 +180,7 @@ fun DrawingScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, on
     val vm: DrawingViewModel = viewModel(key = "drawing-$coupleId") { DrawingViewModel(app, coupleId, me.uid) }
     val strokes by vm.strokes.collectAsStateWithLifecycle()
     val presence by vm.presence.collectAsStateWithLifecycle()
+    val saving by vm.saving.collectAsStateWithLifecycle()
     val partnerName = partner?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.home_partner_fallback)
 
     var colorIndex by remember { mutableIntStateOf(0) }
@@ -296,7 +311,7 @@ fun DrawingScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, on
         MainAction(stringResource(R.string.lv_save), Kit.PHOTO_D, {
             eraser = false
             vm.save(me) { Toast.makeText(context, savedText, Toast.LENGTH_SHORT).show() }
-        }, enabled = list.isNotEmpty())
+        }, enabled = list.isNotEmpty() && !saving)
     }
 }
 
