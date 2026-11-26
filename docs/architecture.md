@@ -156,7 +156,9 @@ Decision (Ulaş, 2026-11-26): unpairing deletes the shared data **for both** par
    `coupleId` and deletes the couple doc in one batch, and shows "X eşleşmeyi kaldırdı".
 3. Deleting the account unpairs first, then deletes `users/{uid}` and the Firebase account. Firebase needs a
    recent sign-in, so the app checks the sign-in is under 4 minutes old *before* deleting anything; otherwise it
-   signs out and asks to sign in again.
+   signs out and asks to sign in again. It is reachable from Biz > Hesap and, for someone who never paired, from
+   the account button on the pairing screen (`ui/pairing/PairingAccountSheet.kt`; Google Play requires in-app
+   deletion). Both go through `LeaveViewModel.deleteAccount`.
 
 The rules allow exactly this: ending once with the server time and your own uid, leaving only an ended (or
 missing) couple, deleting your user doc only when unpaired, and no new shared writes after the couple ended

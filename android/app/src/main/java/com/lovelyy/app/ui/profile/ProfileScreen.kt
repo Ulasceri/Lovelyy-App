@@ -101,9 +101,7 @@ private const val CLOCK_D = "M12 3.5a8.5 8.5 0 1 1 0 17a8.5 8.5 0 1 1 0-17z M12 
 private const val GRID_D = "M6 4h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z M15 4h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-3a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z M6 13h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2z M15 13h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-3a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2z"
 private const val PEOPLE_D = "M12.5 8a3.5 3.5 0 1 1-7 0a3.5 3.5 0 1 1 7 0z M19.5 9a2.5 2.5 0 1 1-5 0a2.5 2.5 0 1 1 5 0z M3 20a6 6 0 0 1 12 0M15 20a4 4 0 0 1 6-3.5"
 private const val X_D = "M7 7l10 10M17 7L7 17"
-private const val LOGOUT_D = "M14 5h3a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-3M10 8l-4 4 4 4M6 12h9"
 private const val SHIELD_D = "M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3zM9 12l2 2 4-4"
-private const val CHEVRON_D = "M9 5l7 7-7 7"
 
 /** Biz tab (approved design 10): the two of you, shortcuts and settings. */
 @Composable
