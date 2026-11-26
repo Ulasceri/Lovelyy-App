@@ -229,6 +229,7 @@ fun CatSection(me: UserProfile, couple: Couple?, partner: UserProfile?, modifier
                 onPetDone = { strokes -> if (strokes > 0) vm.act(me, members, CatActionType.Pet, strokes) },
                 onStreakClick = onOpenCare,
                 wearing = ui?.doc?.let { com.lovelyy.app.data.CareRewards.worn(it.wearing, it.streak.best) },
+                footer = ui?.doc?.recent?.let { todayLineText(it, me.uid, partnerName) },
             )
             NeedsRow(ui?.levels)
         }
@@ -247,11 +248,9 @@ fun CatSection(me: UserProfile, couple: Couple?, partner: UserProfile?, modifier
         ui?.let { u ->
             StatusLine(
                 streak = u.doc.streak,
-                lastAction = u.doc.lastAction,
                 me = me,
                 partnerUid = partner?.uid,
                 partnerName = partnerName,
-                describe = texts,
                 modifier = Modifier.padding(top = 14.dp),
             )
         }
@@ -624,9 +623,9 @@ private fun CareButtons(
     modifier: Modifier = Modifier,
 ) {
     Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-        CareButton(Icons.Filled.Restaurant, stringResource(R.string.cat_feed), enabled && !sleeping, highlight == CatActionType.Feed, onFeed, Modifier.weight(1f))
-        CareButton(Icons.Filled.WaterDrop, stringResource(R.string.cat_water), enabled && !sleeping, highlight == CatActionType.Water, onWater, Modifier.weight(1f))
-        CareButton(Icons.Filled.SportsBaseball, stringResource(R.string.cat_play), enabled && !sleeping, highlight == CatActionType.Play, onPlay, Modifier.weight(1f))
+        CareButton(Icons.Filled.Restaurant, stringResource(R.string.cat_feed), enabled, highlight == CatActionType.Feed, onFeed, Modifier.weight(1f), dimmed = sleeping)
+        CareButton(Icons.Filled.WaterDrop, stringResource(R.string.cat_water), enabled, highlight == CatActionType.Water, onWater, Modifier.weight(1f), dimmed = sleeping)
+        CareButton(Icons.Filled.SportsBaseball, stringResource(R.string.cat_play), enabled, highlight == CatActionType.Play, onPlay, Modifier.weight(1f), dimmed = sleeping)
         CareButton(
             if (sleeping) Icons.Filled.WbSunny else Icons.Filled.Bedtime,
             stringResource(if (sleeping) R.string.cat_wake else R.string.cat_sleep),
@@ -636,14 +635,14 @@ private fun CareButtons(
 }
 
 @Composable
-private fun CareButton(icon: ImageVector, label: String, enabled: Boolean, highlighted: Boolean, onClick: () -> Unit, modifier: Modifier) {
+private fun CareButton(icon: ImageVector, label: String, enabled: Boolean, highlighted: Boolean, onClick: () -> Unit, modifier: Modifier, dimmed: Boolean = false) {
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
     val scale by animateFloatAsState(
         if (pressed) 0.88f else 1f,
         spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium), label = "press",
     )
-    val alpha by animateFloatAsState(if (enabled) 1f else 0.45f, label = "enabled")
+    val alpha by animateFloatAsState(if (enabled && !dimmed) 1f else 0.45f, label = "enabled")
     val bg by androidx.compose.animation.animateColorAsState(if (highlighted) Peach else CreamCard, label = "bg")
     Column(
         modifier
@@ -671,16 +670,13 @@ private fun CareButton(icon: ImageVector, label: String, enabled: Boolean, highl
 @Composable
 private fun StatusLine(
     streak: CareStreak,
-    lastAction: CatAction?,
     me: UserProfile,
     partnerUid: String?,
     partnerName: String,
-    describe: (CatAction) -> String,
     modifier: Modifier = Modifier,
 ) {
     val today = LocalDate.now()
     val parts = buildList {
-        if (lastAction != null) add(describe(lastAction).trimEnd() + " · " + relativeTime(lastAction.at))
         val meDone = streak.caredToday(me.uid, today)
         val partnerDone = partnerUid != null && streak.caredToday(partnerUid, today)
         add(
@@ -697,17 +693,6 @@ private fun StatusLine(
         textAlign = TextAlign.Center,
         modifier = modifier.fillMaxWidth(),
     )
-}
-
-@Composable
-private fun relativeTime(at: Long): String {
-    val minutes = ((System.currentTimeMillis() - at) / 60_000).coerceAtLeast(0)
-    return when {
-        minutes < 1 -> stringResource(R.string.time_now)
-        minutes < 60 -> stringResource(R.string.time_minutes, minutes)
-        minutes < 24 * 60 -> stringResource(R.string.time_hours, minutes / 60)
-        else -> stringResource(R.string.time_days, minutes / (24 * 60))
-    }
 }
 
 /** "Deniz besledi", "Sen oynadın"... */

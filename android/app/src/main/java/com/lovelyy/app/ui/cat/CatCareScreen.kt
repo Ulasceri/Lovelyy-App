@@ -175,11 +175,7 @@ fun CatCareScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBac
 
     val catName = ui?.doc?.name?.takeIf { it.isNotBlank() } ?: stringResource(R.string.cat_generic)
     val today = LocalDate.now()
-    val todayLine = ui?.doc?.recent?.let { recent ->
-        val latest = CareRewards.todayLatest(recent, me.uid, today)
-        if (latest.isEmpty()) stringResource(R.string.cc_today_none)
-        else stringResource(R.string.cc_today, latest.map { todayText(it, me.uid, partnerName) }.joinToString(" · "))
-    }
+    val todayLine = ui?.doc?.recent?.let { todayLineText(it, me.uid, partnerName) }
 
     Column(
         Modifier
@@ -237,16 +233,16 @@ fun CatCareScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBac
         val highlight = levels?.let(::mostNeeded)
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             NeedCard(BOWL_D, stringResource(R.string.need_hunger), levels?.hunger, stringResource(R.string.cat_feed),
-                enabled && !sleeping, highlight == CatActionType.Feed, Modifier.weight(1f)) { act(CatActionType.Feed) }
+                enabled, highlight == CatActionType.Feed, Modifier.weight(1f), dimmed = sleeping) { act(CatActionType.Feed) }
             NeedCard(DROP_D, stringResource(R.string.need_thirst), levels?.thirst, stringResource(R.string.cat_water),
-                enabled && !sleeping, highlight == CatActionType.Water, Modifier.weight(1f)) { act(CatActionType.Water) }
+                enabled, highlight == CatActionType.Water, Modifier.weight(1f), dimmed = sleeping) { act(CatActionType.Water) }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             NeedCard(MOON_D, stringResource(R.string.need_energy), levels?.energy,
                 stringResource(if (sleeping) R.string.cat_wake else R.string.cat_sleep),
                 enabled, highlight == CatActionType.Sleep, Modifier.weight(1f)) { act(if (sleeping) CatActionType.Wake else CatActionType.Sleep) }
             NeedCard(HEART_D, stringResource(R.string.need_love), levels?.love, stringResource(R.string.cat_play),
-                enabled && !sleeping, highlight == CatActionType.Play, Modifier.weight(1f)) { act(CatActionType.Play) }
+                enabled, highlight == CatActionType.Play, Modifier.weight(1f), dimmed = sleeping) { act(CatActionType.Play) }
         }
 
         val streak = ui?.doc?.streak
@@ -255,6 +251,10 @@ fun CatCareScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBac
             best = streak?.best ?: 0,
             wearing = ui?.doc?.let { CareRewards.worn(it.wearing, it.streak.best) },
             onWear = { a -> vm.wear(a) },
+            onLocked = { a ->
+                banner = context.getString(R.string.cc_locked_hint, context.getString(accessoryNameRes(a)), a.day)
+                view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+            },
         )
     }
 
@@ -270,6 +270,14 @@ fun CatCareScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBac
             },
         )
     }
+}
+
+/** "Bugün: sen sevdin · Elif su verdi" — shared by Yuva and Kedi bakımı so both show the same line. */
+@Composable
+internal fun todayLineText(recent: List<CatAction>, myUid: String, partnerName: String): String {
+    val latest = CareRewards.todayLatest(recent, myUid, LocalDate.now())
+    return if (latest.isEmpty()) stringResource(R.string.cc_today_none)
+    else stringResource(R.string.cc_today, latest.map { todayText(it, myUid, partnerName) }.joinToString(" · "))
 }
 
 @Composable
@@ -296,6 +304,7 @@ private fun NeedCard(
     enabled: Boolean,
     highlighted: Boolean,
     modifier: Modifier,
+    dimmed: Boolean = false,
     onClick: () -> Unit,
 ) {
     val shape = RoundedCornerShape(22.dp)
@@ -327,7 +336,7 @@ private fun NeedCard(
             )
         }
         val bg by animateColorAsState(if (highlighted) Peach else ButtonIdle, label = "bg")
-        val alpha by animateFloatAsState(if (enabled) 1f else 0.45f, label = "enabled")
+        val alpha by animateFloatAsState(if (enabled && !dimmed) 1f else 0.45f, label = "enabled")
         Box(
             Modifier
                 .fillMaxWidth()
@@ -345,7 +354,7 @@ private fun NeedCard(
 }
 
 @Composable
-private fun StreakCard(current: Int, best: Int, wearing: Accessory?, onWear: (Accessory?) -> Unit) {
+private fun StreakCard(current: Int, best: Int, wearing: Accessory?, onWear: (Accessory?) -> Unit, onLocked: (Accessory) -> Unit) {
     val shape = RoundedCornerShape(24.dp)
     val next = CareRewards.next(current, best)
     Column(
@@ -384,7 +393,9 @@ private fun StreakCard(current: Int, best: Int, wearing: Accessory?, onWear: (Ac
         }
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Accessory.entries.forEach { a ->
-                AccessoryBadge(a, CareRewards.unlocked(a, best), a == wearing, Modifier.weight(1f)) { onWear(if (a == wearing) null else a) }
+                AccessoryBadge(a, CareRewards.unlocked(a, best), a == wearing, Modifier.weight(1f)) {
+                    if (CareRewards.unlocked(a, best)) onWear(if (a == wearing) null else a) else onLocked(a)
+                }
             }
         }
     }
@@ -395,7 +406,7 @@ private fun AccessoryBadge(a: Accessory, unlocked: Boolean, worn: Boolean, modif
     val name = accessoryName(a)
     val label = stringResource(if (worn) R.string.cc_worn else if (unlocked) R.string.cc_unlocked else R.string.cc_locked, name) + ", " + stringResource(R.string.cc_day, a.day)
     Column(
-        modifier.clearAndSetSemantics { contentDescription = label }.bounceClick(enabled = unlocked, onClick = onClick),
+        modifier.clearAndSetSemantics { contentDescription = label }.bounceClick(onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
@@ -425,11 +436,11 @@ private fun AccessoryBadge(a: Accessory, unlocked: Boolean, worn: Boolean, modif
 }
 
 @Composable
-private fun accessoryName(a: Accessory): String = stringResource(
-    when (a) {
-        Accessory.Kurdele -> R.string.cc_acc_kurdele
-        Accessory.Papyon -> R.string.cc_acc_papyon
-        Accessory.Sapka -> R.string.cc_acc_sapka
-        Accessory.Gozluk -> R.string.cc_acc_gozluk
-    },
-)
+private fun accessoryName(a: Accessory): String = stringResource(accessoryNameRes(a))
+
+private fun accessoryNameRes(a: Accessory): Int = when (a) {
+    Accessory.Kurdele -> R.string.cc_acc_kurdele
+    Accessory.Papyon -> R.string.cc_acc_papyon
+    Accessory.Sapka -> R.string.cc_acc_sapka
+    Accessory.Gozluk -> R.string.cc_acc_gozluk
+}

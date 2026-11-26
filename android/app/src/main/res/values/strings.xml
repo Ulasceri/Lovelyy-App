@@ -388,6 +388,7 @@
     <string name="md_your_mood_cd">Senin ruh halin</string>
     <string name="md_partner_mood_cd">%1$s ruh hali: %2$s</string>
     <string name="md_partner_none">Henüz paylaşmadı</string>
+    <string name="md_my_note">Notun</string>
     <string name="md_partner_note">%1$s notu</string>
     <string name="md_question">Bugün nasılsın?</string>
     <string name="md_note_label">Not ekle (isteğe bağlı)</string>
@@ -482,6 +483,7 @@
     <string name="cc_acc_papyon">Papyon</string>
     <string name="cc_acc_sapka">Şapka</string>
     <string name="cc_acc_gozluk">Gözlük</string>
+    <string name="cc_locked_hint">%1$s %2$d günlük seride açılır</string>
     <string name="cc_locked">%1$s, kilitli</string>
     <string name="cc_unlocked">%1$s, açıldı</string>
     <string name="cc_worn">%1$s, kedinin üstünde</string>

@@ -183,14 +183,16 @@ fun DistanceScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit) {
 
     val toast: (Int) -> Unit = { res -> Toast.makeText(context, context.getString(res), Toast.LENGTH_SHORT).show() }
     var pendingFirst by remember { mutableStateOf(true) }
+    var pendingOnly by remember { mutableStateOf(true) }
     val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        if (granted) vm.share(context, me.uid, cityOnly, pendingFirst, toast) else toast(R.string.ds_no_permission)
+        if (granted) vm.share(context, me.uid, pendingOnly, pendingFirst, toast) else toast(R.string.ds_no_permission)
     }
     fun shareNow(first: Boolean, only: Boolean = cityOnly) {
         if (CoarseLocation.hasPermission(context)) {
             vm.share(context, me.uid, only, first, toast)
         } else {
             pendingFirst = first
+            pendingOnly = only
             permission.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
         }
     }

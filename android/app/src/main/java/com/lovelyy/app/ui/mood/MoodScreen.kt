@@ -62,6 +62,7 @@ import com.lovelyy.app.R
 import com.lovelyy.app.analytics.AnalyticsEvent
 import com.lovelyy.app.data.MoodEntry
 import com.lovelyy.app.data.MoodKind
+import com.lovelyy.app.data.MoodRepository
 import com.lovelyy.app.data.SignalKind
 import com.lovelyy.app.data.UserProfile
 import com.lovelyy.app.signals.labelRes
@@ -89,7 +90,6 @@ import timber.log.Timber
 private val NoteBubble = Color(0xFFE6F5F0)
 private val NoteLabel = Color(0xFF5F524C)
 private val FieldBorder = Color(0xFFF0E2D8)
-private const val NOTE_MAX = 80
 
 class MoodViewModel(private val app: LovelyyApplication) : ViewModel() {
     /** Saves my mood and tells my partner. True when the mood was saved. */
@@ -167,18 +167,11 @@ fun MoodScreen(me: UserProfile, partner: UserProfile?, moods: Map<String, MoodEn
                     modifier = Modifier.weight(1f),
                 )
             }
+            if (mine != null && mine.note.isNotBlank()) {
+                NoteBox(stringResource(R.string.md_my_note), mine.note)
+            }
             if (theirs != null && theirs.note.isNotBlank()) {
-                Column(
-                    Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomEnd = 16.dp, bottomStart = 4.dp))
-                        .background(NoteBubble)
-                        .padding(horizontal = 14.dp, vertical = 10.dp),
-                    verticalArrangement = Arrangement.spacedBy(2.dp),
-                ) {
-                    Text(stringResource(R.string.md_partner_note, TurkishSuffix.genitive(partnerName)), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = NoteLabel)
-                    Text(theirs.note, fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, color = Brown)
-                }
+                NoteBox(stringResource(R.string.md_partner_note, TurkishSuffix.genitive(partnerName)), theirs.note)
             }
         }
 
@@ -218,7 +211,7 @@ fun MoodScreen(me: UserProfile, partner: UserProfile?, moods: Map<String, MoodEn
             val fieldShape = RoundedCornerShape(18.dp)
             BasicTextField(
                 value = note,
-                onValueChange = { note = it.take(NOTE_MAX) },
+                onValueChange = { note = it.take(MoodRepository.MAX_NOTE) },
                 singleLine = true,
                 interactionSource = interaction,
                 cursorBrush = SolidColor(PeachDeep),
@@ -281,6 +274,21 @@ fun MoodScreen(me: UserProfile, partner: UserProfile?, moods: Map<String, MoodEn
                 modifier = Modifier.padding(start = 10.dp),
             )
         }
+    }
+}
+
+@Composable
+private fun NoteBox(label: String, text: String) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomEnd = 16.dp, bottomStart = 4.dp))
+            .background(NoteBubble)
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        Text(label, fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = NoteLabel)
+        Text(text, fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, color = Brown)
     }
 }
 
