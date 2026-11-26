@@ -1,5 +1,6 @@
 package com.lovelyy.app.data
 
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.channels.awaitClose
@@ -36,28 +37,71 @@ object WheelMath {
         while (next < current + 360f * turns) next += 360f
         return next
     }
+
+    /** How long one spin animates; both phones use it. */
+    const val SPIN_MS = 3200
+
+    /** A spin started within this window of another one is the same spin (slightly longer than [SPIN_MS]). */
+    const val SPIN_WINDOW_MS = 4_000L
+
+    /**
+     * True when a spin stamped [at] (another phone's clock) is still "in the air" at [now].
+     * Uses the absolute difference so a partner clock that runs a little ahead also counts as recent.
+     */
+    fun isRecent(at: Long, now: Long): Boolean = at > 0L && kotlin.math.abs(now - at) < SPIN_WINDOW_MS
+
+    /** Whether a new spin may replace the stored one: only when no other spin of that wheel is still running. */
+    fun acceptsNewSpin(lastAt: Long?, now: Long): Boolean = lastAt == null || !isRecent(lastAt, now)
+
+    /** How long a late viewer should animate a spin stamped [at] so it ends about when the spinner's did. */
+    fun remainingMs(at: Long, now: Long, minMs: Int = 1_200): Int =
+        (SPIN_MS - (now - at).coerceIn(0L, SPIN_MS.toLong())).toInt().coerceAtLeast(minMs)
 }
 
 /** The last result of one wheel, shared by both partners (couples/{id}/wheelSpins/{wheelId}). */
 data class WheelSpin(val wheelId: String, val label: String, val result: String, val by: String, val byName: String, val at: Long)
+
+/** Outcome of trying to spin: the spin both phones agree on, and whether it is ours ([won]). */
+data class SpinClaim(val spin: WheelSpin, val won: Boolean)
 
 class WheelRepository(private val db: FirebaseFirestore) {
 
     private fun spins(coupleId: String) =
         db.collection(Paths.COUPLES).document(coupleId).collection(Paths.WHEEL_SPINS)
 
-    /** Saves the decision before the wheel stops, so the partner sees the same result. */
-    suspend fun saveSpin(coupleId: String, me: UserProfile, wheelId: String, label: String, result: String) {
-        spins(coupleId).document(wheelId).set(
-            mapOf(
-                "label" to label.take(MAX_LABEL),
-                "result" to result.take(MAX_ITEM),
-                "by" to me.uid,
-                "byName" to me.displayName,
-                "at" to System.currentTimeMillis(),
-            ),
-        ).await()
+    /**
+     * Saves the decision before the wheel stops, so the partner sees the same result. Runs as a transaction:
+     * when both partners spin at the same moment only the first spin is stored, and the other phone gets
+     * that spin back ([SpinClaim.won] false) to show instead of its own.
+     */
+    suspend fun claimSpin(coupleId: String, me: UserProfile, wheelId: String, label: String, result: String): SpinClaim {
+        val ref = spins(coupleId).document(wheelId)
+        return db.runTransaction { tx ->
+            val snap = tx.get(ref)
+            val now = System.currentTimeMillis()
+            val existing = if (snap.exists()) snap.toSpin() else null
+            if (existing != null && !WheelMath.acceptsNewSpin(existing.at, now)) {
+                SpinClaim(existing, won = false)
+            } else {
+                val spin = WheelSpin(wheelId, label.take(MAX_LABEL), result.take(MAX_ITEM), me.uid, me.displayName, now)
+                tx.set(ref, spin.toMap())
+                SpinClaim(spin, won = true)
+            }
+        }.await()
     }
+
+    /** Plain write used when the transaction cannot run (e.g. offline): Firestore queues it. */
+    suspend fun saveSpin(coupleId: String, me: UserProfile, wheelId: String, label: String, result: String) {
+        val spin = WheelSpin(wheelId, label.take(MAX_LABEL), result.take(MAX_ITEM), me.uid, me.displayName, System.currentTimeMillis())
+        spins(coupleId).document(wheelId).set(spin.toMap()).await()
+    }
+
+    private fun WheelSpin.toMap() = mapOf("label" to label, "result" to result, "by" to by, "byName" to byName, "at" to at)
+
+    private fun DocumentSnapshot.toSpin() = WheelSpin(
+        id, getString("label").orEmpty(), getString("result").orEmpty(),
+        getString("by").orEmpty(), getString("byName").orEmpty(), getLong("at") ?: 0L,
+    )
 
     /** The last result of every wheel, by wheel id. */
     fun observeSpins(coupleId: String): Flow<Map<String, WheelSpin>> = callbackFlow {
@@ -66,12 +110,7 @@ class WheelRepository(private val db: FirebaseFirestore) {
                 close(err)
             } else if (snap != null) {
                 trySend(
-                    snap.documents.associate { d ->
-                        d.id to WheelSpin(
-                            d.id, d.getString("label").orEmpty(), d.getString("result").orEmpty(),
-                            d.getString("by").orEmpty(), d.getString("byName").orEmpty(), d.getLong("at") ?: 0L,
-                        )
-                    },
+                    snap.documents.associate { d -> d.id to d.toSpin() },
                 )
             }
         }

@@ -585,6 +585,7 @@
     <string name="wh_new_name">Çarkın adı, örn. Hafta sonu ne yapsak?</string>
     <string name="wh_new_items">Seçenekler (her satıra bir tane)</string>
     <string name="wh_min_items">En az %1$d seçenek gerekli</string>
+    <string name="wh_duplicate">Bu seçenek zaten çarkta</string>
     <string name="wh_max_items">En fazla %1$d seçenek olabilir</string>
     <string name="wh_delete_wheel">Bu çarkı sil</string>
     <string name="wh_reset">Varsayılana dön</string>
