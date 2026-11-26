@@ -9,11 +9,13 @@ import android.widget.Toast
 import com.lovelyy.app.R
 import com.lovelyy.app.data.Couple
 import com.lovelyy.app.data.LeaveRules
+import com.lovelyy.app.data.OnboardingPrefs
 import com.lovelyy.app.data.UserProfile
 import com.lovelyy.app.telemetry.Telemetry
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
@@ -35,6 +37,8 @@ sealed interface AppState {
     data object SignedOut : AppState
     data class NeedsName(val me: UserProfile) : AppState
     data class Pairing(val me: UserProfile) : AppState
+    /** Paired a moment ago on this phone: the "you are paired" flow and permission primers come before Home. */
+    data class JustPaired(val me: UserProfile, val coupleId: String) : AppState
     data class Home(val me: UserProfile, val couple: Couple?, val partner: UserProfile?) : AppState
     data class Failed(val message: String?) : AppState
 }
@@ -46,13 +50,16 @@ class AppViewModel(private val app: LovelyyApplication) : ViewModel() {
     private var lastScreen: String? = null
     private var lastState: AppState? = null
 
+    /** Bumped when the post-pairing flow ends, so the state is recomputed and Home shows. Declared before [state]. */
+    private val pairedFlowTick = MutableStateFlow(0)
+
     val state: StateFlow<AppState> = buildState()
         .onEach(::track)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), initialState())
 
     private fun track(s: AppState) {
         // Pairing -> Home means the couple was just formed (both phones see this once).
-        if (lastState is AppState.Pairing && s is AppState.Home) Telemetry.track(AnalyticsEvent.PairingCompleted)
+        if (lastState is AppState.Pairing && (s is AppState.Home || s is AppState.JustPaired)) Telemetry.track(AnalyticsEvent.PairingCompleted)
         if (s !is AppState.Loading) lastState = s
         val screen = s.screenName ?: return
         if (screen != lastScreen) {
@@ -60,6 +67,19 @@ class AppViewModel(private val app: LovelyyApplication) : ViewModel() {
             Telemetry.onScreen(screen)
         }
     }
+
+    fun finishPairedFlow(uid: String) {
+        OnboardingPrefs.finishPairedFlow(app, uid)
+        // Whatever was answered, the notification question has been put once; Home must not repeat it.
+        OnboardingPrefs.markNotificationsAsked(app)
+        pairedFlowTick.value++
+    }
+
+    fun notificationPrimerAnswered(allowed: Boolean) =
+        Telemetry.track(AnalyticsEvent.PermissionPrimerAnswered("notifications", allowed))
+
+    fun locationPrimerAnswered(allowed: Boolean) =
+        Telemetry.track(AnalyticsEvent.PermissionPrimerAnswered("location", allowed))
 
     private fun buildState(): Flow<AppState> {
         if (!app.isFirebaseConfigured) return flowOf<AppState>(AppState.FirebaseMissing)
@@ -85,8 +105,14 @@ class AppViewModel(private val app: LovelyyApplication) : ViewModel() {
                         when {
                             me == null -> if (cached != null) emptyFlow() else flowOf<AppState>(AppState.Loading)
                             me.displayName.isBlank() -> flowOf<AppState>(AppState.NeedsName(me))
-                            me.coupleId == null -> flowOf<AppState>(AppState.Pairing(me))
-                            else -> homeState(me, me.coupleId)
+                            me.coupleId == null -> {
+                                OnboardingPrefs.markPairingStarted(app, me.uid)
+                                flowOf<AppState>(AppState.Pairing(me))
+                            }
+                            else -> pairedFlowTick.flatMapLatest {
+                                if (OnboardingPrefs.pairedFlowPending(app, me.uid)) flowOf<AppState>(AppState.JustPaired(me, me.coupleId))
+                                else homeState(me, me.coupleId)
+                            }
                         }
                     }
                 )
@@ -105,6 +131,7 @@ class AppViewModel(private val app: LovelyyApplication) : ViewModel() {
     }
 
     private fun cachedHome(uid: String): AppState.Home? {
+        if (OnboardingPrefs.pairedFlowPending(app, uid)) return null
         val c = com.lovelyy.app.widget.WidgetData.couple(app) ?: return null
         if (c.myUid != uid || c.myName.isBlank()) return null
         val me = UserProfile(uid = uid, displayName = c.myName, coupleId = c.coupleId)

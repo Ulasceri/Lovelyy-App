@@ -25,3 +25,7 @@ val Sand = Color(0xFFF3ECE6)        // empty avatar, track
 val NeedLow = Color(0xFFF07B45)
 val NeedOk = Color(0xFF5DB89E)
 val ErrorRose = Color(0xFFD9534F)
+val StageMint = Color(0xFFD3EFE7)   // onboarding: the partner's side of the split screen
+val StagePeach = Color(0xFFFFDCC6)  // onboarding: your side of the split screen
+val HeartInk = Color(0xFFE0602B)    // onboarding: your stroke, flying heart (deep peach)
+val MintDeep = Color(0xFF2F8F7A)    // onboarding: the partner's stroke

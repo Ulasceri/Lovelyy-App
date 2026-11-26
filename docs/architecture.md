@@ -9,7 +9,7 @@ com.lovelyy.app
 ├── data/                Firebase access (AuthRepository, UserRepository, PairingRepository)
 └── ui/
     ├── AppViewModel     decides which screen to show from auth + Firestore state
-    ├── LovelyyRoot      cross-fades between: Setup → Login → Name → Pairing → Home
+    ├── LovelyyRoot      cross-fades between: Setup → Login (Karşılama → intro → form) → Name → Pairing → JustPaired → Home
     ├── theme/           colors, Quicksand typography, rounded shapes
     ├── components/      shared buttons, text field, avatars, beating heart
     └── auth/ profile/ pairing/ home/ setup/
@@ -186,3 +186,21 @@ user wakes it, and WorkManager delays are "at the earliest" (Doze can defer them
 With Blaze: add `firebase-messaging`, store each user's FCM token, and a function on
 `couples/{id}/signals/{sid}` create that sends to the partner's token. Then delivery is instant
 even when the app is closed. The client side above stays as the in-app experience.
+
+## Onboarding
+
+Two parts, both in `ui/onboarding/` (design boards A1-A6). They share one idea, `SplitStage`: the top of
+the screen is split by a slanted seam into the partner's side (mint) and your side (peach).
+
+- **Intro** (`IntroScreen`): a mode of the signed-out screen (`LoginViewModel.Mode.Intro`), shown only after
+  "Başlayalım" on Karşılama. Three pages, each with one optional tap whose result shows on the partner's
+  side (feed the cat, send a heartbeat, draw half a heart). It is a local demo: nothing is written to
+  Firestore. "Giriş yap" on Karşılama and "Atla" go straight to the form.
+- **After pairing** (`PairedFlow`): the `AppState.JustPaired` state. `OnboardingPrefs` marks a user when they
+  see the pairing screen on this phone; once they have a couple, `JustPaired` is shown instead of `Home`
+  until the flow ends. People who were paired before never see it. Steps: Eşleştiniz, then a primer for
+  notifications (Android 13+) and one for location; a permission that is already granted skips its primer.
+  The system window opens only from the primer's main button. Allowing location shares it the same way as
+  the Mesafe screen (city and distance only).
+
+No names appear in onboarding (product decision): the copy says "Sevgilin" and "Sen".

@@ -88,6 +88,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lovelyy.app.R
+import com.lovelyy.app.data.OnboardingPrefs
 import com.lovelyy.app.data.Couple
 import com.lovelyy.app.data.DayCounter
 import com.lovelyy.app.data.Emotion
@@ -257,13 +258,18 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
     val soonText = stringResource(R.string.home_soon_toast)
     val soon: () -> Unit = { Toast.makeText(context, soonText, Toast.LENGTH_SHORT).show() }
 
-    // Partner signals: listen while the app process lives, ask once for notification permission.
+    // Partner signals: listen while the app process lives. People who paired before the onboarding existed
+    // are asked once for the notification permission here; new couples answer it on the primer instead.
     LaunchedEffect(coupleId, me.uid) { app.signalCenter.start(coupleId, me.uid) }
     val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
     LaunchedEffect(Unit) {
         if (Build.VERSION.SDK_INT >= 33 &&
+            !OnboardingPrefs.notificationsAsked(context) &&
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
-        ) permission.launch(Manifest.permission.POST_NOTIFICATIONS)
+        ) {
+            OnboardingPrefs.markNotificationsAsked(context)
+            permission.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
     }
 
     // The home-screen widgets can't read Firestore while the app is closed: keep who the couple is on the phone.

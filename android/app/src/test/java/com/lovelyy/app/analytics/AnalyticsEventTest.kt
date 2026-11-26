@@ -37,6 +37,8 @@ class AnalyticsEventTest {
         AnalyticsEvent.PasswordResetSent,
         AnalyticsEvent.CoupleUnpaired,
         AnalyticsEvent.AccountDeleted,
+        AnalyticsEvent.IntroFinished(skipped = false, demosTried = 3),
+        AnalyticsEvent.PermissionPrimerAnswered(permission = "location", allowed = true),
         AnalyticsEvent.ScreenView("home"),
         AnalyticsEvent.ScreenView("day_counter"),
     )

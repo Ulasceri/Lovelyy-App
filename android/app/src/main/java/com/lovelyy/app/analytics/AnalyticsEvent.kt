@@ -161,6 +161,21 @@ sealed interface AnalyticsEvent {
         override val name = "password_reset_sent"
     }
 
+    /** The try-it intro after Karşılama ended. [skipped] = left through "Atla"; [demosTried] = 0..3 demos tapped. */
+    data class IntroFinished(val skipped: Boolean, val demosTried: Int) : AnalyticsEvent {
+        override val name = "intro_finished"
+        override val params: Map<String, Any> get() = mapOf("skipped" to skipped, "demos_tried" to demosTried)
+    }
+
+    /**
+     * A permission primer after pairing was answered. [permission] is "notifications" or "location";
+     * [allowed] is false for "Şimdi değil" and for a refusal in the system window.
+     */
+    data class PermissionPrimerAnswered(val permission: String, val allowed: Boolean) : AnalyticsEvent {
+        override val name = "permission_primer_answered"
+        override val params: Map<String, Any> get() = mapOf("permission" to permission, "allowed" to allowed)
+    }
+
     /**
      * A screen was shown. [screenName] is a fixed route name like "home", never anything dynamic.
      * Sent as the standard `screen_view` event, so it shows up in the Screens report.
