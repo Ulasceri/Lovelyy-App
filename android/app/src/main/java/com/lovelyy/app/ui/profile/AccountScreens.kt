@@ -88,7 +88,7 @@ fun AccountScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBac
     val google = remember { user?.providerData?.any { it.providerId == "google.com" } == true }
     val email = user?.email.orEmpty()
     val partnerName = partner?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.home_partner_fallback)
-    val days = couple?.startDate?.toDate()?.time?.let { DayCounter.dayNumber(it, System.currentTimeMillis()) }
+    val days = couple?.startDate?.toDate()?.time?.let { DayCounter.together(it, System.currentTimeMillis()).days }
     var confirmSignOut by remember { mutableStateOf(false) }
     var confirmReset by remember { mutableStateOf(false) }
     val resetSent = stringResource(R.string.acc_reset_sent, email)

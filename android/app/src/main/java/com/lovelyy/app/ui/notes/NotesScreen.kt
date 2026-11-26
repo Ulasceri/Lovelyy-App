@@ -154,7 +154,7 @@ class NotesViewModel(private val app: LovelyyApplication, private val coupleId: 
 
 /** Notlar (approved design 18): filter chips, two-column sticky notes, "Not yaz". */
 @Composable
-fun NotesScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onSearch: () -> Unit) {
+fun NotesScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onSearch: () -> Unit, openId: String? = null) {
     val app = lovelyyApp()
     val coupleId = me.coupleId ?: return
     val vm: NotesViewModel = viewModel(key = "notes-$coupleId") { NotesViewModel(app, coupleId) }
@@ -162,6 +162,11 @@ fun NotesScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onSe
     val partnerName = partner?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.home_partner_fallback)
     var tabSel by rememberSaveable { mutableIntStateOf(0) } // 0 all, 1 mine, 2 theirs
     var editing by remember { mutableStateOf<Note?>(null) }
+    // Opened from Arama on one note: open it once the notes have loaded.
+    var opened by rememberSaveable { mutableStateOf(false) }
+    androidx.compose.runtime.LaunchedEffect(notes, openId) {
+        if (!opened && openId != null) notes?.firstOrNull { it.id == openId }?.let { editing = it; opened = true }
+    }
 
     // "Emin misin?" before deleting.
     var askDelete by remember { mutableStateOf<(() -> Unit)?>(null) }

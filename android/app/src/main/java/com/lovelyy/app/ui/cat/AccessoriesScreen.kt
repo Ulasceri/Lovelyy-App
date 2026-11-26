@@ -99,7 +99,7 @@ fun AccessoriesScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit
         val shape = RoundedCornerShape(28.dp)
         BoxWithConstraints(Modifier.fillMaxWidth().height(280.dp).softShadow(shape, 10.dp).clip(shape).background(CatBg)) {
             val side = maxWidth
-            Box(Modifier.size(side).offset(y = -side * 0.12f)) {
+            Box(Modifier.size(side).offset(y = -side * 0.05f)) {
                 Image(painterResource(R.drawable.cat_base), stringResource(R.string.ac_cat_desc, catName ?: stringResource(R.string.cat_generic)), Modifier.fillMaxSize())
                 CatAccessoryLayer(sel, Modifier.fillMaxSize())
             }

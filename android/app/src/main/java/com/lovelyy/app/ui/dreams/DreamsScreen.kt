@@ -117,7 +117,7 @@ private class Editing(val dream: Dream?)
 
 /** Hayaller listesi (approved design 12): the shared bucket list. */
 @Composable
-fun DreamsScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onSearch: () -> Unit) {
+fun DreamsScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onSearch: () -> Unit, openId: String? = null) {
     val coupleId = me.coupleId ?: return
     val app = lovelyyApp()
     val vm: DreamsViewModel = viewModel(key = "dreams-$coupleId") { DreamsViewModel(app, coupleId) }
@@ -125,6 +125,11 @@ fun DreamsScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onS
     val partnerName = partner?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.home_partner_fallback)
     val haptic = LocalHapticFeedback.current
     var editing by remember { mutableStateOf<Editing?>(null) }
+    // Opened from Arama on one dream: open it once the list has loaded.
+    var opened by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    androidx.compose.runtime.LaunchedEffect(dreams, openId) {
+        if (!opened && openId != null) dreams?.firstOrNull { it.id == openId }?.let { editing = Editing(it); opened = true }
+    }
 
     // "Emin misin?" before deleting.
     var askDelete by remember { mutableStateOf<(() -> Unit)?>(null) }

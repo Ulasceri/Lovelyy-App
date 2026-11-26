@@ -74,8 +74,8 @@ fun SearchScreen(
     partner: UserProfile?,
     start: SearchScope,
     onBack: () -> Unit,
-    onNote: () -> Unit,
-    onDream: () -> Unit,
+    onNote: (String) -> Unit,
+    onDream: (String) -> Unit,
     onLetter: (String) -> Unit,
 ) {
     val coupleId = me.coupleId ?: return
@@ -143,11 +143,11 @@ fun SearchScreen(
                 )
                 if ((scope == SearchScope.All || scope == SearchScope.Notes) && noteHits.isNotEmpty()) {
                     DayHeader(stringResource(R.string.se_notes))
-                    noteHits.forEach { n -> NoteHit(n, q, n.by == me.uid, me.displayName, partnerName, onNote) }
+                    noteHits.forEach { n -> NoteHit(n, q, n.by == me.uid, me.displayName, partnerName) { onNote(n.id) } }
                 }
                 if ((scope == SearchScope.All || scope == SearchScope.Dreams) && dreamHits.isNotEmpty()) {
                     DayHeader(stringResource(R.string.se_dreams))
-                    dreamHits.forEach { d -> DreamHit(d, q, onDream) }
+                    dreamHits.forEach { d -> DreamHit(d, q) { onDream(d.id) } }
                 }
                 if ((scope == SearchScope.All || scope == SearchScope.Memories) && letterHits.isNotEmpty()) {
                     DayHeader(stringResource(R.string.se_memories))

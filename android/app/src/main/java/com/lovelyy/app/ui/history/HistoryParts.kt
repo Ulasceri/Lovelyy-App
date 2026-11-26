@@ -149,7 +149,7 @@ internal fun EmptyNote(text: String, modifier: Modifier = Modifier) {
 @Composable
 internal fun InnerColumn(spacing: Int = 8, content: @Composable ColumnScope.() -> Unit) {
     Column(
-        Modifier.fillMaxSize().verticalScrollState().padding(horizontal = 20.dp).navigationBarsPadding().padding(top = 20.dp, bottom = 140.dp),
+        Modifier.fillMaxSize().imePadding().verticalScrollState().padding(horizontal = 20.dp).navigationBarsPadding().padding(top = 20.dp, bottom = 140.dp),
         verticalArrangement = Arrangement.spacedBy(spacing.dp),
         content = content,
     )

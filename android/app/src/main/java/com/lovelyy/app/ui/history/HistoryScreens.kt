@@ -160,7 +160,8 @@ fun QuestionHistoryScreen(me: UserProfile, partner: UserProfile?, onBack: () -> 
     val today = LocalDate.now()
     val list = days.orEmpty().sortedByDescending { it.day }
     val todayQ = list.firstOrNull { it.day == today.toString() }
-    val past = list.filter { it.day != today.toString() && it.answers.isNotEmpty() }
+    // Today is listed once I answered it (until then it's the "Cevapla" card above).
+    val past = list.filter { it.answers.isNotEmpty() && (it.day != today.toString() || it.answers.containsKey(me.uid)) }
     val both = list.count { it.answers.size >= 2 }
     val streak = QuestionMath.streak(list, today)
 

@@ -325,10 +325,10 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
                     Routes.COUNTER -> CounterScreen(me, couple, partner, onBack = ::pop)
                     Routes.MOOD -> MoodScreen(me, partner, moods, onBack = ::pop, onHistory = { push(Routes.MOOD_HISTORY) })
                     Routes.QUESTION -> QuestionScreen(me, couple, partner, onBack = ::pop, onHistory = { push(Routes.QUESTION_HISTORY) })
-                    Routes.NOTES -> NotesScreen(me, partner, onBack = ::pop, onSearch = { push("${Routes.SEARCH}:notes") })
+                    Routes.NOTES -> NotesScreen(me, partner, onBack = ::pop, onSearch = { push("${Routes.SEARCH}:notes") }, openId = route.substringAfter(':', "").ifEmpty { null })
                     Routes.CAT -> CatCareScreen(me, couple, partner, onBack = ::pop, onAccessories = { push(Routes.ACCESSORIES) })
                     Routes.DISTANCE -> DistanceScreen(me, partner, onBack = ::pop)
-                    Routes.DREAMS -> DreamsScreen(me, partner, onBack = ::pop, onSearch = { push("${Routes.SEARCH}:dreams") })
+                    Routes.DREAMS -> DreamsScreen(me, partner, onBack = ::pop, onSearch = { push("${Routes.SEARCH}:dreams") }, openId = route.substringAfter(':', "").ifEmpty { null })
                     Routes.WHEEL -> WheelScreen(me, partner, onBack = ::pop, onHistory = { push(Routes.WHEEL_HISTORY) })
                     Routes.CAPSULE -> CapsuleScreen(me, partner, onBack = ::pop, onOpenedList = { push(Routes.LETTERS) })
                     Routes.DRAWING -> DrawingScreen(me, partner, onBack = ::pop, onOld = { push(Routes.DRAWINGS) })
@@ -340,8 +340,8 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
                     Routes.WHEEL_HISTORY -> WheelHistoryScreen(me, partner, onBack = ::pop)
                     Routes.SEARCH -> SearchScreen(
                         me, partner, SearchScope.of(route.substringAfter(':', "")), onBack = ::pop,
-                        onNote = { returnTo(Routes.NOTES) },
-                        onDream = { returnTo(Routes.DREAMS) },
+                        onNote = { id -> pop(); push("${Routes.NOTES}:$id") },
+                        onDream = { id -> pop(); push("${Routes.DREAMS}:$id") },
                         onLetter = { id -> push("${Routes.LETTERS}:$id") },
                     )
                     Routes.DRAWINGS -> DrawingsScreen(me, partner, onBack = ::pop, onNew = { returnTo(Routes.DRAWING) })
