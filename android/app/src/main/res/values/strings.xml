@@ -109,6 +109,7 @@
     <string name="login_body_signup">Birkaç saniye sürer. Sonra sevgilinle eşleşip kedinizi tanıyacaksınız.</string>
     <string name="login_or_email">ya da e-postayla</string>
     <string name="field_name_ph">Adın</string>
+    <string name="field_name_hint">Adını yaz, sevgilin seni böyle görecek</string>
     <string name="field_email_ph">E-posta adresin</string>
     <string name="field_password_ph">Şifren</string>
     <string name="login_show_password">Şifreyi göster</string>
@@ -128,6 +129,7 @@
     <string name="pair_have_code">Sevgilimin kodu var, onu gireceğim</string>
     <string name="pair_enter_title">Kodu gir</string>
     <string name="pair_enter_body">Sevgilinin ekranındaki 6 haneli kodu yaz.</string>
+    <string name="pair_enter_hint_short">Kod 6 haneli, %1$d hane kaldı</string>
     <string name="pair_enter_hint_ttl">Kod 30 dakika geçerli, sadece bir kez kullanılır.</string>
     <string name="pair_delete">Sil</string>
 
