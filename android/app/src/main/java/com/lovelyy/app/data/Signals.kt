@@ -118,11 +118,24 @@ object SignalFreshness {
         fresh.takeLast(cap) to fresh.dropLast(cap)
 }
 
+/** A signal was refused on the phone because the previous one went out less than [SignalRepository.MIN_GAP_MS] ago. */
+class SignalThrottledException : Exception("Signals are sent at most once every 2 seconds")
+
 class SignalRepository(private val db: FirebaseFirestore) {
 
     private fun signals(coupleId: String) =
         db.collection(Paths.COUPLES).document(coupleId).collection(Paths.SIGNALS)
 
+    /** Uptime-clock time of the last send from this phone (any screen or widget). */
+    @Volatile private var lastSentAt: Long? = null
+
+    /**
+     * Sends a signal to the partner. Rate limited on two levels: this phone refuses a send within
+     * [MIN_GAP_MS] of the previous one ([SignalThrottledException]), and firestore.rules refuse a signal
+     * unless the same batch stamps couples/{id}/limits/{me}.signalAt with the server time, at most once
+     * every 2 seconds. That keeps a buggy loop or a modified client from flooding the partner (and the
+     * project's daily write quota).
+     */
     suspend fun send(
         coupleId: String,
         me: UserProfile,
@@ -132,7 +145,17 @@ class SignalRepository(private val db: FirebaseFirestore) {
         mood: MoodKind? = null,
         text: String? = null,
     ) {
-        signals(coupleId).add(
+        val now = android.os.SystemClock.elapsedRealtime()
+        synchronized(this) {
+            val last = lastSentAt
+            if (last != null && now - last < MIN_GAP_MS) throw SignalThrottledException()
+            lastSentAt = now
+        }
+        val couple = db.collection(Paths.COUPLES).document(coupleId)
+        val batch = db.batch()
+        batch.set(couple.collection(Paths.LIMITS).document(me.uid), mapOf("signalAt" to FieldValue.serverTimestamp()))
+        batch.set(
+            signals(coupleId).document(),
             mapOf(
                 "kind" to kind.key,
                 "emotion" to emotion?.key,
@@ -140,11 +163,12 @@ class SignalRepository(private val db: FirebaseFirestore) {
                 "from" to me.uid,
                 "fromName" to me.displayName,
                 "to" to partnerUid,
-                "text" to text,
+                "text" to text?.take(MAX_TEXT),
                 "at" to System.currentTimeMillis(),
                 "createdAt" to FieldValue.serverTimestamp(),
             ),
-        ).await()
+        )
+        batch.commit().await()
     }
 
     /** The latest signals of the couple, newest first (both directions). */
@@ -179,5 +203,12 @@ class SignalRepository(private val db: FirebaseFirestore) {
             // Pending local writes have no server time yet: use the SDK's estimate instead of null.
             createdAt = getTimestamp("createdAt", DocumentSnapshot.ServerTimestampBehavior.ESTIMATE)?.toDate()?.time,
         )
+    }
+
+    companion object {
+        /** A bit more than the 2 s the rules require, so phone-side timing never hits the server limit. */
+        const val MIN_GAP_MS = 2_100L
+        /** Longest [Signal.text] the rules accept. */
+        const val MAX_TEXT = 120
     }
 }

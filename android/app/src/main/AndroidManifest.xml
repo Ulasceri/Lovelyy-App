@@ -8,9 +8,11 @@
     <!-- Mesafe: only a rough (city level) location, only while the user shares it. -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
+    <!-- allowBackup is off: no auto backup of the signed-in session or local drafts to the cloud
+         or to another device (docs/security.md). -->
     <application
         android:name=".LovelyyApplication"
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
         android:label="@string/app_name"

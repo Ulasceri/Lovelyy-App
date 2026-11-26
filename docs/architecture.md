@@ -118,6 +118,7 @@ treats them as valid for 30 minutes (the rules still allow up to 24h).
 | `couples/{id}.endedAt / endedBy / endedByName` | server time, uid, name | set once when a partner unpairs; the other phone then leaves and deletes the couple doc |
 | `couples/{id}/settings/main` | zone (IANA id), setBy, at | the couple's shared time zone: written once (transaction) with the first phone's zone; every shared "today" (care streak, daily question, capsule open day, calendar, start date) is computed in it via `CoupleClock`/`CoupleDay`, falling back to the phone's zone until loaded. No UI to change it |
 | `couples/{id}/signals/{auto}` | kind (heartbeat/nudge/mood/question/note/event), emotion, mood, text, from, fromName, to, at, createdAt | heartbeats, nudges and notices for the partner |
+| `couples/{id}/limits/{uid}` | signalAt (server time) | rate limit: written in the same batch as every signal; the rules refuse a signal unless this stamp is the request time and the previous one is over 2 s old (docs/security.md) |
 | `couples/{id}/moods/{uid}` | kind, note, at | each partner's current mood |
 | `couples/{id}/moodLog/{uid}_{yyyy-MM-dd}` | kind, note, at, uid, day | one entry per person per day (the last mood that day), written next to `moods/{uid}`; read by Ruh hali geçmişi (last 31 days). Started 2026-11-26, older moods were not logged |
 | `couples/{id}/questions/{yyyy-MM-dd}` | day, question, answers.{uid} = {name, text, at} | günün sorusu; question text comes from `QuestionBank.forDay` so both phones agree without a server |
@@ -159,8 +160,9 @@ The rules allow exactly this: ending once with the server time and your own uid,
 missing) couple, deleting your user doc only when unpaired, and no new shared writes after the couple ended
 (deletes still work). Covered by three tests in `firebase/tests`.
 
-All of these are covered by the existing "members only" rule for `couples/{id}/**`; no rules
-deploy was needed.
+Every shared collection has its own write rule (exact fields, size limits, author = signed-in user);
+see [security.md](security.md). A new shared collection needs a new match block in `firestore.rules`
+and tests, otherwise the app's writes are denied.
 
 ## Partner notifications on the free Spark plan
 

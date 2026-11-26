@@ -31,6 +31,8 @@ object Paths {
     const val DRAWINGS = "drawings"
     const val SETTINGS = "settings"
     const val SETTINGS_DOC = "main"
+    /** couples/{id}/limits/{uid}: server time of my last signal (rate limit, see firestore.rules). */
+    const val LIMITS = "limits"
 }
 
 internal fun DocumentSnapshot.toUserProfile(): UserProfile? =
