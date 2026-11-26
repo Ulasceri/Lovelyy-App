@@ -135,8 +135,13 @@ class HeartbeatViewModel(private val app: LovelyyApplication) : ViewModel() {
                 lastHeartbeatAt = SystemClock.elapsedRealtime()
                 Telemetry.track(AnalyticsEvent.HeartbeatSent(emotion.key))
             }
-            .onFailure { Timber.w(it, "Sending a heartbeat failed") }
+            .onFailure { Timber.w(it, "Sending a heartbeat failed"); showLimitMessage(it) }
             .isSuccess
+    }
+
+    /** The hourly/daily signal limit gets its own friendly message instead of a silent failure. */
+    private fun showLimitMessage(e: Throwable) {
+        if (e is com.lovelyy.app.data.SignalLimitException) Toast.makeText(app, R.string.signal_limit, Toast.LENGTH_LONG).show()
     }
 
     suspend fun nudge(me: UserProfile, partnerUid: String): Boolean {
@@ -146,7 +151,7 @@ class HeartbeatViewModel(private val app: LovelyyApplication) : ViewModel() {
                 lastNudgeAt = SystemClock.elapsedRealtime()
                 Telemetry.track(AnalyticsEvent.NudgeSent)
             }
-            .onFailure { Timber.w(it, "Sending a nudge failed") }
+            .onFailure { Timber.w(it, "Sending a nudge failed"); showLimitMessage(it) }
             .isSuccess
     }
 }

@@ -53,16 +53,37 @@ function join(uid, code = CODE) {
 const sub = (uid, name, ...path) => doc(db(uid), "couples", CODE, name, ...path);
 const note = (by, byName, extra = {}) => ({ text: "hi", color: 2, pinned: false, by, byName, at: Date.now(), ...extra });
 
-// SignalRepository.send: the signal plus my rate-limit stamp, in one batch.
-function sendSignal(from, to, extra = {}) {
+// SignalLimits.next: the next limits/{uid} doc, from the current one and the phone's clock.
+const HOUR = 3600_000, DAY = 24 * HOUR;
+function nextLimits(cur, now = Date.now(), flip = false) {
+  const win = (startKey, countKey, len) => {
+    const start = cur?.[startKey]?.toMillis?.();
+    let reset = start == null || now >= start + len;
+    if (flip && start != null) reset = !reset;
+    return reset ? { [startKey]: serverTimestamp(), [countKey]: 1 } : { [startKey]: cur[startKey], [countKey]: (cur[countKey] ?? 0) + 1 };
+  };
+  return { signalAt: serverTimestamp(), ...win("hourStart", "hourCount", HOUR), ...win("dayStart", "dayCount", DAY) };
+}
+
+// SignalRepository.send: the signal plus my rate-limit doc, in one batch.
+async function sendSignal(from, to, extra = {}, { flip = false, limits } = {}) {
   const d = db(from);
+  const limRef = doc(d, "couples", CODE, "limits", from);
+  const cur = (await getDoc(limRef)).data();
   const b = writeBatch(d);
-  b.set(doc(d, "couples", CODE, "limits", from), { signalAt: serverTimestamp() });
+  b.set(limRef, limits ?? nextLimits(cur, Date.now(), flip));
   b.set(doc(collection(d, "couples", CODE, "signals")), {
     kind: "heartbeat", emotion: "sevgi", mood: null, from, fromName: "Alice", to, text: null,
     at: Date.now(), createdAt: serverTimestamp(), ...extra,
   });
   return b.commit();
+}
+
+// Sets my limits doc directly (as if earlier signals happened), bypassing the rules.
+async function setLimits(uid, data) {
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), "couples", CODE, "limits", uid), data);
+  });
 }
 
 // QuestionRepository.answer (merge write).
@@ -284,14 +305,57 @@ test("signals: rate limit is one per 2 seconds per person", async () => {
   await assertSucceeds(sendSignal("alice", "bob"));
   await assertFails(sendSignal("alice", "bob"));          // right away again
   await assertSucceeds(sendSignal("bob", "alice", { fromName: "Bob" })); // the partner has their own limit
-  // Two seconds later it works again (simulated by moving the stamp back).
-  await env.withSecurityRulesDisabled(async (ctx) => {
-    await setDoc(doc(ctx.firestore(), "couples", CODE, "limits", "alice"), { signalAt: Timestamp.fromMillis(Date.now() - 3000) });
-  });
+  // Two seconds later it works again (simulated by moving the stamps back).
+  const ago = (ms) => Timestamp.fromMillis(Date.now() - ms);
+  await setLimits("alice", { signalAt: ago(3000), hourStart: ago(3000), hourCount: 1, dayStart: ago(3000), dayCount: 1 });
   await assertSucceeds(sendSignal("alice", "bob"));
   // Nobody can reset someone else's stamp or write an arbitrary one.
-  await assertFails(setDoc(sub("bob", "limits", "alice"), { signalAt: serverTimestamp() }));
-  await assertFails(setDoc(sub("alice", "limits", "alice"), { signalAt: Timestamp.fromMillis(1) }));
+  await assertFails(setDoc(sub("bob", "limits", "alice"), nextLimits(null)));
+  await assertFails(setDoc(sub("alice", "limits", "alice"), { ...nextLimits(null), signalAt: Timestamp.fromMillis(1) }));
+});
+
+test("signals: at most 15 per hour and 60 per day by default, windows restart in server time", async () => {
+  await pairAB();
+  const ago = (ms) => Timestamp.fromMillis(Date.now() - ms);
+  // 15 already sent this hour: the 16th is refused, also when trying to start a new window early.
+  await setLimits("alice", { signalAt: ago(5000), hourStart: ago(10 * 60_000), hourCount: 15, dayStart: ago(HOUR), dayCount: 20 });
+  await assertFails(sendSignal("alice", "bob"));
+  await assertFails(sendSignal("alice", "bob", {}, { flip: true }));
+  // An hour later a new hourly window starts; the day keeps counting.
+  await setLimits("alice", { signalAt: ago(5000), hourStart: ago(HOUR + 1000), hourCount: 15, dayStart: ago(2 * HOUR), dayCount: 20 });
+  await assertSucceeds(sendSignal("alice", "bob"));
+  const lim = (await getDoc(sub("alice", "limits", "alice"))).data();
+  if (lim.hourCount !== 1 || lim.dayCount !== 21) throw new Error(`unexpected counts ${lim.hourCount}/${lim.dayCount}`);
+  // 60 today: refused until the day window is over.
+  await setLimits("alice", { signalAt: ago(5000), hourStart: ago(HOUR + 1000), hourCount: 3, dayStart: ago(20 * HOUR), dayCount: 60 });
+  await assertFails(sendSignal("alice", "bob"));
+  await setLimits("alice", { signalAt: ago(5000), hourStart: ago(HOUR + 1000), hourCount: 3, dayStart: ago(DAY + 1000), dayCount: 60 });
+  await assertSucceeds(sendSignal("alice", "bob"));
+  // A phone with a wrong clock that counts up in an expired window is still accepted (only stricter).
+  await setLimits("alice", { signalAt: ago(5000), hourStart: ago(2 * HOUR), hourCount: 5, dayStart: ago(2 * DAY), dayCount: 5 });
+  await assertSucceeds(sendSignal("alice", "bob", {}, { flip: true }));
+  // Counts can't be faked: skipping numbers or resetting a running window is refused.
+  await setLimits("alice", { signalAt: ago(5000), hourStart: ago(60_000), hourCount: 9, dayStart: ago(60_000), dayCount: 9 });
+  const fake = { signalAt: serverTimestamp(), hourStart: ago(60_000), hourCount: 2, dayStart: ago(60_000), dayCount: 10 };
+  await assertFails(sendSignal("alice", "bob", {}, { limits: fake }));
+  await assertFails(sendSignal("alice", "bob", {}, { limits: nextLimits(null) }));
+});
+
+test("signal limits come from config/limits, which the app can read but never write", async () => {
+  await pairAB();
+  const ago = (ms) => Timestamp.fromMillis(Date.now() - ms);
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), "config", "limits"), { signalsPerHour: 3, signalsPerDay: 5, minGapSeconds: 2 });
+  });
+  await setLimits("alice", { signalAt: ago(5000), hourStart: ago(60_000), hourCount: 3, dayStart: ago(60_000), dayCount: 3 });
+  await assertFails(sendSignal("alice", "bob"));                       // 3 per hour from config
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), "config", "limits"), { signalsPerHour: 100, signalsPerDay: 500 });
+  });
+  await assertSucceeds(sendSignal("alice", "bob"));                    // raised in the console
+  await assertSucceeds(getDoc(doc(db("bob"), "config", "limits")));
+  await assertFails(setDoc(doc(db("bob"), "config", "limits"), { signalsPerHour: 9999 }));
+  await assertFails(getDocs(collection(db("bob"), "config")));
 });
 
 test("questions: only my own answer, locked once both answered", async () => {

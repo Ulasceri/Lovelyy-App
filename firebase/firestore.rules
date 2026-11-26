@@ -10,7 +10,7 @@ rules_version = '2';
 //                          members read it, and each collection has its own write rule below
 //                          (exact fields, size limits, author = signed-in user). A new shared
 //                          collection needs a new match block, or the app's writes are denied.
-//   couples/{id}/limits/{uid}  rate limit stamp: signalAt = server time of my last signal
+//   couples/{id}/limits/{uid}  signal rate limit: last signal + hourly/daily windows, server time
 //
 // Pairing (see android/.../data/PairingRepository.kt):
 //   A creates pairCodes/CODE. B, in ONE transaction, creates couples/CODE,
@@ -84,6 +84,32 @@ service cloud.firestore {
         && optStr(d.get('text', null), 120)
         && d.at is int
         && d.createdAt == request.time;
+    }
+    // A fixed rate-limit window: either a new window starting now (only once the old one is over)
+    // or one more in the current window, never above max. Counting up in an expired window is
+    // allowed too (only stricter), so a phone with a wrong clock can always fall back to it.
+    function windowOk(d, old, startKey, countKey, length, max) {
+      return d[countKey] is int && d[countKey] <= max && (
+        (d[startKey] == request.time && d[countKey] == 1
+          && (old == null || !(startKey in old) || request.time >= old[startKey] + length))
+        || (old != null && startKey in old && countKey in old
+          && d[startKey] == old[startKey] && d[countKey] == old[countKey] + 1)
+      );
+    }
+    // Limits come from config/limits (editable in the Firebase console, no app update needed):
+    // signalsPerHour, signalsPerDay, minGapSeconds. Missing doc or field = the defaults below.
+    function signalConfig() {
+      let p = /databases/$(database)/documents/config/limits;
+      return exists(p) ? get(p).data : {};
+    }
+    function validLimits(d, old) {
+      let cfg = signalConfig();
+      return d.keys().hasOnly(['signalAt', 'hourStart', 'hourCount', 'dayStart', 'dayCount'])
+        && d.signalAt == request.time
+        && (old == null || !('signalAt' in old)
+            || request.time > old.signalAt + duration.value(cfg.get('minGapSeconds', 2), 's'))
+        && windowOk(d, old, 'hourStart', 'hourCount', duration.value(1, 'h'), cfg.get('signalsPerHour', 15))
+        && windowOk(d, old, 'dayStart', 'dayCount', duration.value(24, 'h'), cfg.get('signalsPerDay', 60));
     }
     function validMood(d) {
       return d.keys().hasOnly(['kind', 'note', 'at']) && str(d.kind, 20) && str(d.note, 140) && d.at is int;
@@ -211,6 +237,14 @@ service cloud.firestore {
       allow delete: if signedIn() && me() == userId && resource.data.get('coupleId', null) == null;
     }
 
+    // ---------- config ----------
+    // App-wide settings edited only in the Firebase console (e.g. config/limits). Readable by any
+    // signed-in user so the app can show the same limits; never writable from the app.
+    match /config/{docId} {
+      allow get: if signedIn();
+      allow list, write: if false;
+    }
+
     // ---------- pairCodes ----------
     match /pairCodes/{code} {
       // Knowing the code is the secret. Single reads only, never listing.
@@ -304,12 +338,11 @@ service cloud.firestore {
           && getAfter(limitPath()).data.get('signalAt', null) == request.time;
       }
 
-      // limits/{uid}: my last signal's server time. At most one signal every 2 seconds per person.
+      // limits/{uid}: my signal rate limit, all in server time. Defaults: one signal every 2 seconds,
+      // 15 per hour, 60 per day per person; overridden by config/limits (see signalConfig).
       match /limits/{uid} {
         allow create, update: if openCouple() && uid == me()
-          && request.resource.data.keys().hasOnly(['signalAt'])
-          && request.resource.data.signalAt == request.time
-          && (resource == null || request.time > resource.data.signalAt + duration.value(2, 's'));
+          && validLimits(request.resource.data, resource == null ? null : resource.data);
       }
 
       // moods/{uid}: my current mood. moodLog/{uid}_{day}: my last mood of that day.

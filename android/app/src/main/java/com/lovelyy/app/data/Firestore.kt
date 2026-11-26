@@ -31,8 +31,12 @@ object Paths {
     const val DRAWINGS = "drawings"
     const val SETTINGS = "settings"
     const val SETTINGS_DOC = "main"
-    /** couples/{id}/limits/{uid}: server time of my last signal (rate limit, see firestore.rules). */
+    /** couples/{id}/limits/{uid}: my signal rate limit windows (see SignalLimits and firestore.rules). */
     const val LIMITS = "limits"
+    /** config/{doc}: app-wide settings edited in the Firebase console (read-only for the app). */
+    const val CONFIG = "config"
+    /** config/limits: signalsPerHour, signalsPerDay, minGapSeconds (see SignalLimits). */
+    const val LIMITS_CONFIG_DOC = "limits"
 }
 
 internal fun DocumentSnapshot.toUserProfile(): UserProfile? =

@@ -141,13 +141,19 @@ class HeartReceiver : BroadcastReceiver() {
         }
         val pending = goAsync()
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
-            val ok = runCatching {
+            val result = runCatching {
                 val me = UserProfile(uid = c.myUid, displayName = c.myName, coupleId = c.coupleId)
                 app.signalRepository.send(c.coupleId, me, c.partnerUid, SignalKind.Heartbeat, Emotion.Sevgi)
-            }.onFailure { Timber.w(it, "Widget heartbeat failed") }.isSuccess
+            }.onFailure { Timber.w(it, "Widget heartbeat failed") }
+            val ok = result.isSuccess
             if (ok) Telemetry.track(AnalyticsEvent.HeartbeatSent(Emotion.Sevgi.key))
+            val message = when {
+                ok -> R.string.widget_heart_sent
+                result.exceptionOrNull() is com.lovelyy.app.data.SignalLimitException -> R.string.signal_limit
+                else -> R.string.widget_heart_failed
+            }
             withContext(Dispatchers.Main) {
-                Toast.makeText(app, if (ok) R.string.widget_heart_sent else R.string.widget_heart_failed, Toast.LENGTH_SHORT).show()
+                Toast.makeText(app, message, Toast.LENGTH_SHORT).show()
             }
             pending.finish()
         }

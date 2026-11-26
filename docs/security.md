@@ -63,20 +63,33 @@ Console steps (in this order; **do not enforce before step 5**, or the app stops
 ## 3. Rate limiting
 
 - **Server (rules)**: every signal (heartbeat, nudge, mood/note/plan/question/wheel notice) is written in a
-  batch together with `couples/{id}/limits/{me}` = `{signalAt: serverTimestamp()}`. The rules accept the
-  signal only if that stamp is in the same write, and accept the stamp only if the previous one is more
-  than 2 seconds old. Server time, so the phone's clock doesn't matter. A queued offline signal that syncs
-  within 2 s of another is refused (rare; the sender sees "couldn't send").
-- **Phone**: `SignalRepository` refuses a second send within 2.1 s from any screen or the widget
-  (`SignalThrottledException`), on top of the screens' own cooldowns (heartbeat 3 s, nudge 8 s).
+  batch together with `couples/{id}/limits/{me}` = `{signalAt, hourStart, hourCount, dayStart, dayCount}`.
+  The rules accept the signal only if that doc is updated in the same write, and accept the doc only if
+  - the previous signal is more than `minGapSeconds` old (default 2),
+  - the hourly window has at most `signalsPerHour` signals (default **15**) and the daily one at most
+    `signalsPerDay` (default **60**; Ulaş, 2026-11-26),
+  - a window only restarts (`start = request.time`, count 1) once it is over; otherwise the count goes up by one.
+  All in server time, so changing the phone's clock doesn't help.
+- **The numbers are config, not code**: Firestore doc `config/limits` with `signalsPerHour`, `signalsPerDay`,
+  `minGapSeconds` (numbers). Edit it in Firebase Console → Firestore → `config` → `limits`; the rules use it
+  immediately and phones pick it up within 10 minutes. Missing doc or field = the defaults above. The app can
+  read `config/*` but never write it.
+- **Phone**: `SignalRepository` checks the same limits before writing (`SignalLimits`, unit-tested), refuses a
+  second send within the gap (`SignalThrottledException`) and shows "Şimdilik yeterince sinyal gönderdin, biraz
+  sonra tekrar dene 🙂" on the heartbeat screen, the home nudge and the widget (`SignalLimitException`).
+  If the phone's clock disagrees with the server about a window being over, it retries once the other way.
+- A queued offline signal that syncs within the gap of another is refused (rare; the sender sees "couldn't send").
 - Other writes are naturally bounded (one doc per person, per day or per action) and protected by
   App Check. A per-hour or per-day quota for every write needs a server (see below).
+- Later (needs a design first): a "sessize al / rahatsız etme" switch for the receiver.
 
 ## 4. Console checklist (Spark, no cost)
 
 - [ ] Publish the latest `firebase/firestore.rules` (Firestore → Rules → paste → Publish), then run the app
       through every screen once on the emulator to see nothing is denied.
 - [ ] App Check as in section 2.
+- [ ] Optional: create `config/limits` (`signalsPerHour: 15`, `signalsPerDay: 60`, `minGapSeconds: 2`) so the
+      limits are visible and editable in the console (without it the same defaults apply).
 - [ ] Google Cloud Console → APIs & Services → Credentials → the Android API key: **Application restriction:
       Android apps** (`com.lovelyy.app` + debug SHA-1 + release / Play signing SHA-1) and **API restrictions**
       to the Firebase APIs the app uses (Identity Toolkit, Token Service, Cloud Firestore, Firebase Installations,
