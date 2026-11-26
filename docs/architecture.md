@@ -115,9 +115,11 @@ treats them as valid for 30 minutes (the rules still allow up to 24h).
 | Path | Fields | Notes |
 |---|---|---|
 | `couples/{id}.startDate` | timestamp | day counter; start of the chosen day in the couple's time zone |
+| `couples/{id}.endedAt / endedBy / endedByName` | server time, uid, name | set once when a partner unpairs; the other phone then leaves and deletes the couple doc |
 | `couples/{id}/settings/main` | zone (IANA id), setBy, at | the couple's shared time zone: written once (transaction) with the first phone's zone; every shared "today" (care streak, daily question, capsule open day, calendar, start date) is computed in it via `CoupleClock`/`CoupleDay`, falling back to the phone's zone until loaded. No UI to change it |
 | `couples/{id}/signals/{auto}` | kind (heartbeat/nudge/mood/question/note/event), emotion, mood, text, from, fromName, to, at, createdAt | heartbeats, nudges and notices for the partner |
 | `couples/{id}/moods/{uid}` | kind, note, at | each partner's current mood |
+| `couples/{id}/moodLog/{uid}_{yyyy-MM-dd}` | kind, note, at, uid, day | one entry per person per day (the last mood that day), written next to `moods/{uid}`; read by Ruh hali geçmişi (last 31 days). Started 2026-11-26, older moods were not logged |
 | `couples/{id}/questions/{yyyy-MM-dd}` | day, question, answers.{uid} = {name, text, at} | günün sorusu; question text comes from `QuestionBank.forDay` so both phones agree without a server |
 | `couples/{id}/notes/{auto}` | text, color (0-4), pinned, by, byName, at, updatedAt, updatedBy (last text/color edit; missing on old notes) | shared sticky notes; an edit is saved in a transaction and asks before overwriting a partner's newer change |
 | `couples/{id}/events/{auto}` | title, date (yyyy-MM-dd), emoji, yearly, by, byName, at | plans and special days; the anniversary is built in from `startDate`, not stored |
@@ -125,16 +127,37 @@ treats them as valid for 30 minutes (the rules still allow up to 24h).
 | `couples/{id}/dreams/{auto}` | title, category (seyahat/deneyim/hayat/diger), goal, by, byName, at, doneAt | shared bucket list (Hayaller) |
 | `couples/{id}/wheels/{id}` | label, items[], at | decision wheels; ids `yemek`, `gezi`, `izle` override the built-in wheels, other ids are custom wheels. Spins are not stored |
 | `couples/{id}/wheelSpins/{wheelId}` | label, result, by, byName, at | the last result of each wheel, shared: the spinner saves it before the wheel stops, the partner's wheel rests on the same result and gets a "wheel" signal |
+| `couples/{id}/wheelLog/{auto}` | wheelId, label, result, by, byName, at | every spin that counted (written in the same transaction as `wheelSpins`, or by the offline fallback); read by Çark geçmişi |
 | `couples/{id}/capsules/{auto}` | title, text, openOn (yyyy-MM-dd), by, byName, at | time-capsule letters; the app hides the text until `openOn` (rules can't hide a field, so this is not a hard lock) |
 | `couples/{id}/strokes/{auto}` | by, color, width, points[] (normalized 0..1, max 400 points), at | the current shared canvas (Canlı çizim), max 600 strokes |
 | `couples/{id}/drawing/presence` | {uid: millis} | last time each partner drew; "drawing now" = within 45 s |
-| `couples/{id}/drawings/{auto}` | strokes[], by, byName, at | drawings saved to Anılar; saving clears the canvas |
+| `couples/{id}/drawings/{auto}` | strokes[], by, byName, at | drawings saved to Anılar; saving clears the canvas. Çizimlerimiz lists the newest 60 and can delete one (for both partners) |
 
 Günün sorusu hides the partner's answer until you answer, but only in the app: Firestore rules
 can't hide one field of a document from a member, and both partners are members. That's fine for
 a couple's own data. You may change your answer only until the partner has answered too; after that
 both answers are locked (checked in a transaction in `QuestionRepository.answer`, `QuestionMath.isLocked`). Calendar date math (yearly repeats, 29 Feb, countdowns) is in
 `CalendarMath` and covered by `CalendarMathTest`.
+
+History, search and inbox screens read what is already there: Kalp atışı geçmişi and Bildirimler use the last
+`signals` (150 / 100), Önceki sorular uses `questions`, and Arama searches notes, dreams and opened letters on the
+phone (sealed letters never match). The inbox's read state is per phone (`InboxSeen`, SharedPreferences), not shared.
+
+## Unpairing and deleting the account (Spark, no server code)
+
+Decision (Ulaş, 2026-11-26): unpairing deletes the shared data **for both** partners. `data/LeaveRepository.kt`:
+1. The leaving partner deletes every doc of every shared collection (`LeaveRules.SHARED`; a unit test checks it
+   lists every collection in `Paths`), then in one batch sets `endedAt/endedBy/endedByName` on the couple and
+   clears their own `coupleId`.
+2. The other phone (`AppViewModel`) sees the ended couple, deletes anything written meanwhile, clears its own
+   `coupleId` and deletes the couple doc in one batch, and shows "X eşleşmeyi kaldırdı".
+3. Deleting the account unpairs first, then deletes `users/{uid}` and the Firebase account. Firebase needs a
+   recent sign-in, so the app checks the sign-in is under 4 minutes old *before* deleting anything; otherwise it
+   signs out and asks to sign in again.
+
+The rules allow exactly this: ending once with the server time and your own uid, leaving only an ended (or
+missing) couple, deleting your user doc only when unpaired, and no new shared writes after the couple ended
+(deletes still work). Covered by three tests in `firebase/tests`.
 
 All of these are covered by the existing "members only" rule for `couples/{id}/**`; no rules
 deploy was needed.

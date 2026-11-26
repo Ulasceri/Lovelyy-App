@@ -130,6 +130,37 @@ sealed interface AnalyticsEvent {
         override val params: Map<String, Any> get() = mapOf("strokes" to strokes)
     }
 
+    /** A saved drawing was deleted from Çizimlerimiz (for both partners). */
+    data object DrawingDeleted : AnalyticsEvent {
+        override val name = "drawing_deleted"
+    }
+
+    /** An accessory was put on the cat ([accessory] is the fixed accessory id, e.g. "Papyon") or taken off (null). */
+    data class AccessoryWorn(val accessory: String?) : AnalyticsEvent {
+        override val name = "accessory_worn"
+        override val params: Map<String, Any> get() = mapOf("accessory" to (accessory ?: "none"))
+    }
+
+    /** Bildirimler: "mark all read" was tapped. */
+    data object InboxReadAll : AnalyticsEvent {
+        override val name = "inbox_read_all"
+    }
+
+    /** This user removed the pairing; the shared data was deleted for both. */
+    data object CoupleUnpaired : AnalyticsEvent {
+        override val name = "couple_unpaired"
+    }
+
+    /** This user deleted their account. */
+    data object AccountDeleted : AnalyticsEvent {
+        override val name = "account_deleted"
+    }
+
+    /** A password reset mail was sent from Hesap. */
+    data object PasswordResetSent : AnalyticsEvent {
+        override val name = "password_reset_sent"
+    }
+
     /** The try-it intro after Karşılama ended. [skipped] = left through "Atla"; [demosTried] = 0..3 demos tapped. */
     data class IntroFinished(val skipped: Boolean, val demosTried: Int) : AnalyticsEvent {
         override val name = "intro_finished"

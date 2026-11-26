@@ -12,6 +12,12 @@ rules_version = '2';
 //   A creates pairCodes/CODE. B, in ONE transaction, creates couples/CODE,
 //   sets coupleId on both user docs and deletes pairCodes/CODE.
 //   These rules accept only that exact shape.
+//
+// Unpairing (see android/.../data/LeaveRepository.kt), Spark plan so no server code:
+//   A deletes every shared doc under couples/{id}/**, then in ONE batch marks the couple
+//   ended (endedAt, endedBy, endedByName) and clears users/A.coupleId. B's app sees the
+//   ended couple, clears users/B.coupleId and deletes the couple doc in one batch.
+//   An ended couple accepts no new shared writes, only deletes.
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -47,6 +53,13 @@ service cloud.firestore {
           || code == resource.data.get('pairCode', null)
           || (existsAfter(codePath(code)) && getAfter(codePath(code)).data.ownerUid == userId);
       }
+      // Leaving: my couple is gone or marked ended (in the same write).
+      function leavingCouple() {
+        let cid = resource.data.get('coupleId', null);
+        return cid != null
+          && request.resource.data.get('coupleId', null) == null
+          && (!existsAfter(couplePath(cid)) || getAfter(couplePath(cid)).data.get('endedAt', null) != null);
+      }
       function isPartner() {
         let cid = resource.data.get('coupleId', null);
         return cid != null && me() in get(couplePath(cid)).data.members;
@@ -68,7 +81,7 @@ service cloud.firestore {
         && request.resource.data.createdAt == resource.data.createdAt
         && validName(request.resource.data.displayName)
         && validPairCode()
-        && (coupleUnchanged() || joiningCouple());
+        && (coupleUnchanged() || joiningCouple() || leavingCouple());
 
       // My partner-to-be: only links me to our new couple and clears my code.
       allow update: if signedIn() && me() != userId
@@ -76,7 +89,8 @@ service cloud.firestore {
         && request.resource.data.get('pairCode', null) == null
         && joiningCouple();
 
-      allow delete: if false;
+      // Deleting my account: only once I'm no longer in a couple.
+      allow delete: if signedIn() && me() == userId && resource.data.get('coupleId', null) == null;
     }
 
     // ---------- pairCodes ----------
@@ -125,18 +139,32 @@ service cloud.firestore {
           && getAfter(userPath(me())).data.coupleId == coupleId;
       }
 
+      function isEnded() { return resource.data.get('endedAt', null) != null; }
+
       allow get, list: if isMember();
       allow create: if signedIn() && validNewCouple();
+      // Day counter start date (an ended couple has endedAt, so it never passes hasOnly).
       allow update: if isMember()
         && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['members', 'createdAt'])
         && request.resource.data.keys().hasOnly(['members', 'createdAt', 'startDate'])
         && (request.resource.data.get('startDate', null) == null || request.resource.data.startDate is timestamp);
-      allow delete: if false;
+      // Ending the couple: once, by a member, stamped with the server time and their own uid.
+      allow update: if isMember() && !isEnded()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['endedAt', 'endedBy', 'endedByName'])
+        && request.resource.data.endedAt == request.time
+        && request.resource.data.endedBy == me()
+        && validName(request.resource.data.endedByName);
+      // The partner who stayed removes the ended couple when leaving it.
+      allow delete: if isMember() && isEnded();
 
       // Everything the couple shares (cat, notes, moods...): only the two of them.
       // ({sub}/ is required: a bare {document=**} would also match the couple doc itself.)
+      // After the couple ended nothing new is written, it can only be deleted.
       match /{sub}/{document=**} {
-        allow read, write: if signedIn() && me() in get(couplePath(coupleId)).data.members;
+        function couple() { return get(couplePath(coupleId)).data; }
+        function member() { return signedIn() && me() in couple().members; }
+        allow read, delete: if member();
+        allow create, update: if member() && couple().get('endedAt', null) == null;
       }
     }
   }

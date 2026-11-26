@@ -21,6 +21,9 @@ Android uygulaması Kotlin + Jetpack Compose + Material 3 ile yazılır, arka u�
 | Biz: profil, ayarlar, mesafe (şehir düzeyinde konum paylaşımı) | Hazır |
 | 4 ana ekran widget'ı (küçük kedi, geniş kedi, gün sayacı + kalp, canlı çizim) | Hazır |
 | Analytics, Crashlytics, Performance, Timber katmanı | Hazır, bkz. [docs/analytics.md](docs/analytics.md) |
+| Geçmiş ekranları (ruh hali, önceki sorular, kalp atışı, çark), arama | Hazır |
+| Çizimlerimiz (kayıtlı çizimler, silme), açılmış mektuplar, aksesuarlar, bildirimler | Hazır |
+| Hesap (giriş yöntemi, şifre sıfırlama, çıkış, hesap silme) ve eşleşmeyi kaldırma | Hazır; eşleşme kaldırılınca ortak veriler iki taraftan da kalıcı silinir (yeni Firestore kuralları yayınlanmalı) |
 | Henüz tasarlanıp kodlanmamış ekranlar | Arayüzde **"Yakında"** olarak görünür |
 
 ## Teknoloji

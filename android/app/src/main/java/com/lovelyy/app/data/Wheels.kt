@@ -85,6 +85,7 @@ class WheelRepository(private val db: FirebaseFirestore) {
             } else {
                 val spin = WheelSpin(wheelId, label.take(MAX_LABEL), result.take(MAX_ITEM), me.uid, me.displayName, now)
                 tx.set(ref, spin.toMap())
+                tx.set(log(coupleId).document(), spin.toMap() + ("wheelId" to wheelId)) // Çark geçmişi
                 SpinClaim(spin, won = true)
             }
         }.await()
@@ -94,6 +95,23 @@ class WheelRepository(private val db: FirebaseFirestore) {
     suspend fun saveSpin(coupleId: String, me: UserProfile, wheelId: String, label: String, result: String) {
         val spin = WheelSpin(wheelId, label.take(MAX_LABEL), result.take(MAX_ITEM), me.uid, me.displayName, System.currentTimeMillis())
         spins(coupleId).document(wheelId).set(spin.toMap()).await()
+        // History (Çark geçmişi).
+        log(coupleId).add(spin.toMap() + ("wheelId" to wheelId))
+    }
+
+    private fun log(coupleId: String) =
+        db.collection(Paths.COUPLES).document(coupleId).collection(Paths.WHEEL_LOG)
+
+    /** Past results of every wheel, newest first. */
+    fun observeLog(coupleId: String, limit: Long = 60): Flow<List<WheelSpin>> = callbackFlow {
+        val reg = log(coupleId).orderBy("at", Query.Direction.DESCENDING).limit(limit).addSnapshotListener { snap, err ->
+            if (err != null) {
+                close(err)
+            } else if (snap != null) {
+                trySend(snap.documents.map { d -> d.toSpin().copy(wheelId = d.getString("wheelId").orEmpty()) })
+            }
+        }
+        awaitClose { reg.remove() }
     }
 
     private fun WheelSpin.toMap() = mapOf("label" to label, "result" to result, "by" to by, "byName" to byName, "at" to at)

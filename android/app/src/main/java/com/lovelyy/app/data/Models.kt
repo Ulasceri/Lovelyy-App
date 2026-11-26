@@ -20,6 +20,10 @@ data class Couple(
     val createdAt: Timestamp? = null,
     /** The day the relationship started (set later by the couple, used by the day counter). */
     val startDate: Timestamp? = null,
+    /** Set when one partner removed the pairing (LeaveRepository); the other phone then leaves too. */
+    val endedAt: Timestamp? = null,
+    val endedBy: String? = null,
+    val endedByName: String? = null,
 ) {
     fun partnerOf(uid: String): String? = members.firstOrNull { it != uid }
 }

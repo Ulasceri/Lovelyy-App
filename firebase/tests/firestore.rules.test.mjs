@@ -164,3 +164,63 @@ test("joiner who was also sharing a code can still pair", async () => {
     tx.delete(doc(d, "pairCodes", "BBB234"));
   }));
 });
+
+// ---------- unpairing (LeaveRepository) ----------
+
+// What the leaving partner's app does: delete shared docs, then end the couple and leave it in one batch.
+async function endAsAlice() {
+  const d = db("alice");
+  const b = writeBatch(d);
+  b.update(doc(d, "couples", CODE), { endedAt: serverTimestamp(), endedBy: "alice", endedByName: "Alice" });
+  b.update(doc(d, "users", "alice"), { coupleId: null });
+  return b.commit();
+}
+
+// What the partner who stayed does when they see the ended couple.
+function leaveAsBob() {
+  const d = db("bob");
+  const b = writeBatch(d);
+  b.update(doc(d, "users", "bob"), { coupleId: null });
+  b.delete(doc(d, "couples", CODE));
+  return b.commit();
+}
+
+test("unpair: delete shared data, end, partner leaves, both can pair again", async () => {
+  await pairAB();
+  await assertSucceeds(setDoc(doc(db("alice"), "couples", CODE, "notes", "n1"), { text: "hi" }));
+  await assertSucceeds(deleteDoc(doc(db("alice"), "couples", CODE, "notes", "n1")));
+  await assertSucceeds(endAsAlice());
+  // Ended: nothing new can be written, deletes still work, reads still work for members.
+  await assertFails(setDoc(doc(db("bob"), "couples", CODE, "notes", "n2"), { text: "late" }));
+  await assertSucceeds(getDoc(doc(db("bob"), "couples", CODE)));
+  await assertSucceeds(leaveAsBob());
+  const a = await getDoc(doc(db("alice"), "users", "alice"));
+  const b = await getDoc(doc(db("bob"), "users", "bob"));
+  if (a.data().coupleId !== null || b.data().coupleId !== null) throw new Error("still paired");
+  await assertSucceeds(createCode("alice", "DEF345"));
+});
+
+test("unpair: cannot leave a couple that is not ended, or end it for someone else", async () => {
+  await pairAB();
+  await assertFails(updateDoc(doc(db("alice"), "users", "alice"), { coupleId: null }));
+  await assertFails(deleteDoc(doc(db("alice"), "couples", CODE)));
+  await assertFails(updateDoc(doc(db("alice"), "couples", CODE), { endedAt: serverTimestamp(), endedBy: "bob", endedByName: "Bob" }));
+  await assertFails(updateDoc(doc(db("alice"), "couples", CODE), { endedAt: Timestamp.fromMillis(1), endedBy: "alice", endedByName: "Alice" }));
+  await signUp("eve", "Eve");
+  await assertFails(updateDoc(doc(db("eve"), "couples", CODE), { endedAt: serverTimestamp(), endedBy: "eve", endedByName: "Eve" }));
+  await assertSucceeds(endAsAlice());
+  // Once ended it can't be ended again or have its start date changed.
+  await assertFails(updateDoc(doc(db("bob"), "couples", CODE), { endedAt: serverTimestamp(), endedBy: "bob", endedByName: "Bob" }));
+  await assertFails(updateDoc(doc(db("bob"), "couples", CODE), { startDate: Timestamp.now() }));
+  await assertFails(deleteDoc(doc(db("eve"), "couples", CODE)));
+});
+
+test("delete account: only my own doc, only when not paired", async () => {
+  await pairAB();
+  await assertFails(deleteDoc(doc(db("alice"), "users", "alice")));
+  await assertSucceeds(endAsAlice());
+  await assertFails(deleteDoc(doc(db("alice"), "users", "bob")));
+  await assertSucceeds(deleteDoc(doc(db("alice"), "users", "alice")));
+  // The partner who stayed can still leave after the other account is gone.
+  await assertSucceeds(leaveAsBob());
+});

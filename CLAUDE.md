@@ -39,8 +39,10 @@ iOS comes later (`ios/` is a stub). Product: [docs/product.md](docs/product.md).
 flow (Eşleştiniz + notification and location primers), Anasayfa with the bottom nav (Yuva, Anılar,
 Planlar, Biz), the cat and Kedi bakımı (streak, accessories), day counter, heartbeat, mood, daily question,
 notes, calendar, bucket list, decision wheel, live drawing, time capsule, distance, profile/settings,
-4 home-screen widgets, and telemetry.
-**Not designed yet = "Yakında" placeholder** (`home_soon` string), e.g. old drawings and heartbeat history.
+4 home-screen widgets, telemetry, and the second design round (mood/question/heartbeat/wheel history, search,
+saved drawings, opened letters, accessories, inbox, account, unpair screen).
+Unpairing deletes the shared data for both partners (Ulaş, 2026-11-26; `LeaveRepository`, see docs/architecture.md).
+**Not designed yet = "Yakında" placeholder** (`home_soon` string).
 
 ## Architecture and where things live
 
@@ -59,7 +61,7 @@ android/app/src/main/java/com/lovelyy/app/
   ui/LovelyyRoot       renders the screen for the current AppState
   ui/theme/            Color, Type (Quicksand), Shape, Theme
   ui/components/       Components.kt (buttons, text field, avatar), Design.kt (approved shared blocks)
-  ui/{auth,onboarding,profile,pairing,home,cat,heartbeat,setup}/
+  ui/{auth,onboarding,profile,pairing,home,cat,heartbeat,setup,history,search,inbox,...}/
 android/app/src/debug/   debug-only telemetry receiver
 android/app/src/main/assets/cat/   14 mp4 clips (played by CatAnimator, ExoPlayer)
 firebase/                firestore.rules, database.rules.json (deny all), functions/ (TS), tests/

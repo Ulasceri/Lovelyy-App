@@ -12,6 +12,7 @@ import com.lovelyy.app.data.DreamRepository
 import com.lovelyy.app.data.WheelRepository
 import com.lovelyy.app.data.CapsuleRepository
 import com.lovelyy.app.data.DrawingRepository
+import com.lovelyy.app.data.LeaveRepository
 import com.lovelyy.app.data.MoodRepository
 import com.lovelyy.app.data.NoteRepository
 import com.lovelyy.app.data.QuestionRepository
@@ -52,6 +53,7 @@ class LovelyyApplication : Application() {
     val capsuleRepository by lazy { CapsuleRepository(FirebaseFirestore.getInstance()) }
     val coupleSettingsRepository by lazy { com.lovelyy.app.data.CoupleSettingsRepository(FirebaseFirestore.getInstance()) }
     val drawingRepository by lazy { DrawingRepository(FirebaseFirestore.getInstance()) }
+    val leaveRepository by lazy { LeaveRepository(FirebaseFirestore.getInstance(), FirebaseAuth.getInstance()) }
     val signalCenter by lazy { SignalCenter(this) }
 
     /** A screen asked for by a widget or notification tap; Home opens it and clears it. */

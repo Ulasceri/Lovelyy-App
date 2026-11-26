@@ -132,8 +132,13 @@ class DrawingRepository(private val db: FirebaseFirestore) {
         awaitClose { reg.remove() }
     }
 
-    fun observeSaved(coupleId: String): Flow<List<SavedDrawing>> = callbackFlow {
-        val reg = saved(coupleId).orderBy("at", Query.Direction.DESCENDING).limit(20).addSnapshotListener { snap, err ->
+    /** Removes a drawing from Anılar (both partners). */
+    suspend fun deleteSaved(coupleId: String, id: String) {
+        saved(coupleId).document(id).delete().await()
+    }
+
+    fun observeSaved(coupleId: String, limit: Long = 60): Flow<List<SavedDrawing>> = callbackFlow {
+        val reg = saved(coupleId).orderBy("at", Query.Direction.DESCENDING).limit(limit).addSnapshotListener { snap, err ->
             if (err != null) {
                 close(err)
             } else if (snap != null) {

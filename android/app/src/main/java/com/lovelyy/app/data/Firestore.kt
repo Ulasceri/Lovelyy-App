@@ -23,6 +23,8 @@ object Paths {
     const val DREAMS = "dreams"
     const val WHEELS = "wheels"
     const val WHEEL_SPINS = "wheelSpins"
+    const val WHEEL_LOG = "wheelLog"
+    const val MOOD_LOG = "moodLog"
     const val CAPSULES = "capsules"
     const val STROKES = "strokes"
     const val DRAWING = "drawing"
@@ -47,6 +49,9 @@ internal fun DocumentSnapshot.toCouple(): Couple? =
         members = (get("members") as? List<String>).orEmpty(),
         createdAt = getTimestamp("createdAt"),
         startDate = getTimestamp("startDate"),
+        endedAt = getTimestamp("endedAt"),
+        endedBy = getString("endedBy"),
+        endedByName = getString("endedByName"),
     )
 
 /** The shared item being edited was deleted (usually by the partner) before the edit reached the server. */
