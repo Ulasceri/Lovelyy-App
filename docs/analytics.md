@@ -59,7 +59,7 @@ Timber.e(e, "Cat action failed")         // + breadcrumb + non-fatal report
 `BuildConfig.TELEMETRY_DEFAULT_ENABLED`: **on in release, off in debug**. Changing it
 (`Telemetry.consent.setEnabled(false)`) immediately calls `setAnalyticsCollectionEnabled`,
 `setCrashlyticsCollectionEnabled` (and deletes unsent crash reports when turning off) and
-`FirebasePerformance.isPerformanceCollectionEnabled`. A future privacy setting only needs that call.
+`FirebasePerformance.isPerformanceCollectionEnabled`. The "Kullanım verisi" switch in the Biz tab calls it. Opting out also resets the analytics app-instance id.
 
 The manifest disables all three by default so nothing is collected before the app has read the choice;
 Firebase remembers the value the app sets, so from the second launch on, early events (app start trace,

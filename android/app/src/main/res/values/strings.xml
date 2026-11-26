@@ -605,6 +605,8 @@
     <string name="pf_account">Hesap</string>
     <string name="pf_account_google">Google ile bağlı</string>
     <string name="pf_account_email">E-posta ile bağlı</string>
+    <string name="pf_telemetry">Kullanım verisi</string>
+    <string name="pf_telemetry_hint">Anonim kullanım ve hata raporları gönder</string>
     <string name="pf_unpair">Eşleşmeyi kaldır</string>
 
     <!-- Mesafe (approved design 9) -->

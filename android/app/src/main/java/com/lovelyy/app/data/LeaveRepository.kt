@@ -20,6 +20,18 @@ object LeaveRules {
     )
 
     /**
+     * Every local SharedPreferences file that holds couple or account data. Deleting the account clears all of
+     * them (the "telemetry" file, the user's analytics choice, is kept on purpose). A new prefs file that holds
+     * personal data must be added here.
+     */
+    val LOCAL_PREFS = listOf(
+        "inbox", "signals", "lovelyy_onboarding", "capsule_draft", "couple_clock", "cat_widget", "widget_couple", "drawing_widget",
+    )
+
+    /** Paths that are not shared couple data. Everything else in [Paths] must be in [SHARED]. */
+    val NOT_SHARED = setOf(Paths.USERS, Paths.COUPLES, Paths.PAIR_CODES, Paths.CONFIG)
+
+    /**
      * Firebase only deletes an account signed in "recently" (about 5 minutes). Checking first, with a margin,
      * means we never delete the data and then fail on the account itself. The check uses server time only:
      * [authTimeSec] (when the user signed in) and [issuedAtSec] (when a just refreshed ID token was issued)
@@ -43,7 +55,9 @@ object LeaveRules {
 /**
  * Unpairing and account deletion on the free Spark plan (no server code). The rules
  * (firebase/firestore.rules, "Unpairing") accept exactly these steps:
- * 1. [unpair]: delete every shared doc, then end the couple and clear my coupleId in one batch.
+ * 1. [unpair]: end the couple and clear my coupleId in one batch, then delete every shared doc. Ending first means
+ *    nothing is deleted when that batch is refused, and the rules block new shared writes (e.g. the cat doc an open
+ *    screen recreates) while the purge runs.
  * 2. The partner's app sees the ended couple and calls [leaveEnded]: clear their coupleId and delete the couple.
  * Shared data is gone for both (Ulaş's decision, 2026-11-26).
  */
@@ -52,11 +66,11 @@ class LeaveRepository(private val db: FirebaseFirestore, private val auth: Fireb
     private fun userRef(uid: String) = db.collection(Paths.USERS).document(uid)
     private fun coupleRef(id: String) = db.collection(Paths.COUPLES).document(id)
 
-    /** Deletes all shared data of the couple (both partners lose it), then ends the couple and leaves it. */
+    /** Ends the couple and leaves it, then deletes all shared data of the couple (both partners lose it). */
     suspend fun unpair(context: Context, me: UserProfile) {
         val coupleId = me.coupleId ?: return
+        // End the couple first: if the rules refuse, nothing has been deleted yet.
         try {
-            purge(coupleId)
             db.batch()
                 .update(coupleRef(coupleId), mapOf("endedAt" to FieldValue.serverTimestamp(), "endedBy" to me.uid, "endedByName" to me.displayName.take(40)))
                 .update(userRef(me.uid), "coupleId", null)
@@ -70,6 +84,8 @@ class LeaveRepository(private val db: FirebaseFirestore, private val auth: Fireb
             Timber.i("Couple was already ended by the partner; leaving it")
             leaveEndedCouple(coupleId, me.uid)
         }
+        // Already left: a failed purge must not stop account deletion. The partner's leaveEnded purges again.
+        runCatching { purge(coupleId) }.onFailure { Timber.w(it, "Deleting the shared data after unpairing failed") }
         clearLocal(context)
     }
 
@@ -115,7 +131,7 @@ class LeaveRepository(private val db: FirebaseFirestore, private val auth: Fireb
         userRef(me.uid).delete().await()
         user.delete().await()
         clearLocal(context)
-        CapsuleDraft.clear(context)
+        wipeLocal(context)
         return DeleteResult.Deleted
     }
 
@@ -132,6 +148,18 @@ class LeaveRepository(private val db: FirebaseFirestore, private val auth: Fireb
                 if (docs.size < PAGE) break
             }
         }
+    }
+
+    /** Account deleted: nothing of ours may stay on the phone (preferences, widget picture, telemetry ids). */
+    private fun wipeLocal(context: Context) {
+        LeaveRules.LOCAL_PREFS.forEach { name ->
+            runCatching { context.getSharedPreferences(name, Context.MODE_PRIVATE).edit().clear().commit() }
+        }
+        runCatching { java.io.File(context.filesDir, com.lovelyy.app.widget.DrawingWidget.FILE).delete() }
+        com.lovelyy.app.widget.DrawingWidget.updateAll(context)
+        com.lovelyy.app.widget.DaysWidget.updateAll(context)
+        com.lovelyy.app.widget.CatWidget.updateAll(context)
+        com.lovelyy.app.telemetry.Telemetry.wipe(context)
     }
 
     /** The widgets and the cached home screen must not show the old couple. */
