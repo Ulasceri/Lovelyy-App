@@ -41,6 +41,7 @@ Android uygulaması Kotlin + Jetpack Compose + Material 3 ile yazılır, arka u�
 | `android/` | Android uygulaması (Gradle projesi, Android Studio'da bu klasörü aç) |
 | `firebase/` | Firestore / Realtime Database güvenlik kuralları, kural testleri (`tests/`), Cloud Functions iskeleti (`functions/`) |
 | `assets/` | Ortak dosyalar: Quicksand fontu, `animations/` ve `images/` (şimdilik boş, ileri için ayrıldı) |
+| `web/` | Play için herkese açık sayfalar (gizlilik, şartlar, hesap silme), Firebase Hosting; bkz. [web/README.md](web/README.md) |
 | `docs/` | Ürün özeti, tasarım prensipleri, mimari, analytics |
 | `tools/` | Yardımcı araçlar: `tools/cat-animation/` kedi kliplerini fal.ai ile üretir (bkz. [tools/README.md](tools/README.md)) |
 | `ios/` | İleride iOS uygulaması (şimdilik sadece not) |
