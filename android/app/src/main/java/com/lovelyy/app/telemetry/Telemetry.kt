@@ -57,13 +57,26 @@ object Telemetry {
 
     private fun applyCollection(app: Application, enabled: Boolean) {
         Timber.i("telemetry collection %s", if (enabled) "enabled" else "disabled")
-        FirebaseAnalytics.getInstance(app).setAnalyticsCollectionEnabled(enabled)
+        FirebaseAnalytics.getInstance(app).apply {
+            setAnalyticsCollectionEnabled(enabled)
+            // Opting out also forgets the app-instance id.
+            if (!enabled) resetAnalyticsData()
+        }
         FirebaseCrashlytics.getInstance().apply {
             setCrashlyticsCollectionEnabled(enabled)
             // Opting out also throws away crash reports still waiting to be sent.
             if (!enabled) deleteUnsentReports()
         }
         FirebasePerformance.getInstance().isPerformanceCollectionEnabled = enabled
+    }
+
+    /** Account deletion: forget the analytics app-instance id and drop crash reports still waiting to be sent. */
+    fun wipe(app: android.content.Context) {
+        if (!firebaseReady) return
+        runCatching {
+            FirebaseAnalytics.getInstance(app).resetAnalyticsData()
+            FirebaseCrashlytics.getInstance().deleteUnsentReports()
+        }.onFailure { Timber.w(it, "Wiping telemetry data failed") }
     }
 
     fun track(event: AnalyticsEvent) = analytics.track(event)

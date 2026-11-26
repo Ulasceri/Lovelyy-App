@@ -17,6 +17,18 @@ object LeaveRules {
     )
 
     /**
+     * Every local SharedPreferences file that holds couple or account data. Deleting the account clears all of
+     * them (the "telemetry" file, the user's analytics choice, is kept on purpose). A new prefs file that holds
+     * personal data must be added here.
+     */
+    val LOCAL_PREFS = listOf(
+        "inbox", "signals", "lovelyy_onboarding", "capsule_draft", "couple_clock", "cat_widget", "widget_couple", "drawing_widget",
+    )
+
+    /** Paths that are not shared couple data. Everything else in [Paths] must be in [SHARED]. */
+    val NOT_SHARED = setOf(Paths.USERS, Paths.COUPLES, Paths.PAIR_CODES)
+
+    /**
      * Firebase only deletes an account signed in "recently" (about 5 minutes). Checking first, with a margin,
      * means we never delete the data and then fail on the account itself.
      */
@@ -78,7 +90,7 @@ class LeaveRepository(private val db: FirebaseFirestore, private val auth: Fireb
         userRef(me.uid).delete().await()
         user.delete().await()
         clearLocal(context)
-        CapsuleDraft.clear(context)
+        wipeLocal(context)
         return DeleteResult.Deleted
     }
 
@@ -95,6 +107,18 @@ class LeaveRepository(private val db: FirebaseFirestore, private val auth: Fireb
                 if (docs.size < PAGE) break
             }
         }
+    }
+
+    /** Account deleted: nothing of ours may stay on the phone (preferences, widget picture, telemetry ids). */
+    private fun wipeLocal(context: Context) {
+        LeaveRules.LOCAL_PREFS.forEach { name ->
+            runCatching { context.getSharedPreferences(name, Context.MODE_PRIVATE).edit().clear().commit() }
+        }
+        runCatching { java.io.File(context.filesDir, com.lovelyy.app.widget.DrawingWidget.FILE).delete() }
+        com.lovelyy.app.widget.DrawingWidget.updateAll(context)
+        com.lovelyy.app.widget.DaysWidget.updateAll(context)
+        com.lovelyy.app.widget.CatWidget.updateAll(context)
+        com.lovelyy.app.telemetry.Telemetry.wipe(context)
     }
 
     /** The widgets and the cached home screen must not show the old couple. */

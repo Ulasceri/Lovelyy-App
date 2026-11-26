@@ -23,8 +23,10 @@ Android uygulaması Kotlin + Jetpack Compose + Material 3 ile yazılır, arka u�
 | Analytics, Crashlytics, Performance, Timber katmanı | Hazır, bkz. [docs/analytics.md](docs/analytics.md) |
 | Geçmiş ekranları (ruh hali, önceki sorular, kalp atışı, çark), arama | Hazır |
 | Çizimlerimiz (kayıtlı çizimler, silme), açılmış mektuplar, aksesuarlar, bildirimler | Hazır |
-| Hesap (giriş yöntemi, şifre sıfırlama, çıkış, hesap silme) ve eşleşmeyi kaldırma | Hazır; eşleşme kaldırılınca ortak veriler iki taraftan da kalıcı silinir (yeni Firestore kuralları yayınlanmalı) |
+| Hesap (giriş yöntemi, şifre sıfırlama, çıkış, hesap silme) ve eşleşmeyi kaldırma; Biz sekmesinde "Kullanım verisi" anahtarı (analitik/hata/performans kapatılabilir) | Hazır; hesap silince profil, eşleşme kodu, ortak veriler ve telefondaki yerel veriler silinir; eşleşme kaldırılınca ortak veriler iki taraftan da kalıcı silinir (yeni Firestore kuralları yayınlanmalı) |
 | Henüz tasarlanıp kodlanmamış ekranlar | Arayüzde **"Yakında"** olarak görünür |
+
+Ertelenen işler: [todo.md](todo.md).
 
 ## Teknoloji
 

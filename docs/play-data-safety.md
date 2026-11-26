@@ -37,7 +37,7 @@ Hepsi: **Toplanır = Evet, Paylaşılır = Hayır**, işlenme "zorunlu değil" y
 - Play Aile Politikası: hedef kitle 13+ (çocuklara yönelik değil)
 
 ## Dikkat / açık noktalar (Ulas'a)
-1. **Telemetri varsayılan AÇIK** (release) ve uygulamada kapatma düğmesi yok (`TelemetryConsent` hazır, arayüzü yok). AB/KVKK açısından riskli olabilir; Biz → Ayarlar'a bir "Kullanım verisi" anahtarı eklemek iyi olur. Politika şu an bunu "meşru menfaat" olarak yazıyor.
+1. Telemetri release'te varsayılan açık; kullanıcı Biz → "Kullanım verisi" anahtarıyla kapatabilir (Analytics, Crashlytics ve Performance birlikte durur).
 2. Cloud Firestore kuralları henüz yayınlanmadıysa "yalnızca siz ve partner görür" ifadesi kurallar yayınlanana kadar doğru olmaz. Yayınlanmalı.
 3. Bildirimler şu an uygulama içi/yerel; FCM (sunucu push) eklenirse cihaz belirteci ("Cihaz kimliği") ve politika güncellenmeli.
 4. Politikadaki iletişim e-postası `web/CONTACT_EMAIL` ile belirlenir.

@@ -35,9 +35,26 @@ class LeaveRulesTest {
         // must be added to LeaveRules.SHARED, or unpairing would leave its data behind.
         val notShared = setOf(Paths.USERS, Paths.COUPLES, Paths.PAIR_CODES, Paths.CAT_DOC, Paths.SETTINGS_DOC)
         val all = Paths::class.java.declaredFields
-            .filter { java.lang.reflect.Modifier.isStatic(it.modifiers) && it.type == String::class.java }
+            .filter { java.lang.reflect.Modifier.isStatic(it.modifiers) && it.type == String::class.java && !it.name.endsWith("_DOC") }
             .map { it.isAccessible = true; it.get(null) as String }
             .toSet()
         assertEquals(all - notShared, LeaveRules.SHARED.toSet())
+    }
+
+    @Test
+    fun everySharedPathIsPurgedOnUnpair() {
+        // Account deletion relies on unpair's purge: a collection missing here would stay in Firestore.
+        val all = Paths::class.java.declaredFields
+            .filter { java.lang.reflect.Modifier.isStatic(it.modifiers) && it.type == String::class.java && !it.name.endsWith("_DOC") }
+            .map { it.get(null) as String }
+            .toSet() - LeaveRules.NOT_SHARED
+        assertEquals(all, LeaveRules.SHARED.toSet())
+        assertEquals(LeaveRules.SHARED.size, LeaveRules.SHARED.toSet().size)
+    }
+
+    @Test
+    fun accountDeletionClearsEveryLocalPrefsFileButTelemetryChoice() {
+        assertFalse("telemetry" in LeaveRules.LOCAL_PREFS)
+        assertTrue(LeaveRules.LOCAL_PREFS.containsAll(listOf("inbox", "signals", "capsule_draft", "drawing_widget", "widget_couple", "cat_widget")))
     }
 }

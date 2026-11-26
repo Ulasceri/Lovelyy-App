@@ -157,7 +157,7 @@ class HeartReceiver : BroadcastReceiver() {
 /** "Canlı çizim" widget: the shared canvas as a picture, and who is drawing right now. */
 object DrawingWidget {
     private const val PREFS = "drawing_widget"
-    private const val FILE = "drawing_widget.png"
+    const val FILE = "drawing_widget.png"
     private const val SIZE = 420
 
     fun isEnabled(context: Context) = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean("enabled", true)
