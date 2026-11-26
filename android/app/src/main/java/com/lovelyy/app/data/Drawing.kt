@@ -41,6 +41,12 @@ object DrawingMath {
         return out.chunked(2).filterIndexed { idx, _ -> idx % n == 0 }.flatten()
     }
 
+    /** Oldest first (ties by id) — the order strokes are painted in. */
+    fun inDrawingOrder(strokes: List<Stroke>): List<Stroke> = strokes.sortedWith(compareBy<Stroke> { it.at }.thenBy { it.id })
+
+    /** Id of the saved drawing for an ordered canvas: same canvas => same id, so a double save is a no-op. */
+    fun savedId(ordered: List<Stroke>): String = "d_" + ordered.first().id
+
     const val MAX_POINTS = 400
     /** How long after the last stroke someone still counts as "drawing now". */
     const val ACTIVE_MS = 45_000L
@@ -75,35 +81,47 @@ class DrawingRepository(private val db: FirebaseFirestore) {
         presence(coupleId).set(mapOf(uid to System.currentTimeMillis()), SetOptions.merge()).await()
     }
 
-    /** Copies the canvas to Anılar and clears it for a new drawing. */
-    suspend fun saveAndClear(coupleId: String, me: UserProfile, current: List<Stroke>) {
-        if (current.isEmpty()) return
-        saved(coupleId).add(
-            mapOf(
-                "strokes" to current.map { it.toMap() },
-                "by" to me.uid,
-                "byName" to me.displayName,
-                "at" to System.currentTimeMillis(),
-            ),
-        ).await()
-        current.chunked(400).forEach { part ->
-            val batch = db.batch()
-            part.forEach { batch.delete(strokes(coupleId).document(it.id)) }
-            batch.commit().await()
-        }
+    /**
+     * Copies [current] to Anılar and clears exactly those strokes, atomically. The saved doc id is derived from the
+     * oldest stroke, so two partners saving the same canvas can never create two drawings: the loser of the race
+     * finds the drawing already saved (or the strokes gone) and does nothing. Strokes added meanwhile are not in
+     * [current] and stay on the canvas. Returns false when it was already saved by someone else.
+     */
+    suspend fun saveAndClear(coupleId: String, me: UserProfile, current: List<Stroke>): Boolean {
+        if (current.isEmpty()) return false
+        val ordered = DrawingMath.inDrawingOrder(current)
+        val savedRef = saved(coupleId).document(DrawingMath.savedId(ordered))
+        val firstRef = strokes(coupleId).document(ordered.first().id)
+        return db.runTransaction { tx ->
+            if (tx.get(savedRef).exists() || !tx.get(firstRef).exists()) return@runTransaction false
+            tx.set(
+                savedRef,
+                mapOf(
+                    "strokes" to ordered.map { it.toMap() },
+                    "by" to me.uid,
+                    "byName" to me.displayName,
+                    "at" to System.currentTimeMillis(),
+                ),
+            )
+            ordered.forEach { tx.delete(strokes(coupleId).document(it.id)) }
+            true
+        }.await()
     }
 
+    /** The newest [MAX_STROKES] strokes (newest-first query, single-field index), in drawing order. */
     fun observe(coupleId: String): Flow<List<Stroke>> = callbackFlow {
-        val reg = strokes(coupleId).orderBy("at", Query.Direction.ASCENDING).limit(MAX_STROKES.toLong()).addSnapshotListener { snap, err ->
-            if (err != null) close(err) else if (snap != null) trySend(snap.documents.mapNotNull { d -> d.data?.toStroke(d.id) })
+        val reg = strokes(coupleId).orderBy("at", Query.Direction.DESCENDING).limit(MAX_STROKES.toLong()).addSnapshotListener { snap, err ->
+            if (err != null) close(err) else if (snap != null) trySend(DrawingMath.inDrawingOrder(snap.documents.mapNotNull { d -> d.data?.toStroke(d.id) }))
         }
         awaitClose { reg.remove() }
     }
 
     /** One read of the canvas (for the widget refresh job). */
     suspend fun current(coupleId: String): List<Stroke> =
-        strokes(coupleId).orderBy("at", Query.Direction.ASCENDING).limit(MAX_STROKES.toLong()).get().await()
-            .documents.mapNotNull { d -> d.data?.toStroke(d.id) }
+        DrawingMath.inDrawingOrder(
+            strokes(coupleId).orderBy("at", Query.Direction.DESCENDING).limit(MAX_STROKES.toLong()).get().await()
+                .documents.mapNotNull { d -> d.data?.toStroke(d.id) },
+        )
 
     /** uid → last time they drew. */
     fun observePresence(coupleId: String): Flow<Map<String, Long>> = callbackFlow {
