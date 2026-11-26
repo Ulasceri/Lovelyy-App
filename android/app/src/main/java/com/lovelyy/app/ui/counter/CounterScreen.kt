@@ -158,8 +158,9 @@ fun CounterScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBac
     LaunchedEffect(startMillis) { while (startMillis != null) withFrameMillis { now = System.currentTimeMillis() } }
     val t = DayCounter.together(startMillis ?: now, now)
     val days = t.days
-    val (prev, next) = DayCounter.next(days)
-    val all = DayCounter.milestones(days + 2000)
+    val startDate = startMillis?.let { DayCounter.dateOf(it) }
+    val (prev, next) = DayCounter.next(days, startDate)
+    val all = DayCounter.milestones(days + 2000, startDate)
     val todayMilestone = startMillis != null && all.any { it.day == days }
 
     val shareText = stringResource(R.string.dc_share_text, me.displayName, partnerName, num(days))

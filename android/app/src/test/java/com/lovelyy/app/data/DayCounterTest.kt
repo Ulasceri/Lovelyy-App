@@ -41,6 +41,27 @@ class DayCounterTest {
     }
 
     @Test
+    fun yearMilestonesAreCalendarBased() {
+        val start = LocalDate.of(2024, 2, 14)
+        val all = DayCounter.milestones(1500, start)
+        // 14 Feb 2024 -> 14 Feb 2027 is 1096 days (2024 is a leap year), not 3 * 365.
+        val third = all.first { it.years == 3 }
+        assertEquals(1096L, third.day)
+        assertEquals(LocalDate.of(2027, 2, 14), start.plusDays(third.day))
+        val (prev, next) = DayCounter.next(1017, start)
+        assertEquals(2, prev?.years)
+        assertEquals(3, next.years)
+        assertEquals(79L, next.day - 1017)
+    }
+
+    @Test
+    fun leapDayStartLandsOn28FebInPlainYears() {
+        val start = LocalDate.of(2024, 2, 29)
+        val first = DayCounter.milestones(400, start).first { it.years == 1 }
+        assertEquals(LocalDate.of(2025, 2, 28), start.plusDays(first.day))
+    }
+
+    @Test
     fun milestonesAreSortedAndUnique() {
         val all = DayCounter.milestones(4000)
         assertEquals(all.sortedBy { it.day }, all)

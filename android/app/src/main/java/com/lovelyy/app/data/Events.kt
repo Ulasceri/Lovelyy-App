@@ -27,7 +27,8 @@ object CalendarMath {
     /** The next day (today or later) this event happens, or null if a one-time plan is past. */
     fun nextOccurrence(e: CalEvent, today: LocalDate): LocalDate? {
         if (!e.yearly) return e.date.takeIf { !it.isBefore(today) }
-        var year = today.year
+        // Never before the event's own first date (a yearly event created in 2028 has no 2027 occurrence).
+        var year = maxOf(today.year, e.date.year)
         while (true) {
             val d = safeDate(year, e.date.monthValue, e.date.dayOfMonth)
             if (!d.isBefore(today)) return d
@@ -49,7 +50,7 @@ object CalendarMath {
     }
 
     /** How many times a yearly event has happened by [on] (e.g. 2 → "2. yıl"). */
-    fun yearsAt(e: CalEvent, on: LocalDate): Int = on.year - e.date.year
+    fun yearsAt(e: CalEvent, on: LocalDate): Int = maxOf(0, on.year - e.date.year)
 }
 
 class EventRepository(private val db: FirebaseFirestore) {

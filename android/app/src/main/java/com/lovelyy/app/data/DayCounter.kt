@@ -3,6 +3,7 @@ package com.lovelyy.app.data
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 
 /** Time together, split for the live counter. */
 data class Together(
@@ -45,19 +46,24 @@ object DayCounter {
     fun dayNumber(startMillis: Long, now: Long): Long = together(startMillis, now).days + 1
 
     /** Celebrated days: round hundreds, every 500/1000 later, and every anniversary. */
-    fun milestones(upTo: Long): List<Milestone> {
+    fun milestones(upTo: Long, start: LocalDate? = null): List<Milestone> {
         val hundreds = buildList {
             listOf(100L, 200L, 300L, 500L).forEach { add(Milestone(it, null)) }
             var d = 1000L
             while (d <= upTo) { add(Milestone(d, null)); d += if (d < 3000) 500 else 1000 }
         }
-        val years = (1..((upTo / 365) + 1).toInt()).map { Milestone(it * 365L, it) }
-        return (hundreds + years).distinctBy { it.day }.sortedBy { it.day }
+        val years = (1..((upTo / 365) + 1).toInt()).map { Milestone(yearDay(it, start), it) }
+        // A year milestone that lands on a round day (e.g. day 1000) must stay a year milestone.
+        return (years + hundreds).distinctBy { it.day }.sortedBy { it.day }
     }
 
+    /** Elapsed days at the [n]th anniversary: calendar based when [start] is known (leap years), else n * 365. */
+    private fun yearDay(n: Int, start: LocalDate?): Long =
+        if (start == null) n * 365L else ChronoUnit.DAYS.between(start, start.plusYears(n.toLong()))
+
     /** The next milestone strictly after [days], and the one before it (for the progress bar). */
-    fun next(days: Long): Pair<Milestone?, Milestone> {
-        val all = milestones(days + 2000)
+    fun next(days: Long, start: LocalDate? = null): Pair<Milestone?, Milestone> {
+        val all = milestones(days + 2000, start)
         val next = all.first { it.day > days }
         val prev = all.lastOrNull { it.day <= days }
         return prev to next
