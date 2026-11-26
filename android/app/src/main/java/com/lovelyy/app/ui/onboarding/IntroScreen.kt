@@ -61,6 +61,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.PathMeasure
 import androidx.compose.ui.graphics.StrokeCap
@@ -149,6 +150,7 @@ fun IntroScreen(onBack: () -> Unit, onDone: (skipped: Boolean, tried: Int) -> Un
                     val dir = if (targetState > initialState) 1 else -1
                     (slideInHorizontally { dir * it / 4 } + fadeIn()) togetherWith (slideOutHorizontally { -dir * it / 4 } + fadeOut())
                 },
+                modifier = Modifier.fillMaxSize(),
                 label = "intro-stage",
             ) { p ->
                 when (p) {
@@ -263,7 +265,7 @@ private fun CatDemo(tried: Boolean, onTry: () -> Unit) {
 
         SideChip(stringResource(R.string.onb_side_partner), Mint, Modifier.align(Alignment.TopStart).padding(start = 24.dp, top = top + TOP_BAR)) { PersonBadge() }
         PopIn(tried, Modifier.align(Alignment.TopEnd).padding(end = 20.dp, top = top + TOP_BAR + 42.dp), delayMs = 700) {
-            StageBubble(stringResource(R.string.onb_cat_bubble), stringResource(R.string.onb_now), Modifier.widthIn(max = 220.dp)) {
+            StageBubble(stringResource(R.string.onb_cat_bubble), stringResource(R.string.onb_cat_bubble_sub), Modifier.widthIn(max = 230.dp)) {
                 Badge(CatBg) {
                     Image(painterResource(R.drawable.cat_base), null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
                 }
@@ -459,8 +461,11 @@ private fun DrawDemo(tried: Boolean, onTry: () -> Unit) {
     val top = statusBarTop()
     val left = remember { svgPath(HEART_LEFT_D) }
     val right = remember { svgPath(HEART_RIGHT_D) }
-    val leftLen = remember { PathMeasure().apply { setPath(left, false) }.length }
-    val rightLen = remember { PathMeasure().apply { setPath(right, false) }.length }
+    val leftMeasure = remember { PathMeasure().apply { setPath(left, false) } }
+    val rightMeasure = remember { PathMeasure().apply { setPath(right, false) } }
+    // The part drawn so far, cut out of each half (reused between frames).
+    val leftDrawn = remember { Path() }
+    val rightDrawn = remember { Path() }
     val mine = remember { Animatable(0f) }
     val theirs = remember { Animatable(0f) }
     LaunchedEffect(tried) {
@@ -482,19 +487,16 @@ private fun DrawDemo(tried: Boolean, onTry: () -> Unit) {
                 val dots = Stroke(3f, cap = StrokeCap.Round, pathEffect = PathEffect.dashPathEffect(floatArrayOf(2f, 9f)))
                 drawPath(left, guide, style = dots)
                 drawPath(right, guide, style = dots)
+                val ink = Stroke(9f, cap = StrokeCap.Round, join = StrokeJoin.Round)
                 if (mine.value > 0f) {
-                    drawPath(
-                        left, HeartInk,
-                        style = Stroke(9f, cap = StrokeCap.Round, join = StrokeJoin.Round,
-                            pathEffect = PathEffect.dashPathEffect(floatArrayOf(leftLen, leftLen), leftLen * (1f - mine.value))),
-                    )
+                    leftDrawn.reset()
+                    leftMeasure.getSegment(0f, leftMeasure.length * mine.value, leftDrawn, true)
+                    drawPath(leftDrawn, HeartInk, style = ink)
                 }
                 if (theirs.value > 0f) {
-                    drawPath(
-                        right, MintDeep,
-                        style = Stroke(9f, cap = StrokeCap.Round, join = StrokeJoin.Round,
-                            pathEffect = PathEffect.dashPathEffect(floatArrayOf(rightLen, rightLen), rightLen * (1f - theirs.value))),
-                    )
+                    rightDrawn.reset()
+                    rightMeasure.getSegment(0f, rightMeasure.length * theirs.value, rightDrawn, true)
+                    drawPath(rightDrawn, MintDeep, style = ink)
                 }
             }
         }

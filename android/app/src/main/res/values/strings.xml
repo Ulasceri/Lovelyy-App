@@ -730,7 +730,6 @@
     <string name="onb_skip">Atla</string>
     <string name="onb_next">Devam</string>
     <string name="onb_later">Şimdi değil</string>
-    <string name="onb_now">şimdi</string>
     <string name="onb_create_account">Hesabını oluştur</string>
     <string name="onb_side_partner">Sevgilinin ekranı</string>
     <string name="onb_side_me">Senin ekranın</string>
@@ -741,13 +740,14 @@
     <string name="onb_cat_try">Besle</string>
     <string name="onb_cat_done">Doydu</string>
     <string name="onb_cat_food">Tokluk</string>
-    <string name="onb_cat_bubble">Sevgilin Mırmır\'ı besledi</string>
+    <string name="onb_cat_bubble">Sevgilin besledi</string>
+    <string name="onb_cat_bubble_sub">Mırmır doydu · şimdi</string>
     <string name="onb_heart_title">Dokun, o hissetsin</string>
     <string name="onb_heart_body">Kalp atışın, dürtmen ve ruh halin saniyeler içinde onun telefonunda. Aranızda kaç kilometre olursa olsun.</string>
     <string name="onb_heart_hint">Dene: kalbe dokun</string>
     <string name="onb_heart_hint_done">Sevgilinin telefonu titredi</string>
     <string name="onb_heart_try">Kalp atışı gönder</string>
-    <string name="onb_heart_bubble">Sevgilinden kalp atışı</string>
+    <string name="onb_heart_bubble">Kalp atışı geldi</string>
     <string name="onb_heart_bubble_sub">Telefonu titredi</string>
     <string name="onb_heart_seam">Uzakta olsan da yanında</string>
     <string name="onb_draw_title">Yarısı senden, yarısı ondan</string>
