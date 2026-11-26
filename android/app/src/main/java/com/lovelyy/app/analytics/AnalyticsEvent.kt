@@ -171,6 +171,15 @@ sealed interface AnalyticsEvent {
     }
 
     /**
+     * The "Seri nedir?" sheet was shown. [source] is a fixed key: "auto" (by itself, the first time the couple's
+     * streak reached 1), "chip" (the Yuva streak chip) or "card" (the Kedi bakımı streak card).
+     */
+    data class StreakExplainerShown(val source: String) : AnalyticsEvent {
+        override val name = "streak_explainer_shown"
+        override val params: Map<String, Any> get() = mapOf("source" to source)
+    }
+
+    /**
      * A screen was shown. [screenName] is a fixed route name like "home", never anything dynamic.
      * Sent as the standard `screen_view` event, so it shows up in the Screens report.
      */

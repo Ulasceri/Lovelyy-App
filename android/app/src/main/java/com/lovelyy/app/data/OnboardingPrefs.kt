@@ -11,6 +11,7 @@ object OnboardingPrefs {
     private const val PREFS = "lovelyy_onboarding"
     private const val KEY_PAIRING_PREFIX = "pairing_started_"
     private const val KEY_NOTIFICATIONS_ASKED = "notifications_asked"
+    private const val KEY_STREAK_EXPLAINER_PREFIX = "streak_explainer_seen_"
 
     private fun prefs(context: Context) = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
@@ -28,4 +29,14 @@ object OnboardingPrefs {
     fun notificationsAsked(context: Context): Boolean = prefs(context).getBoolean(KEY_NOTIFICATIONS_ASKED, false)
 
     fun markNotificationsAsked(context: Context) = prefs(context).edit { putBoolean(KEY_NOTIFICATIONS_ASKED, true) }
+
+    /**
+     * "Seri nedir?" (board S1) was already shown for this couple on this phone, by itself or from the streak chip
+     * or card, so it must not open by itself again. Per couple: a new pairing starts a new streak.
+     */
+    fun streakExplainerSeen(context: Context, coupleId: String): Boolean =
+        prefs(context).getBoolean(KEY_STREAK_EXPLAINER_PREFIX + coupleId, false)
+
+    fun markStreakExplainerSeen(context: Context, coupleId: String) =
+        prefs(context).edit { putBoolean(KEY_STREAK_EXPLAINER_PREFIX + coupleId, true) }
 }

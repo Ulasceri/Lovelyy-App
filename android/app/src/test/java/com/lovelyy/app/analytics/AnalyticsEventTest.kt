@@ -37,6 +37,7 @@ class AnalyticsEventTest {
         AnalyticsEvent.AccountDeleted,
         AnalyticsEvent.IntroFinished(skipped = false, demosTried = 3),
         AnalyticsEvent.PermissionPrimerAnswered(permission = "location", allowed = true),
+        AnalyticsEvent.StreakExplainerShown(source = "auto"),
         AnalyticsEvent.ScreenView("home"),
         AnalyticsEvent.ScreenView("day_counter"),
     )
