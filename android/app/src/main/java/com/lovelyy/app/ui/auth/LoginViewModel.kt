@@ -54,6 +54,14 @@ class LoginViewModel(
         resetSent = false
     }
 
+    /** Back to an empty Karşılama: nothing typed for the previous sign-in may show up after signing out. */
+    fun reset() {
+        switchMode(Mode.Welcome)
+        name = ""
+        email = ""
+        password = ""
+    }
+
     /** Called when a field is edited, so a stale error doesn't linger until resubmit. */
     fun clearError() { if (error != null) error = null }
 
