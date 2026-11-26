@@ -123,6 +123,7 @@ fun ProfileScreen(
     val cat: CatViewModel = viewModel(key = "cat-$coupleId") { CatViewModel(app, coupleId, me.uid) }
     val catUi by cat.ui.collectAsStateWithLifecycle()
     var naming by remember { mutableStateOf(false) }
+    var confirmSignOut by remember { mutableStateOf(false) }
     var editingName by remember { mutableStateOf(false) }
 
     // Things that change outside the app (system settings, launcher): re-read when we come back.
@@ -225,8 +226,18 @@ fun ProfileScreen(
         SettingsCard {
             // Unpairing deletes shared data and needs new security rules: it comes in a later step.
             SettingRow(X_D, stringResource(R.string.pf_unpair), "", color = Danger, onClick = onSoon)
-            SettingRow(LOGOUT_D, stringResource(R.string.sign_out), "") { scope.launch { app.authRepository.signOut(context) } }
+            SettingRow(LOGOUT_D, stringResource(R.string.sign_out), "") { confirmSignOut = true }
         }
+    }
+
+    if (confirmSignOut) {
+        com.lovelyy.app.ui.components.ConfirmDialog(
+            title = stringResource(R.string.sign_out_title),
+            body = stringResource(R.string.sign_out_body),
+            confirm = stringResource(R.string.sign_out),
+            onConfirm = { confirmSignOut = false; scope.launch { app.authRepository.signOut(context) } },
+            onDismiss = { confirmSignOut = false },
+        )
     }
 
     if (naming) {

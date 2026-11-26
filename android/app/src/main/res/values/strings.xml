@@ -26,6 +26,8 @@
     <string name="pair_share_text">Lovelyy\'de benimle eşleş 💛 Kodum: %1$s</string>
     <string name="pair_join">Eşleş</string>
     <string name="sign_out">Çıkış yap</string>
+    <string name="sign_out_title">Çıkış yapılsın mı?</string>
+    <string name="sign_out_body">Hesabından çıkacaksın. Tekrar giriş yapınca her şey yerinde olacak.</string>
 
     <!-- Home -->
     <string name="home_us">%1$s &amp; %2$s</string>
@@ -692,8 +694,8 @@
     <string name="wg_days">Gün sayacı + tek dokunuşla kalp</string>
     <string name="wg_hint">Ana ekrana eklemek için bir widget\'a dokun</string>
     <string name="wg_pin_failed">Bu telefon widget eklemeyi desteklemiyor. Ana ekrana uzun basıp Widget\'lar\'dan ekleyebilirsin.</string>
-    <string name="widget_days_sample">412 gün</string>
-    <string name="widget_drawing_sample_live">Elif çiziyor</string>
+    <string name="widget_days_sample">♥ gün</string>
+    <string name="widget_drawing_sample_live">Canlı çizim</string>
     <string name="del_confirm">Sil</string>
     <string name="del_dream_title">Bu hayal silinsin mi?</string>
     <string name="del_dream_body">İkinizin listesinden de kalkar. Geri alınamaz.</string>
