@@ -9,14 +9,18 @@ import org.junit.Test
 class LeaveRulesTest {
 
     @Test
-    fun signInFreshOnlyWithinFourMinutes() {
-        val now = 10_000_000L
-        assertTrue(LeaveRules.signInFresh(now - 60_000, now))
-        assertTrue(LeaveRules.signInFresh(now - LeaveRules.FRESH_MS, now))
-        assertFalse(LeaveRules.signInFresh(now - LeaveRules.FRESH_MS - 1, now))
-        assertFalse(LeaveRules.signInFresh(null, now))
-        // A sign-in "in the future" means a wrong clock: don't trust it.
-        assertFalse(LeaveRules.signInFresh(now + 60_000, now))
+    fun signInFreshOnlyWithinFourMinutesOfServerTime() {
+        val auth = 1_700_000_000L // seconds, Firebase's clock
+        assertTrue(LeaveRules.signInFreshByToken(auth, auth + 60))
+        assertTrue(LeaveRules.signInFreshByToken(auth, auth + LeaveRules.FRESH_MS / 1000))
+        assertFalse(LeaveRules.signInFreshByToken(auth, auth + LeaveRules.FRESH_MS / 1000 + 1))
+        // Token issued in the same second as the sign-in (or rounded a second earlier) is fresh.
+        assertTrue(LeaveRules.signInFreshByToken(auth, auth))
+        assertTrue(LeaveRules.signInFreshByToken(auth, auth - 1))
+        assertFalse(LeaveRules.signInFreshByToken(auth, auth - 60))
+        assertFalse(LeaveRules.signInFreshByToken(null, auth))
+        assertFalse(LeaveRules.signInFreshByToken(auth, null))
+        assertFalse(LeaveRules.signInFreshByToken(0, auth))
     }
 
     @Test
