@@ -27,7 +27,7 @@ data class Note(
 )
 
 /** The partner changed the note after this edit was opened. [current] is the version on the server now. */
-class NoteConflictException(val current: Note) : Exception("Note changed meanwhile")
+class NoteConflictException(val current: Note) : EditConflictException("Note changed meanwhile")
 
 /** Pure rules for notes (unit-tested in NoteRulesTest). */
 object NoteRules {
@@ -44,8 +44,7 @@ object NoteRules {
         serverUpdatedBy: String?,
         me: String,
     ): Boolean {
-        val changed = openedUpdatedAt != serverUpdatedAt || openedText != serverText
-        return changed && serverUpdatedBy != me
+        return EditRules.isConflict(openedText, openedUpdatedAt, serverText, serverUpdatedAt, serverUpdatedBy, me)
     }
 }
 

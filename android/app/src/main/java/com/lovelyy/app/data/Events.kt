@@ -1,5 +1,6 @@
 package com.lovelyy.app.data
 
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -20,7 +21,18 @@ data class CalEvent(
     val byName: String,
     /** Built in (e.g. the anniversary from the day counter): can't be edited here. */
     val builtIn: Boolean = false,
-)
+    /** Last edit (millis) and who made it; null on plans written before these fields existed. */
+    val updatedAt: Long? = null,
+    val updatedBy: String? = null,
+) {
+    /** The part an editor changes; compared to detect a concurrent edit. */
+    val content: EventContent get() = EventContent(title, date, yearly)
+}
+
+data class EventContent(val title: String, val date: LocalDate, val yearly: Boolean)
+
+/** The partner changed the plan after this edit was opened. [current] is the version on the server now. */
+class EventConflictException(val current: CalEvent) : EditConflictException("Event changed meanwhile")
 
 /** Pure date math for the calendar (unit-tested in CalendarMathTest). */
 object CalendarMath {
@@ -59,20 +71,29 @@ class EventRepository(private val db: FirebaseFirestore) {
         db.collection(Paths.COUPLES).document(coupleId).collection(Paths.EVENTS)
 
     /**
-     * Adds a plan ([id] null) or edits one. Editing never re-creates a plan the partner deleted meanwhile
-     * (throws [ItemGoneException]) and keeps the original creator (by/byName/at).
+     * Adds a plan ([opened] null) or edits one ([opened] = the plan as it was when the editor opened).
+     * Editing never re-creates a plan the partner deleted meanwhile (throws [ItemGoneException]), keeps the
+     * original creator (by/byName/at), and throws [EventConflictException] if the partner changed it
+     * meanwhile unless [force]. Offline, the edit is written without the conflict check.
      */
-    suspend fun save(coupleId: String, me: UserProfile, id: String?, title: String, date: LocalDate, emoji: String, yearly: Boolean) {
+    suspend fun save(coupleId: String, me: UserProfile, opened: CalEvent?, title: String, date: LocalDate, emoji: String, yearly: Boolean, force: Boolean = false) {
         val data = mapOf(
             "title" to title.trim().take(MAX_TITLE),
             "date" to date.toString(),
             "emoji" to emoji,
             "yearly" to yearly,
         )
-        if (id == null) {
+        if (opened == null) {
             events(coupleId).add(data + mapOf("by" to me.uid, "byName" to me.displayName, "at" to System.currentTimeMillis())).await()
         } else {
-            events(coupleId).document(id).updateExisting(data)
+            events(coupleId).document(opened.id).updateUnlessChanged(
+                db,
+                data + mapOf("updatedAt" to System.currentTimeMillis(), "updatedBy" to me.uid),
+                force,
+                parse = { it.toEvent() },
+                isConflict = { EditRules.isConflict(opened.content, opened.updatedAt, it.content, it.updatedAt, it.updatedBy, me.uid) },
+                conflict = { EventConflictException(it) },
+            )
         }
     }
 
@@ -85,23 +106,25 @@ class EventRepository(private val db: FirebaseFirestore) {
             if (err != null) {
                 close(err)
             } else if (snap != null) {
-                trySend(
-                    snap.documents.mapNotNull { d ->
-                        val date = d.getString("date")?.let { runCatching { LocalDate.parse(it) }.getOrNull() } ?: return@mapNotNull null
-                        CalEvent(
-                            id = d.id,
-                            title = d.getString("title").orEmpty(),
-                            date = date,
-                            emoji = d.getString("emoji") ?: "💛",
-                            yearly = d.getBoolean("yearly") == true,
-                            by = d.getString("by").orEmpty(),
-                            byName = d.getString("byName").orEmpty(),
-                        )
-                    },
-                )
+                trySend(snap.documents.mapNotNull { it.toEvent() })
             }
         }
         awaitClose { reg.remove() }
+    }
+
+    private fun DocumentSnapshot.toEvent(): CalEvent? {
+        val date = getString("date")?.let { runCatching { LocalDate.parse(it) }.getOrNull() } ?: return null
+        return CalEvent(
+            id = id,
+            title = getString("title").orEmpty(),
+            date = date,
+            emoji = getString("emoji") ?: "💛",
+            yearly = getBoolean("yearly") == true,
+            by = getString("by").orEmpty(),
+            byName = getString("byName").orEmpty(),
+            updatedAt = getLong("updatedAt"),
+            updatedBy = getString("updatedBy"),
+        )
     }
 
     companion object {

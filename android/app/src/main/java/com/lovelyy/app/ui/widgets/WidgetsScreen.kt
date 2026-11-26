@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lovelyy.app.R
+import com.lovelyy.app.data.displayCatName
 import com.lovelyy.app.data.Couple
 import com.lovelyy.app.data.DayCounter
 import com.lovelyy.app.data.DrawingMath
@@ -103,9 +104,9 @@ fun WidgetsScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
     val presence by drawing.presence.collectAsStateWithLifecycle()
 
     val partnerName = partner?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.home_partner_fallback)
-    val catName = catUi?.doc?.name?.takeIf { it.isNotBlank() } ?: stringResource(R.string.cat_generic)
+    val catName = displayCatName(catUi?.doc?.name)
     val levels = catUi?.levels
-    val streak = catUi?.doc?.streak?.current(LocalDate.now()) ?: 0
+    val streak = catUi?.doc?.streak?.current(com.lovelyy.app.ui.coupleToday()) ?: 0
     val days = couple?.startDate?.toDate()?.time?.let { DayCounter.together(it, System.currentTimeMillis()).days.toInt() }
     val liveAt = partner?.uid?.let { presence[it] }
     val partnerLive = liveAt != null && System.currentTimeMillis() - liveAt < DrawingMath.ACTIVE_MS

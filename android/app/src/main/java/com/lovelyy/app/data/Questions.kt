@@ -149,7 +149,7 @@ class QuestionRepository(private val db: FirebaseFirestore) {
     fun observeRecent(coupleId: String, limit: Long = 60): Flow<List<DayQuestion>> = callbackFlow {
         // Document ids are yyyy-MM-dd, so an ascending id range from the cutoff picks the recent days.
         // (Ordering by id descending needs a composite index that the project does not have.)
-        val from = LocalDate.now().minusDays(limit).toString()
+        val from = CoupleClock.today().minusDays(limit).toString()
         val reg = questions(coupleId)
             .whereGreaterThanOrEqualTo(com.google.firebase.firestore.FieldPath.documentId(), from)
             .addSnapshotListener { snap, err ->

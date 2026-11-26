@@ -85,6 +85,7 @@ class AppViewModel(private val app: LovelyyApplication) : ViewModel() {
         return auth.authState.flatMapLatest { firebaseUser ->
             if (firebaseUser == null) {
                 app.signalCenter.reset()
+                com.lovelyy.app.data.CoupleClock.reset()
                 return@flatMapLatest flowOf<AppState>(AppState.SignedOut)
             }
             flow<AppState> {

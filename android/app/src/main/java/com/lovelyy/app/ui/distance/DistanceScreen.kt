@@ -259,7 +259,7 @@ fun DistanceScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit) {
         }
 
         // Next meeting: the nearest one-time plan from the calendar.
-        val today = LocalDate.now()
+        val today = com.lovelyy.app.ui.coupleToday()
         val next = events.orEmpty().filter { !it.yearly }
             .mapNotNull { e -> CalendarMath.nextOccurrence(e, today)?.let { e to it } }
             .minByOrNull { it.second }

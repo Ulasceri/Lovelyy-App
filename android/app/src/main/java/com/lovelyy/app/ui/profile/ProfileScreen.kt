@@ -57,6 +57,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lovelyy.app.R
 import com.lovelyy.app.analytics.AnalyticsEvent
+import com.lovelyy.app.data.displayCatName
 import com.lovelyy.app.data.CatActionType
 import com.lovelyy.app.data.Couple
 import com.lovelyy.app.data.DayCounter
@@ -220,7 +221,7 @@ fun ProfileScreen(
                 if (widgets > 0) stringResource(R.string.pf_widgets_count, widgets) else stringResource(R.string.pf_widgets_none),
                 onClick = onWidgets,
             )
-            SettingRow(PENCIL_D, stringResource(R.string.pf_cat_name), catUi?.doc?.name?.takeIf { it.isNotBlank() } ?: "–") { naming = true }
+            SettingRow(PENCIL_D, stringResource(R.string.pf_cat_name), displayCatName(catUi?.doc?.name)) { naming = true }
             SettingRow(PEOPLE_D, stringResource(R.string.pf_account), stringResource(if (google) R.string.pf_account_google else R.string.pf_account_email), onClick = onSoon)
         }
         SettingsCard {
@@ -242,7 +243,7 @@ fun ProfileScreen(
 
     if (naming) {
         NameCatDialog(
-            initial = catUi?.doc?.name.orEmpty(),
+            initial = displayCatName(catUi?.doc?.name),
             canDismiss = true,
             onDismiss = { naming = false },
             onSave = { n ->

@@ -2,7 +2,9 @@ package com.lovelyy.app.data
 
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.tasks.await
 
 /** Collection names. Keep in sync with firebase/firestore.rules. */
@@ -25,6 +27,8 @@ object Paths {
     const val STROKES = "strokes"
     const val DRAWING = "drawing"
     const val DRAWINGS = "drawings"
+    const val SETTINGS = "settings"
+    const val SETTINGS_DOC = "main"
 }
 
 internal fun DocumentSnapshot.toUserProfile(): UserProfile? =
@@ -68,3 +72,54 @@ internal inline fun <reified T : Throwable> Throwable.causeOf(): T? =
 /** True if a Firestore call failed because the device is offline (transactions need the server). */
 internal fun Throwable.isOffline(): Boolean =
     causeOf<FirebaseFirestoreException>()?.code == FirebaseFirestoreException.Code.UNAVAILABLE
+
+/** Pure rule shared by notes, plans and dreams (unit-tested in NoteRulesTest / EditRulesTest). */
+object EditRules {
+    /**
+     * True if saving an edit would silently overwrite someone else's change: the server version differs
+     * from the one the editor was opened with ([opened] content / [openedUpdatedAt]) and the last edit was
+     * not mine. Old documents have no updatedAt on either side, so then only the content is compared.
+     * [T] is whatever the editable content is (text, a data class...), compared with equals.
+     */
+    fun <T> isConflict(opened: T, openedUpdatedAt: Long?, server: T, serverUpdatedAt: Long?, serverUpdatedBy: String?, me: String): Boolean {
+        val changed = openedUpdatedAt != serverUpdatedAt || opened != server
+        return changed && serverUpdatedBy != me
+    }
+}
+
+/**
+ * Edits an existing document in a transaction that refuses to overwrite a partner's change: throws
+ * [ItemGoneException] if the document is gone, or what [conflict] builds if [isConflict] says the server
+ * version changed meanwhile (skipped when [force]). Offline, a transaction can't run; then the edit is
+ * written as a plain update, without the conflict check, and never throws because of being offline.
+ */
+internal suspend fun <T : Any> DocumentReference.updateUnlessChanged(
+    db: FirebaseFirestore,
+    data: Map<String, Any?>,
+    force: Boolean,
+    parse: (DocumentSnapshot) -> T?,
+    isConflict: (T) -> Boolean,
+    conflict: (T) -> Exception,
+) {
+    val ref = this
+    try {
+        db.runTransaction { tx ->
+            val snap = tx.get(ref)
+            if (!snap.exists()) throw ItemGoneException()
+            val current = parse(snap) ?: throw ItemGoneException()
+            if (!force && isConflict(current)) throw conflict(current)
+            tx.update(ref, data)
+            null
+        }.await()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        e.causeOf<ItemGoneException>()?.let { throw it }
+        e.causeOf<EditConflictException>()?.let { throw it }
+        if (!e.isOffline()) throw e
+        updateExisting(data)
+    }
+}
+
+/** Base of the per-type conflict exceptions (they carry the server version). */
+open class EditConflictException(message: String) : Exception(message)
