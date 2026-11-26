@@ -332,12 +332,7 @@ private fun LetterSheet(c: Capsule, today: LocalDate, mine: Boolean, onDismiss: 
             Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 20.dp).padding(bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            val heading = when {
-                open -> c.title
-                mine -> stringResource(R.string.tc_from_me)
-                else -> stringResource(R.string.tc_from_partner, c.byName.ifBlank { stringResource(R.string.home_partner_fallback) })
-            }
-            Text(heading, fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = Brown)
+            Text(c.title, fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = Brown)
             if (open) {
                 WhiteCard(padding = 18.dp) {
                     Text(c.text, fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 16.sp, lineHeight = 24.sp, color = Brown)
