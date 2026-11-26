@@ -53,13 +53,18 @@ Source: `ui/theme/Color.kt`. Theme mapping: `ui/theme/Theme.kt` (`lightColorSche
 | StagePeach | `#FFDCC6` | `StagePeach` | Onboarding split stage: your side |
 | HeartInk | `#E0602B` | `HeartInk` | Onboarding: your drawn stroke, flying heart |
 | MintDeep | `#2F8F7A` | `MintDeep` | Onboarding: the partner's drawn stroke |
+| CatStripStart / CatStripEnd | `#F3EAD1` / `#EADAC0` | `CatStripStart`, `CatStripEnd` | Cat card v2: horizontal gradient of the strip above the video |
+| FlameInk | `#E07A45` | `FlameInk` | Streak flame outline (fill `Peach`) |
+| CheckInk | `#2F7F69` | `CheckInk` | "Cared today" check on the Kedi bakımı streak card |
+| SheetHandle | `#E3D5CB` | `SheetHandle` | Bottom sheet drag handle (44x5) |
+| BrownMuted | `#5F524C` | `BrownMuted` | Small text on tinted (peach) surfaces |
 
 `res/values/colors.xml` (only for window/splash background): `peach #FFB38A`, `mint #9ED9C8`, `brown #4A3B35`, `cream #FFF8F2`, `brown_soft #8A7A72` (note: DIFFERENT from `BrownSoft #75655E` in Color.kt; `docs/design-principles.md` also lists the old `#8A7A72` value. Color.kt is correct).
 
 Theme assignments: `primary=Peach`, `onPrimary=Brown`, `secondary=Mint`, `onSecondary=Brown`, `tertiary=PeachDeep`, `surface=background=Cream`, `surfaceContainer*=CreamCard`, `error=ErrorRose`. Note: text on buttons is `onPrimary`=Brown (not white).
 
 ### Non-token colors hardcoded in code (current state; do NOT use in new code, move to a token)
-`#F6E3D6` inactive PeachButton background · `#FF8A5B` badge dot · `#9A8A83` DesignField placeholder · `#F8EDD7` LoginScreen decoration · `#8A7A73` LoginScreen secondary text (same as BrownHint) · `#E3D5CB`/`#D9C9BE` Pairing line/ring · `#F3D9C8` filled OTP border · `#F6EEE8` "Yakında" (Coming soon) card/pill background · `#E07A45` streak fire icon · `#FF6F91` CatSection heart tone · `#4A3B35` shadow color (=Brown).
+`#F6E3D6` inactive PeachButton background · `#FF8A5B` badge dot · `#9A8A83` DesignField placeholder · `#F8EDD7` LoginScreen decoration · `#8A7A73` LoginScreen secondary text (same as BrownHint) · `#E3D5CB`/`#D9C9BE` Pairing line/ring · `#F3D9C8` filled OTP border · `#F6EEE8` "Yakında" (Coming soon) card/pill background · `#E07A45` streak fire icon (now `FlameInk`; the wheel still hardcodes it) · `#FF6F91` CatSection heart tone · `#4A3B35` shadow color (=Brown).
 
 ### Emotion (heartbeat) colors
 In `ui/heartbeat/EmotionVisual.kt`, raw-colored `EmotionStyle(main, light background, dark tone)`:
@@ -187,7 +192,8 @@ All under `ui/components/`. For new UI, prefer the `Design.kt` family (approved 
 Screen-specific components (in dedicated files, `private`):
 
 - **Bottom navigation** (`HomeScreen.kt: BottomNav/NavItem`): white panel, top corners 26dp, 78dp, 16dp shadow. Order: **Yuva · Anılar · [center heart] · Planlar · Biz** (Nest · Memories · [center heart] · Plans · Us). Item = 22dp icon + 12sp label inside a 52x30 pill (selected `PeachSoft`); selected icon/label `Brown`, otherwise `BrownSoft`. Icons: Home, Photo, CalendarMonth, Groups (Rounded). Center heart: 64dp `Peach` circle, 4dp `Cream` border, 28dp Brown heart, heartbeat animation (1800ms keyframe, 1.12/1.08 peaks), "send heartbeat" action. Tab change `fadeIn/fadeOut`; outside Yuva the back button returns to Yuva.
-- **Cat hero** (`ui/cat/CatSection.kt`): `CatBg` card with 28dp corners, soft shadow, name/streak chip (fire icon), speech bubble (4s float), petting the cat.
+- **Cat hero v2** (`ui/cat/CatSection.kt`): `CatBg` card with 28dp corners, soft shadow; nothing on the video. Top: 36dp strip (`CatStripStart`→`CatStripEnd` gradient) with the name 17sp Bold + 14dp pencil (rename) and a white 28dp streak chip (16dp flame, 13sp Bold), both with 48dp touch targets reaching above the card. Middle: the video (`CatStage`, petting + hearts), height from `CatCardGeometry` so the card keeps its old height. Below: 36dp slot with the white speech bubble (15dp corners, 14sp Bold, tail pointing up, 2dp float); banners take its place as a pill (13sp, up to 2 lines). Then the need bars (8dp top padding).
+- **Seri nedir? sheet** (`ui/cat/StreakExplainerSheet.kt`, board S1): `Cream` sheet, 32dp top corners, `SheetHandle` handle, header with the two avatars + flame circle (52dp, 16dp overlap) and a 22sp title, white card with three icon rows (40dp `PeachTint`/`MintTint` circles), `PeachSoft` Plus note (info only), `PeachButton` "Anladım". Scrim `Brown` 45%.
 - **Need bars** (`NeedsRow/NeedMeter`): 4 bars, equal weight, gap 10dp, bar height **8dp**, track `Sand`; fill `NeedOk` (normal) / `NeedLow` (low, 700ms pulse); value change `spring(LowBouncy, Low)`. Labels: **Tokluk · Su · Enerji · Sevgi** (Fullness · Water · Energy · Love).
 - **Care buttons** (`CareButton`): 64dp circle (28dp icon) + 14sp Bold label below. Order: **Besle · Su ver · Oyna · Uyut** (Feed · Give water · Play · Put to sleep; "Uyandır" / Wake up if sleeping). On press 0.88 scale (MediumBouncy), disabled 0.45 alpha, the most needed action is highlighted with a `Peach` background + Peach shadow.
 - **Together card** (`TogetherCard`): "N gündür birliktesiniz" (together for N days) counter (26sp Bold), if there is no date "Tanıştığınız günü ekleyin" (Add the day you met).
@@ -216,7 +222,7 @@ Micro animation principle: everything is slightly alive, none of it distracts.
 | Center heart (nav) | 1800ms keyframe: 1 → 1.12 (270ms) → 1 → 1.08 (810ms) → 1 | `BottomNav` |
 | Need bar change | `spring(LowBouncy, Low)` | `NeedMeter` |
 | Low bar pulse | 700ms `FastOutSlowIn`, Reverse | `NeedMeter` |
-| Speech bubble float | 0→-4dp, 1500ms, Reverse | `CatSection` |
+| Speech bubble float | 0→-2dp, 1500ms, Reverse (below the video, so the tail never touches it) | `CatSection` |
 | Rising hearts | 1100ms (`tween FastOutSlowIn`), 120dp rise / 24dp sway | `CatSection`; `RisingHeart` on the login screen |
 | Screen/tab transition | `fadeIn` + `fadeOut` (default duration) | `LovelyyRoot`, `HomeScreen` tabs |
 | Background pulse (pairing) | 1600ms keyframe, 1800ms linear loop | `PairingScreen` |
@@ -232,7 +238,7 @@ Haptics:
 
 ## 8. Iconography
 
-- **Code:** Material Icons `Rounded` family (`Icons.Rounded.*`: Home, Photo, CalendarMonth, Groups, TouchApp, Schedule, ContentCopy, Done, Share, Backspace (AutoMirrored), KeyboardArrowLeft (AutoMirrored)); heart `Icons.Filled.Favorite` / `Rounded.Favorite`; `Filled` on the cat screen (Edit, LocalFireDepartment, WbSunny, Bedtime).
+- **Code:** Material Icons `Rounded` family (`Icons.Rounded.*`: Home, Photo, CalendarMonth, Groups, TouchApp, Schedule, ContentCopy, Done, Share, Backspace (AutoMirrored), KeyboardArrowLeft (AutoMirrored)); heart `Icons.Filled.Favorite` / `Rounded.Favorite`; `Filled` on the cat screen (WbSunny, Bedtime; the name pencil and streak flame are design SVG paths).
 - **Sizes:** list/nav 22dp · small inline 16-20dp · card icon 22dp · care button 28dp · center heart 28dp · "Yakında" large 44dp (in a 96dp circle).
 - **Color:** icon `Brown` (active) / `BrownSoft` (inactive) / `BrownHint` (inside a field); icon circle background `PeachTint`/`MintTint`.
 - **Canvas:** no emoji, faces and icons are SVG. A new icon is first drawn as SVG on the canvas; in code the closest Rounded Material icon or a vector is used.

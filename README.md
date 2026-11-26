@@ -14,7 +14,7 @@ Android uygulaması Kotlin + Jetpack Compose + Material 3 ile yazılır, arka u�
 | Partnerle 6 haneli kodla eşleşme; eşleşme ekranının sağ üstündeki hesap düğmesinden çıkış ve hesap silme (eşleşmeden de hesap silinebilir) | Hazır |
 | Eşleşme sonrası: "Eşleştiniz" ekranı, bildirim ve konum izni ön ekranları (izin penceresi sadece düğmeye basınca açılır) | Hazır |
 | Anasayfa (Yuva / Anılar / Planlar / Biz) ve alt gezinme çubuğu | Hazır |
-| Ortak animasyonlu kedi: ana sayfa + kedi bakımı ekranı, bakım serisi | Hazır (kısa videolar `assets/cat/` içinde, ExoPlayer ile oynar) |
+| Ortak animasyonlu kedi: ana sayfa kedi kartı (v2: isim ve seri videonun üstündeki şeritte, konuşma balonu videonun altında, kedinin üstünde hiçbir şey yok) + kedi bakımı ekranı (bugün kim baktı, en uzun seri), bakım serisi ve "Seri nedir?" açıklaması (seri ilk kez 1 olunca bir kez kendiliğinden açılır, sonra seri rozetinden ve seri kartından) | Hazır (kısa videolar `assets/cat/` içinde, ExoPlayer ile oynar) |
 | Gün sayacı, kalp atışı, ruh hali, günün sorusu, notlar | Hazır |
 | Planlar (takvim + özel günler), hayaller listesi, karar çarkı | Hazır |
 | Anılar: canlı çizim, zaman kapsülü | Hazır |
