@@ -114,7 +114,9 @@ import kotlinx.coroutines.launch
 @Composable
 fun PairingScreen(me: UserProfile) {
     val app = lovelyyApp()
-    val vm: PairingViewModel = viewModel { PairingViewModel(app.pairingRepository) }
+    // Keyed by user: the ViewModel outlives a sign-out, and a second account in the same app run must not inherit
+    // "a code was already created" (it got no code, only the "Kod oluştur" button), the typed digits or an error.
+    val vm: PairingViewModel = viewModel(key = "pairing-${me.uid}") { PairingViewModel(app.pairingRepository) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 

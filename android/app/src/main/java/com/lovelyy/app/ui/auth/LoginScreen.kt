@@ -50,6 +50,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -105,6 +106,13 @@ fun LoginScreen() {
     val app = lovelyyApp()
     val vm: LoginViewModel = viewModel { LoginViewModel(app.authRepository, app.userRepository) }
     val context = LocalContext.current
+
+    // The ViewModel lives as long as the activity, so without this the name, e-mail and password typed before
+    // signing in were still in the form after signing out. Clear it when this screen leaves because someone
+    // signed in (not on a rotation, where nobody is signed in yet and the half-typed form must stay).
+    DisposableEffect(vm) {
+        onDispose { if (app.authRepository.currentUser != null) vm.reset() }
+    }
 
     // The intro handles its own back presses (page by page), so this one is only for the forms.
     BackHandler(enabled = vm.mode == LoginViewModel.Mode.SignIn || vm.mode == LoginViewModel.Mode.SignUp) {
