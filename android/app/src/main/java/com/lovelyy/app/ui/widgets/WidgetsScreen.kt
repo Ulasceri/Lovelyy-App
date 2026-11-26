@@ -41,6 +41,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -189,7 +190,7 @@ fun WidgetsScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(catName, fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Brown, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
                             Text(
-                                stringResource(R.string.widget_streak, streak), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Brown,
+                                pluralStringResource(R.plurals.widget_streak, streak.toInt(), streak), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Brown,
                                 modifier = Modifier.clip(CircleShape).background(PeachSoft).padding(horizontal = 8.dp, vertical = 3.dp),
                             )
                         }
@@ -219,7 +220,7 @@ fun WidgetsScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
                     Column(Modifier.weight(1f)) {
                         Text(stringResource(R.string.widget_together), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Muted)
                         Text(
-                            if (days != null) stringResource(R.string.widget_days, days) else stringResource(R.string.home_set_date),
+                            if (days != null) pluralStringResource(R.plurals.widget_days, days.toInt(), days) else stringResource(R.string.home_set_date),
                             fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = if (days != null) 22.sp else 15.sp, color = Brown,
                         )
                     }

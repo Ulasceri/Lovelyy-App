@@ -15,6 +15,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -82,7 +83,7 @@ fun LettersScreen(me: UserProfile, partner: UserProfile?, startId: String?, onBa
         CenteredTopBar(stringResource(R.string.ol_title), onBack)
         if (capsules != null) {
             Text(
-                if (opened.isEmpty()) stringResource(R.string.ol_none) else stringResource(R.string.ol_intro, opened.size),
+                if (opened.isEmpty()) stringResource(R.string.ol_none) else pluralStringResource(R.plurals.ol_intro, opened.size.toInt(), opened.size),
                 fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, lineHeight = 19.sp, color = SubText,
                 modifier = Modifier.padding(start = 4.dp),
             )
@@ -102,9 +103,9 @@ fun LettersScreen(me: UserProfile, partner: UserProfile?, startId: String?, onBa
                     SvgStrokeIcon(Kit.LOCK_D, Brown, Modifier.size(20.dp))
                 }
                 Column(Modifier.weight(1f)) {
-                    Text(stringResource(R.string.ol_waiting, sealed.size), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Brown)
+                    Text(pluralStringResource(R.plurals.ol_waiting, sealed.size.toInt(), sealed.size), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Brown)
                     Text(
-                        stringResource(R.string.ol_nearest, ChronoUnit.DAYS.between(today, next.openOn)),
+                        pluralStringResource(R.plurals.ol_nearest, (ChronoUnit.DAYS.between(today, next.openOn)).toInt(), ChronoUnit.DAYS.between(today, next.openOn)),
                         fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, color = SubText,
                     )
                 }
@@ -124,7 +125,7 @@ private fun LetterRow(c: Capsule, me: UserProfile, partnerName: String, onClick:
         onClick = onClick,
         extra = {
             Text(
-                "“" + c.text.lineSequence().firstOrNull { it.isNotBlank() }.orEmpty().trim() + "”",
+                stringResource(R.string.ol_quote, c.text.lineSequence().firstOrNull { it.isNotBlank() }.orEmpty().trim()),
                 fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = SubText, maxLines = 1, overflow = TextOverflow.Ellipsis,
             )
         },
@@ -179,7 +180,7 @@ private fun LetterRead(c: Capsule, me: UserProfile, partnerName: String, onBack:
                 }
                 if (sealedDays > 0) {
                     Text(
-                        stringResource(R.string.ol_sealed_days, sealedDays), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Brown,
+                        pluralStringResource(R.plurals.ol_sealed_days, sealedDays.toInt(), sealedDays), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Brown,
                         modifier = Modifier.clip(CircleShape).background(ChipGrey).padding(horizontal = 12.dp, vertical = 6.dp),
                     )
                 }

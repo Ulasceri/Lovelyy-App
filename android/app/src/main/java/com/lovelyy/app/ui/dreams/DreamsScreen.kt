@@ -1,5 +1,6 @@
 package com.lovelyy.app.ui.dreams
 
+import com.lovelyy.app.text.AppLocale
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -84,8 +85,6 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 class DreamsViewModel(private val app: LovelyyApplication, private val coupleId: String) : ViewModel() {
     val dreams: StateFlow<List<Dream>?> = app.dreamRepository.observe(coupleId)
@@ -319,7 +318,7 @@ private fun DreamRow(d: Dream, me: UserProfile, partnerName: String, onToggle: (
 @Composable
 private fun subtitle(d: Dream): String {
     val done = d.doneAt
-    if (done != null) return DayCounter.dateOf(done).format(DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.forLanguageTag("tr-TR")))
+    if (done != null) return DayCounter.dateOf(done).format(AppLocale.formatter("dMMMMy"))
     val cat = categoryLabel(d.category)
     return if (d.goal.isBlank()) cat else "$cat · ${d.goal}"
 }

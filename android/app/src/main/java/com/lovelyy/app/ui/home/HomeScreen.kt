@@ -79,6 +79,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -548,7 +549,7 @@ private fun Header(me: UserProfile, partnerName: String, startMillis: Long?, onD
                 maxLines = 1, overflow = TextOverflow.Ellipsis,
             )
             Text(
-                if (startMillis != null) stringResource(R.string.home_day_number, DayCounter.together(startMillis, System.currentTimeMillis()).days)
+                if (startMillis != null) pluralStringResource(R.plurals.home_day_number, (DayCounter.together(startMillis, System.currentTimeMillis()).days).toInt(), DayCounter.together(startMillis, System.currentTimeMillis()).days)
                 else stringResource(R.string.home_set_date),
                 fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = BrownSoft,
             )
@@ -580,7 +581,7 @@ private fun TogetherCard(startMillis: Long?, modifier: Modifier = Modifier, onCl
                 Text(stringResource(R.string.counter_together), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = BrownSoft)
                 if (startMillis != null) {
                     val t = DayCounter.together(startMillis, now)
-                    Text(stringResource(R.string.counter_days, t.days), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 26.sp, color = Brown)
+                    Text(pluralStringResource(R.plurals.counter_days, t.days.toInt(), t.days), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 26.sp, color = Brown)
                 } else {
                     Text(stringResource(R.string.counter_set_cta), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Brown)
                 }

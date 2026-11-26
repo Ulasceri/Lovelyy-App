@@ -17,6 +17,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -114,7 +115,7 @@ fun AccountScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBac
             Column(Modifier.weight(1f)) {
                 Text(me.displayName, fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = Brown)
                 Text(
-                    if (days != null) stringResource(R.string.acc_paired_days, partnerName, days) else stringResource(R.string.acc_paired, partnerName),
+                    if (days != null) pluralStringResource(R.plurals.acc_paired_days, days.toInt(), partnerName, days) else stringResource(R.string.acc_paired, partnerName),
                     fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = SubText,
                 )
             }
@@ -278,7 +279,7 @@ fun UnpairScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(stringResource(R.string.un_what), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Brown)
-            Consequence(CAT_D, stringResource(R.string.un_cat, catName), stringResource(R.string.un_cat_sub, catName, streak))
+            Consequence(CAT_D, stringResource(R.string.un_cat, catName), pluralStringResource(R.plurals.un_cat_sub, streak.toInt(), catName, streak))
             Consequence(BOX_D, stringResource(R.string.un_data), stringResource(R.string.un_data_sub))
             Consequence(BELL_D, stringResource(R.string.un_partner, partnerName), stringResource(R.string.un_partner_sub, TurkishSuffix.dative(partnerName)))
             Consequence(USER_D, stringResource(R.string.un_account), stringResource(R.string.un_account_sub))

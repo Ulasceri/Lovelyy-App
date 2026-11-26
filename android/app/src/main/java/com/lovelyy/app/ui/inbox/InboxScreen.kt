@@ -1,5 +1,6 @@
 package com.lovelyy.app.ui.inbox
 
+import com.lovelyy.app.text.AppLocale
 import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -12,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -42,7 +44,7 @@ import com.lovelyy.app.ui.history.InnerColumn
 import com.lovelyy.app.ui.history.Muted
 import com.lovelyy.app.ui.history.OutChip
 import com.lovelyy.app.ui.history.SubText
-import com.lovelyy.app.ui.history.TR
+import com.lovelyy.app.ui.history.AppLocale.current()
 import com.lovelyy.app.ui.history.WHEEL_ICON_D
 import com.lovelyy.app.ui.history.dayTitle
 import com.lovelyy.app.ui.history.localDate
@@ -135,7 +137,7 @@ fun InboxScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onOp
             Row(Modifier.fillMaxWidth().padding(top = if (i == 0) 4.dp else 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 DayHeader(dayTitle(day), Modifier.weight(1f))
                 if (i == 0 && unread > 0) {
-                    Text(stringResource(R.string.ib_new, unread), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Brown, modifier = Modifier.padding(end = 4.dp, top = 4.dp))
+                    Text(pluralStringResource(R.plurals.ib_new, unread.toInt(), unread), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Brown, modifier = Modifier.padding(end = 4.dp, top = 4.dp))
                 }
             }
             items.forEach { s ->
@@ -172,7 +174,7 @@ private fun InboxRow(s: Signal, partnerName: String, read: Boolean, onClick: () 
 
 @Composable
 private fun texts(s: Signal, who: String): Pair<String, String?> = when (s.kind) {
-    SignalKind.Heartbeat -> stringResource(R.string.hi_hb_in, who, stringResource((s.emotion ?: Emotion.Sevgi).labelRes()).lowercase(TR)) to null
+    SignalKind.Heartbeat -> stringResource(R.string.hi_hb_in, who, stringResource((s.emotion ?: Emotion.Sevgi).labelRes()).lowercase(AppLocale.current())) to null
     SignalKind.Nudge -> stringResource(R.string.hi_hb_nudge_in, who) to null
     SignalKind.Mood -> stringResource(R.string.ib_mood, who, stringResource((s.mood ?: MoodKind.Mutlu).labelRes())) to null
     SignalKind.Question -> stringResource(R.string.ib_question, who) to stringResource(R.string.ib_question_sub)

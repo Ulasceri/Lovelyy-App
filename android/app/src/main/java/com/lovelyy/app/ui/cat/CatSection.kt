@@ -86,6 +86,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -422,7 +423,7 @@ internal fun CatStage(
             Chip(onClick = onStreakClick, solid = true) {
                 Icon(Icons.Filled.LocalFireDepartment, null, Modifier.size(16.dp), tint = Color(0xFFE07A45))
                 Spacer(Modifier.width(4.dp))
-                Text(stringResource(R.string.cat_streak_chip, streak), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Brown)
+                Text(pluralStringResource(R.plurals.cat_streak_chip, streak.toInt(), streak), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Brown)
             }
         }
 

@@ -1,5 +1,6 @@
 package com.lovelyy.app.ui.counter
 
+import com.lovelyy.app.text.AppLocale
 import android.content.Intent
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
@@ -54,6 +55,7 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
@@ -107,11 +109,8 @@ import timber.log.Timber
 import java.text.NumberFormat
 import java.time.LocalDate
 import java.time.Period
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 import kotlin.random.Random
 
-private val TR = Locale.forLanguageTag("tr-TR")
 private val MintCell = Color(0xFFD6F0E8)
 private val ButterCell = Color(0xFFFFF1C9)
 private val CellLabel = Color(0xFF5F524C)
@@ -235,16 +234,16 @@ fun CounterScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBac
     }
 }
 
-private fun num(n: Long): String = NumberFormat.getIntegerInstance(TR).format(n)
+private fun num(n: Long): String = NumberFormat.getIntegerInstance(AppLocale.current()).format(n)
 
 /** "9 Ekim 2025 Perşembe'den" */
 private fun sinceText(startMillis: Long): String {
     val d = DayCounter.dateOf(startMillis)
-    return d.format(DateTimeFormatter.ofPattern("d MMMM yyyy ", TR)) +
-        TurkishSuffix.ablative(d.format(DateTimeFormatter.ofPattern("EEEE", TR)))
+    return d.format(AppLocale.formatter("dMMMMy")) + " " +
+        TurkishSuffix.ablative(d.format(AppLocale.formatter("EEEE")))
 }
 
-private fun longDate(d: LocalDate): String = d.format(DateTimeFormatter.ofPattern("d MMMM yyyy EEEE", TR))
+private fun longDate(d: LocalDate): String = d.format(AppLocale.formatter("dMMMMyEEEE"))
 
 @Composable
 private fun beatScale(big: Float = 1.12f, small: Float = 1.08f): Float {
@@ -298,7 +297,7 @@ private fun Initial(name: String, color: Color, modifier: Modifier = Modifier) {
         modifier.size(48.dp).clip(CircleShape).background(color).border(3.dp, Cream, CircleShape),
         contentAlignment = Alignment.Center,
     ) {
-        Text(name.trim().firstOrNull()?.uppercase(TR) ?: "?", fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 19.sp, color = Brown)
+        Text(name.trim().firstOrNull()?.uppercase(AppLocale.current()) ?: "?", fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 19.sp, color = Brown)
     }
 }
 
@@ -363,7 +362,7 @@ private fun MilestonePath(days: Long, prev: Milestone?, next: Milestone, all: Li
         Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.dc_path_title), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Brown, modifier = Modifier.weight(1f))
             Text(
-                if (next.years != null) stringResource(R.string.dc_until_year, next.years, left) else stringResource(R.string.dc_until_day, next.day, left),
+                if (next.years != null) pluralStringResource(R.plurals.dc_until_year, left.toInt(), next.years, left) else pluralStringResource(R.plurals.dc_until_day, left.toInt(), next.day, left),
                 fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Brown, maxLines = 1,
                 modifier = Modifier.clip(RoundedCornerShape(50)).background(PeachSoft).padding(horizontal = 12.dp, vertical = 7.dp),
             )

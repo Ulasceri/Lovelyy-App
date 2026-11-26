@@ -1,5 +1,6 @@
 package com.lovelyy.app.ui.plans
 
+import com.lovelyy.app.text.AppLocale
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -42,6 +43,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -95,10 +98,7 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.time.LocalDate
 import java.time.YearMonth
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 
-private val TR = Locale.forLanguageTag("tr-TR")
 private val MintCell = Color(0xFFD6F0E8)
 private val ButterCell = Color(0xFFFFF1C9)
 private val CellLabel = Color(0xFF5F524C)
@@ -230,7 +230,7 @@ fun PlansScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBucke
             }
             special.forEachIndexed { i, (e, left) ->
                 val next = CalendarMath.nextOccurrence(e, today) ?: e.date
-                Countdown(left, e.title, next.format(DateTimeFormatter.ofPattern("d MMMM", TR)), colors[i], Modifier.weight(1f).fillMaxHeight()) {
+                Countdown(left, e.title, next.format(AppLocale.formatter("dMMMM")), colors[i], Modifier.weight(1f).fillMaxHeight()) {
                     if (!e.builtIn) editing = Editing(e, e.date)
                 }
             }
@@ -244,14 +244,14 @@ fun PlansScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBucke
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    month.format(DateTimeFormatter.ofPattern("LLLL yyyy", TR)).replaceFirstChar { it.titlecase(TR) },
+                    month.format(AppLocale.formatter("LLLLy")).replaceFirstChar { it.titlecase(AppLocale.current()) },
                     fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 17.sp, color = Brown, modifier = Modifier.weight(1f),
                 )
                 ArrowButton(LEFT_D, stringResource(R.string.p_prev_month)) { monthKey = month.minusMonths(1).toString() }
                 ArrowButton(RIGHT_D, stringResource(R.string.p_next_month)) { monthKey = month.plusMonths(1).toString() }
             }
             Row {
-                listOf("Pt", "Sa", "Ça", "Pe", "Cu", "Ct", "Pz").forEach {
+                stringArrayResource(R.array.cal_weekdays_short).forEach {
                     Text(it, fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = BrownSoft, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
                 }
             }
@@ -278,8 +278,8 @@ fun PlansScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBucke
                 val whenText = when {
                     left == 0L -> stringResource(R.string.p_today)
                     left == 1L -> stringResource(R.string.p_tomorrow)
-                    left < 7L -> e.date.format(DateTimeFormatter.ofPattern("EEEE", TR))
-                    else -> stringResource(R.string.p_left, left.toInt())
+                    left < 7L -> e.date.format(AppLocale.formatter("EEEE"))
+                    else -> pluralStringResource(R.plurals.p_left, left.toInt(), left.toInt())
                 }
                 Row(
                     Modifier.fillMaxWidth().bounceClick(pressedScale = 0.98f) { editing = Editing(e, e.date) },
@@ -292,7 +292,7 @@ fun PlansScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBucke
                         verticalArrangement = Arrangement.Center,
                     ) {
                         Text(e.date.dayOfMonth.toString(), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 16.sp, lineHeight = 18.sp, color = Brown)
-                        Text(e.date.format(DateTimeFormatter.ofPattern("MMM", TR)).take(3).replaceFirstChar { it.titlecase(TR) }, fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 11.sp, lineHeight = 12.sp, color = Brown)
+                        Text(e.date.format(AppLocale.formatter("MMM")).replaceFirstChar { it.titlecase(AppLocale.current()) }, fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 11.sp, lineHeight = 12.sp, color = Brown)
                     }
                     Column(Modifier.weight(1f)) {
                         Text(e.title, fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Brown, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -362,7 +362,7 @@ private fun Initial(name: String, color: Color) {
     Box(
         Modifier.size(42.dp).clip(CircleShape).background(color).border(3.dp, Cream, CircleShape),
         contentAlignment = Alignment.Center,
-    ) { Text(name.trim().firstOrNull()?.uppercase(TR) ?: "?", fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Brown) }
+    ) { Text(name.trim().firstOrNull()?.uppercase(AppLocale.current()) ?: "?", fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Brown) }
 }
 
 @Composable
@@ -473,7 +473,7 @@ private fun PlanEditor(event: CalEvent?, initialDate: LocalDate, onDismiss: () -
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    stringResource(R.string.p_editor_date, date.format(DateTimeFormatter.ofPattern("d MMMM yyyy EEEE", TR))),
+                    stringResource(R.string.p_editor_date, date.format(AppLocale.formatter("dMMMMyEEEE"))),
                     fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Brown, modifier = Modifier.weight(1f),
                 )
                 SvgStrokeIcon(RIGHT_D, BrownSoft, Modifier.size(18.dp))

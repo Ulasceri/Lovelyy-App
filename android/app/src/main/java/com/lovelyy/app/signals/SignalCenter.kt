@@ -264,7 +264,7 @@ class SignalCenter(private val app: LovelyyApplication) {
         fun notifySummary(context: Context, rest: List<Signal>) {
             val who = rest.last().fromName.ifBlank { context.getString(R.string.home_partner_fallback) }
             val hearts = rest.all { it.kind == SignalKind.Heartbeat }
-            val text = context.getString(if (hearts) R.string.signal_summary_hearts else R.string.signal_summary_mixed, who, rest.size)
+            val text = context.resources.getQuantityString(if (hearts) R.plurals.signal_summary_hearts else R.plurals.signal_summary_mixed, rest.size, who, rest.size)
             val kinds = rest.map { it.kind }.distinct()
             val route = if (kinds.size == 1) route(kinds.single()) else null
             val open = DeepLink.intent(context, route, requestCode = 1100)

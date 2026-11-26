@@ -1,5 +1,6 @@
 package com.lovelyy.app.ui.drawing
 
+import com.lovelyy.app.text.AppLocale
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -13,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -42,7 +44,7 @@ import com.lovelyy.app.ui.history.InnerColumn
 import com.lovelyy.app.ui.history.MiniAvatar
 import com.lovelyy.app.ui.history.Muted
 import com.lovelyy.app.ui.history.SubText
-import com.lovelyy.app.ui.history.TR
+import com.lovelyy.app.ui.history.AppLocale.current()
 import com.lovelyy.app.ui.history.clock
 import com.lovelyy.app.ui.history.localDate
 import com.lovelyy.app.ui.lovelyyApp
@@ -60,7 +62,7 @@ import java.time.format.DateTimeFormatter
 private const val TRASH_D = "M5 7h14M10 7V5h4v2M7 7l1 12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2l1-12M10 11v6M14 11v6"
 private const val LEFT_D = "M15 6l-6 6 6 6"
 private const val RIGHT_D = "M9 6l6 6-6 6"
-private val LONG_DAY: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy EEEE", TR)
+private val LONG_DAY: DateTimeFormatter get() = AppLocale.formatter("dMMMMyEEEE")
 
 /**
  * Çizimlerimiz (approved boards 28-29): every drawing saved from Canlı çizim in a two-column grid, and one drawing
@@ -91,7 +93,7 @@ fun DrawingsScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, o
         if (drawings != null) {
             Text(
                 buildAnnotatedString {
-                    withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = Brown)) { append(stringResource(R.string.dg_count, list.size)) }
+                    withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = Brown)) { append(pluralStringResource(R.plurals.dg_count, list.size.toInt(), list.size)) }
                     append(" · ")
                     append(stringResource(R.string.dg_sub))
                 },
