@@ -1,5 +1,6 @@
 package com.lovelyy.app.ui.wheel
 
+import android.widget.Toast
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
@@ -29,6 +30,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -45,6 +47,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
@@ -69,6 +72,7 @@ import com.lovelyy.app.LovelyyApplication
 import com.lovelyy.app.R
 import com.lovelyy.app.analytics.AnalyticsEvent
 import com.lovelyy.app.data.SignalKind
+import com.lovelyy.app.data.SpinClaim
 import com.lovelyy.app.data.UserProfile
 import com.lovelyy.app.data.WheelSpin
 import com.lovelyy.app.ui.home.relativeTime
@@ -97,11 +101,15 @@ import com.lovelyy.app.ui.theme.Mint
 import com.lovelyy.app.ui.theme.Peach
 import com.lovelyy.app.ui.theme.PeachTint
 import com.lovelyy.app.ui.theme.Quicksand
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import timber.log.Timber
 import kotlin.random.Random
 
@@ -128,16 +136,39 @@ class WheelViewModel(private val app: LovelyyApplication, private val coupleId: 
         .catch { Timber.w(it, "Wheel results unavailable") }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
 
-    /** Shares the result with the partner: stored for both screens, plus a notification. */
-    fun shareSpin(me: UserProfile, partner: UserProfile?, wheel: Wheel, result: String) {
-        viewModelScope.launch {
-            runCatching { app.wheelRepository.saveSpin(coupleId, me, wheel.id, wheel.label, result) }
-                .onFailure { Timber.w(it, "Saving the wheel result failed") }
-            if (partner != null) {
-                runCatching { app.signalRepository.send(coupleId, me, partner.uid, SignalKind.Wheel, text = "${wheel.label} → $result") }
+    /**
+     * Shares a spin with the partner. If the partner spun the same wheel at the same moment, their spin wins:
+     * the returned claim carries it and no signal is sent (they already notify us). Runs in viewModelScope so
+     * leaving the screen mid-spin still saves it; the screen awaits the result to know where to stop.
+     */
+    fun claimSpin(me: UserProfile, partner: UserProfile?, wheel: Wheel, result: String): Deferred<SpinClaim?> =
+        viewModelScope.async {
+            val claim = try {
+                withTimeoutOrNull(CLAIM_TIMEOUT_MS) { app.wheelRepository.claimSpin(coupleId, me, wheel.id, wheel.label, result) }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.w(e, "Wheel spin transaction failed")
+                null
+            }
+            if (claim == null) {
+                // Offline or slow: fall back to a queued plain write so the result still reaches the partner later.
+                runCatching { app.wheelRepository.saveSpin(coupleId, me, wheel.id, wheel.label, result) }
+                    .onFailure { Timber.w(it, "Saving the wheel result failed") }
+            } else {
+                Telemetry.track(AnalyticsEvent.WheelSpun(wheel.builtIn, wheel.items.size))
+            }
+            // Only the spin that counts notifies the partner; a losing simultaneous spin stays silent.
+            if (partner != null && claim?.won != false) {
+                val text = "${wheel.label} → ${claim?.spin?.result ?: result}"
+                runCatching { app.signalRepository.send(coupleId, me, partner.uid, SignalKind.Wheel, text = text) }
                     .onFailure { Timber.w(it, "Wheel signal failed") }
             }
+            claim
         }
+
+    private companion object {
+        const val CLAIM_TIMEOUT_MS = 2_500L
     }
 
     fun delete(id: String) {
@@ -172,12 +203,32 @@ fun WheelScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onHi
     val items = wheel.items
 
     val rotation = remember { Animatable(0f) }
+    // spinning: our own spin is animating. replaying: the partner's fresh spin is animating here.
     var spinning by remember { mutableStateOf(false) }
+    var replaying by remember { mutableStateOf(false) }
+    val busy = spinning || replaying
+    // The spin (by its time) this phone already animated, so it is not replayed again.
+    var animatedAt by remember { mutableLongStateOf(0L) }
     // The shared result of this wheel (whoever spun it last). The wheel rests on it for both partners.
     val lastSpin = spins[wheel.id]?.takeIf { it.result in items }
-    androidx.compose.runtime.LaunchedEffect(wheel.id, lastSpin?.at, items) {
-        if (!spinning && lastSpin != null) {
-            rotation.snapTo(WheelMath.spinTo(0f, items.indexOf(lastSpin.result), items.size, turns = 0))
+    // Keyed on `spinning` too, so the wheel settles on the shared result once our own animation ends.
+    androidx.compose.runtime.LaunchedEffect(wheel.id, lastSpin?.at, items, spinning) {
+        if (spinning || lastSpin == null) return@LaunchedEffect
+        val index = items.indexOf(lastSpin.result)
+        val now = System.currentTimeMillis()
+        if (lastSpin.by != me.uid && lastSpin.at != animatedAt && WheelMath.isRecent(lastSpin.at, now)) {
+            // The partner just spun: play the spin here too instead of jumping to the result.
+            animatedAt = lastSpin.at
+            replaying = true
+            try {
+                val to = WheelMath.spinTo(rotation.value, index, items.size, turns = 4)
+                rotation.animateTo(to, tween(WheelMath.remainingMs(lastSpin.at, now), easing = SpinEasing))
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+            } finally {
+                replaying = false
+            }
+        } else if (WheelMath.indexAt(rotation.value, items.size) != index) {
+            rotation.snapTo(WheelMath.spinTo(0f, index, items.size, turns = 0))
         }
     }
     var showAll by remember { mutableStateOf(false) }
@@ -202,20 +253,44 @@ fun WheelScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onHi
     }
 
     fun spin() {
-        if (spinning || items.size < WheelMath.MIN_ITEMS) return
+        if (busy || items.size < WheelMath.MIN_ITEMS) return
         spinning = true
-        val target = Random.nextInt(items.size)
-        val to = WheelMath.spinTo(rotation.value, target, items.size, turns = 4, jitter = Random.nextFloat() * 2f - 1f)
-        Telemetry.track(AnalyticsEvent.WheelSpun(wheel.builtIn, items.size))
-        vm.shareSpin(me, partner, wheel, items[target])
+        val spunItems = items
+        val target = Random.nextInt(spunItems.size)
+        val to = WheelMath.spinTo(rotation.value, target, spunItems.size, turns = 4, jitter = Random.nextFloat() * 2f - 1f)
+        val claim = vm.claimSpin(me, partner, wheel, spunItems[target])
+        val startedAt = System.currentTimeMillis()
         scope.launch {
-            rotation.animateTo(to, tween(3200, easing = SpinEasing))
-            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-            spinning = false
+            try {
+                // Start turning right away; the shared decision usually arrives while the wheel is still fast.
+                val anim = launch { rotation.animateTo(to, tween(WheelMath.SPIN_MS, easing = SpinEasing)) }
+                val agreed = claim.await()
+                agreed?.spin?.at?.let { animatedAt = it }
+                val winner = agreed?.spin?.result?.let { spunItems.indexOf(it) } ?: -1
+                if (agreed != null && !agreed.won && winner >= 0 && winner != target) {
+                    // The partner's simultaneous spin won: stop on their result instead of ours.
+                    anim.cancel()
+                    anim.join()
+                    val left = (WheelMath.SPIN_MS - (System.currentTimeMillis() - startedAt)).toInt().coerceAtLeast(1_500)
+                    val retarget = WheelMath.spinTo(rotation.value, winner, spunItems.size, turns = 2, jitter = Random.nextFloat() * 2f - 1f)
+                    rotation.animateTo(retarget, tween(left, easing = SpinEasing))
+                } else {
+                    anim.join()
+                }
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+            } finally {
+                spinning = false
+            }
         }
     }
 
     fun saveItems(newItems: List<String>) = vm.save(wheel.id, wheel.label, newItems)
+
+    // Short feedback when an option change is refused (same Toast pattern as the other screens).
+    val context = LocalContext.current
+    val minItemsText = stringResource(R.string.wh_min_items, WheelMath.MIN_ITEMS)
+    val duplicateText = stringResource(R.string.wh_duplicate)
+    fun toast(text: String) = Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
 
     Column(
         Modifier
@@ -274,12 +349,12 @@ fun WheelScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onHi
         // Result.
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
-                stringResource(if (spinning) R.string.wh_spinning else if (lastSpin != null) R.string.wh_result else R.string.wh_not_spun),
+                stringResource(if (busy) R.string.wh_spinning else if (lastSpin != null) R.string.wh_result else R.string.wh_not_spun),
                 fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = BrownSoft,
             )
-            val result = if (spinning || items.isEmpty()) "…" else lastSpin?.result ?: "?"
+            val result = if (busy || items.isEmpty()) "…" else lastSpin?.result ?: "?"
             Text(result, fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 26.sp, color = Brown, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            if (!spinning && lastSpin != null) {
+            if (!busy && lastSpin != null) {
                 val ago = relativeTime(lastSpin.at)
                 Text(
                     if (lastSpin.by == me.uid) stringResource(R.string.wh_by_me, ago)
@@ -289,7 +364,7 @@ fun WheelScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onHi
             }
         }
 
-        MainAction(stringResource(R.string.wh_spin), WHEEL_D, ::spin, enabled = !spinning && items.size >= WheelMath.MIN_ITEMS)
+        MainAction(stringResource(R.string.wh_spin), WHEEL_D, ::spin, enabled = !busy && items.size >= WheelMath.MIN_ITEMS)
 
         // Options.
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -297,8 +372,8 @@ fun WheelScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onHi
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 val shown = if (showAll) items else items.take(VISIBLE_CHIPS)
                 shown.forEach { item ->
-                    OptionChip(item, removeLabel = stringResource(R.string.wh_remove, item), canRemove = items.size > WheelMath.MIN_ITEMS && !spinning) {
-                        saveItems(items - item)
+                    OptionChip(item, removeLabel = stringResource(R.string.wh_remove, item), canRemove = items.size > WheelMath.MIN_ITEMS, enabled = !busy) {
+                        if (items.size > WheelMath.MIN_ITEMS) saveItems(items - item) else toast(minItemsText)
                     }
                 }
                 if (items.size > VISIBLE_CHIPS) {
@@ -327,7 +402,11 @@ fun WheelScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onHi
     if (adding) {
         AddOptionSheet(onDismiss = { adding = false }) { text ->
             adding = false
-            if (text.isNotBlank() && items.none { it.equals(text.trim(), ignoreCase = true) }) saveItems(items + text.trim())
+            when {
+                text.isBlank() -> Unit
+                items.any { it.equals(text.trim(), ignoreCase = true) } -> toast(duplicateText)
+                else -> saveItems(items + text.trim())
+            }
         }
     }
     if (creating) {
@@ -381,7 +460,7 @@ private fun WheelFace(items: List<String>, rotation: Float, label: String, modif
 }
 
 @Composable
-private fun OptionChip(text: String, removeLabel: String, canRemove: Boolean, onRemove: () -> Unit) {
+private fun OptionChip(text: String, removeLabel: String, canRemove: Boolean, enabled: Boolean, onRemove: () -> Unit) {
     Row(
         Modifier.height(44.dp).softShadow(RoundedCornerShape(50), 2.dp).clip(RoundedCornerShape(50)).background(CreamCard)
             .padding(start = 14.dp, end = 2.dp),
@@ -390,7 +469,7 @@ private fun OptionChip(text: String, removeLabel: String, canRemove: Boolean, on
         Text(text, fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Brown, maxLines = 1)
         Box(
             Modifier.size(40.dp).semantics { role = Role.Button; contentDescription = removeLabel }
-                .bounceClick(enabled = canRemove, onClick = onRemove),
+                .bounceClick(enabled = enabled, onClick = onRemove),
             contentAlignment = Alignment.Center,
         ) { SvgStrokeIcon(Kit.X_D, BrownSoft.copy(alpha = if (canRemove) 1f else 0.4f), Modifier.size(14.dp), strokeWidth = 2.4f) }
     }
