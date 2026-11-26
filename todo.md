@@ -12,3 +12,4 @@
 - [ ] Web sitesini `npx firebase-tools deploy --only hosting --project lovelyy-native` ile yayınla.
 - [ ] Bildirimler için FCM eklenirse gizlilik politikasını ve Data safety taslağını güncelle.
 - [ ] Günün sorusundaki 60 soruyu koddan çıkarıp çok dile hazır hale getir.
+- [ ] Eşleşmemiş kullanıcı için eşleşme ekranına "Hesabı sil" girişi tasarlatıp ekle (Play uygulama içi silme istiyor).
