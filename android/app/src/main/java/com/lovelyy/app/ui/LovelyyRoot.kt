@@ -62,3 +62,10 @@ private fun LoadingScreen() {
 @Composable
 fun lovelyyApp(): LovelyyApplication = LocalContext.current.applicationContext as LovelyyApplication
 
+/** Today in the couple's shared time zone (see CoupleClock); recomposes when the zone is loaded. */
+@Composable
+fun coupleToday(): java.time.LocalDate {
+    val zone by com.lovelyy.app.data.CoupleClock.zone.collectAsStateWithLifecycle()
+    return com.lovelyy.app.data.CoupleDay.today(zone, System.currentTimeMillis())
+}
+

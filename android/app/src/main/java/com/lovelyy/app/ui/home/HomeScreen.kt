@@ -220,6 +220,13 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
 
     // Partner signals: listen while the app process lives, ask once for notification permission.
     LaunchedEffect(coupleId, me.uid) { app.signalCenter.start(coupleId, me.uid) }
+    // The couple's shared time zone: both phones count "today" (streaks, daily question, capsules) in it.
+    LaunchedEffect(coupleId, me.uid) {
+        com.lovelyy.app.data.CoupleClock.select(coupleId)
+        app.coupleSettingsRepository.observeZone(coupleId, me.uid)
+            .catch { timber.log.Timber.w(it, "Couple time zone updates failed") }
+            .collect { com.lovelyy.app.data.CoupleClock.apply(coupleId, it) }
+    }
     val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
     LaunchedEffect(Unit) {
         if (Build.VERSION.SDK_INT >= 33 &&

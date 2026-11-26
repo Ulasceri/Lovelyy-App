@@ -114,7 +114,8 @@ treats them as valid for 30 minutes (the rules still allow up to 24h).
 
 | Path | Fields | Notes |
 |---|---|---|
-| `couples/{id}.startDate` | timestamp | day counter; start of the chosen day in the phone's zone |
+| `couples/{id}.startDate` | timestamp | day counter; start of the chosen day in the couple's time zone |
+| `couples/{id}/settings/main` | zone (IANA id), setBy, at | the couple's shared time zone: written once (transaction) with the first phone's zone; every shared "today" (care streak, daily question, capsule open day, calendar, start date) is computed in it via `CoupleClock`/`CoupleDay`, falling back to the phone's zone until loaded. No UI to change it |
 | `couples/{id}/signals/{auto}` | kind (heartbeat/nudge/mood/question/note/event), emotion, mood, text, from, fromName, to, at, createdAt | heartbeats, nudges and notices for the partner |
 | `couples/{id}/moods/{uid}` | kind, note, at | each partner's current mood |
 | `couples/{id}/questions/{yyyy-MM-dd}` | day, question, answers.{uid} = {name, text, at} | günün sorusu; question text comes from `QuestionBank.forDay` so both phones agree without a server |

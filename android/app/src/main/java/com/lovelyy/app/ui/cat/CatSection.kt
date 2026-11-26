@@ -213,7 +213,7 @@ fun CatSection(me: UserProfile, couple: Couple?, partner: UserProfile?, modifier
                 animator = animator,
                 sleepingPoster = ui?.levels?.sleeping == true,
                 name = ui?.doc?.name,
-                streak = ui?.doc?.streak?.current(LocalDate.now()) ?: 0,
+                streak = ui?.doc?.streak?.current(com.lovelyy.app.ui.coupleToday()) ?: 0,
                 bubble = mood?.let { stringResource(it.bubbleRes()) },
                 banner = banner,
                 onNameClick = { naming = true },
@@ -675,7 +675,7 @@ private fun StatusLine(
     partnerName: String,
     modifier: Modifier = Modifier,
 ) {
-    val today = LocalDate.now()
+    val today = com.lovelyy.app.ui.coupleToday()
     val parts = buildList {
         val meDone = streak.caredToday(me.uid, today)
         val partnerDone = partnerUid != null && streak.caredToday(partnerUid, today)

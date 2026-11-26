@@ -37,14 +37,15 @@ fun LovelyyDatePicker(
     /** Only days after today (time-capsule letters). */
     onlyFuture: Boolean = false,
 ) {
-    val todayUtc = LocalDate.now().atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+    val today = com.lovelyy.app.data.CoupleClock.today()
+    val todayUtc = today.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
     val state = rememberDatePickerState(
         initialSelectedDateMillis = initial?.atStartOfDay(ZoneOffset.UTC)?.toInstant()?.toEpochMilli(),
         selectableDates = object : SelectableDates {
             override fun isSelectableDate(utcTimeMillis: Long) =
                 if (onlyFuture) utcTimeMillis > todayUtc else allowFuture || utcTimeMillis <= todayUtc
             override fun isSelectableYear(year: Int) =
-                if (onlyFuture) year >= LocalDate.now().year else allowFuture || year <= LocalDate.now().year
+                if (onlyFuture) year >= today.year else allowFuture || year <= today.year
         },
     )
     val colors = DatePickerDefaults.colors(

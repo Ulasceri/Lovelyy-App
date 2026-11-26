@@ -149,7 +149,7 @@ fun PlansScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBucke
     val vm: PlansViewModel = viewModel(key = "plans-$coupleId") { PlansViewModel(app, coupleId) }
     val stored by vm.events.collectAsStateWithLifecycle()
     val partnerName = partner?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.home_partner_fallback)
-    val today = LocalDate.now()
+    val today = com.lovelyy.app.ui.coupleToday()
     val anniversaryTitle = stringResource(R.string.p_anniversary)
 
     // The day counter's start date is the built-in anniversary.

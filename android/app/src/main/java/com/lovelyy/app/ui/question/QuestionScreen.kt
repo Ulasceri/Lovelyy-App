@@ -110,7 +110,7 @@ class QuestionViewModel(private val app: LovelyyApplication, private val coupleI
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     suspend fun answer(me: UserProfile, partner: UserProfile?, text: String): Boolean {
-        val ok = runCatching { app.questionRepository.answer(coupleId, LocalDate.now(), me, text) }
+        val ok = runCatching { app.questionRepository.answer(coupleId, com.lovelyy.app.data.CoupleClock.today(), me, text) }
             .onFailure { Timber.w(it, "Saving the answer failed") }
             .isSuccess
         if (!ok) return false
@@ -135,7 +135,7 @@ fun QuestionScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBa
     val focus = LocalFocusManager.current
     val partnerName = partner?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.home_partner_fallback)
 
-    val today = LocalDate.now()
+    val today = com.lovelyy.app.ui.coupleToday()
     val todayDoc = days?.firstOrNull { it.day == today.toString() }
     val mine = todayDoc?.answers?.get(me.uid)
     val theirs = partner?.uid?.let { todayDoc?.answers?.get(it) }

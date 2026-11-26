@@ -25,6 +25,8 @@ object Paths {
     const val STROKES = "strokes"
     const val DRAWING = "drawing"
     const val DRAWINGS = "drawings"
+    const val SETTINGS = "settings"
+    const val SETTINGS_DOC = "main"
 }
 
 internal fun DocumentSnapshot.toUserProfile(): UserProfile? =

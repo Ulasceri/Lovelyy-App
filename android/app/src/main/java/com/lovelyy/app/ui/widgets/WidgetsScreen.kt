@@ -105,7 +105,7 @@ fun WidgetsScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
     val partnerName = partner?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.home_partner_fallback)
     val catName = catUi?.doc?.name?.takeIf { it.isNotBlank() } ?: stringResource(R.string.cat_generic)
     val levels = catUi?.levels
-    val streak = catUi?.doc?.streak?.current(LocalDate.now()) ?: 0
+    val streak = catUi?.doc?.streak?.current(com.lovelyy.app.ui.coupleToday()) ?: 0
     val days = couple?.startDate?.toDate()?.time?.let { DayCounter.together(it, System.currentTimeMillis()).days.toInt() }
     val liveAt = partner?.uid?.let { presence[it] }
     val partnerLive = liveAt != null && System.currentTimeMillis() - liveAt < DrawingMath.ACTIVE_MS

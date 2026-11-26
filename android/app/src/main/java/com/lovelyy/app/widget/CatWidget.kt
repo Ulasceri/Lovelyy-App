@@ -113,7 +113,7 @@ object CatWidget {
         val levels = CatRules.levels(doc)
         views.setImageViewResource(R.id.wide_cat, levels.mood.picture())
         views.setTextViewText(R.id.wide_name, doc.name?.takeIf { it.isNotBlank() } ?: context.getString(R.string.cat_generic))
-        views.setTextViewText(R.id.wide_streak, context.getString(R.string.widget_streak, doc.streak.current(java.time.LocalDate.now())))
+        views.setTextViewText(R.id.wide_streak, context.getString(R.string.widget_streak, doc.streak.current(com.lovelyy.app.data.CoupleClock.today())))
         fun bar(ok: Int, low: Int, value: Double) {
             val v = value.toInt().coerceIn(0, 100)
             val isLow = value < CatRules.LOW

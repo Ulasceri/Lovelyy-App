@@ -7,7 +7,6 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
-import java.time.LocalDate
 import java.util.Date
 
 /** Reads and changes the shared cat at couples/{coupleId}/cat/main. */
@@ -61,7 +60,7 @@ class CatRepository(private val db: FirebaseFirestore) {
                 lastAction = action,
                 recent = (listOf(action) + doc.recent).take(MAX_RECENT),
                 streak = if (type == CatActionType.Name) doc.streak
-                else doc.streak.afterCare(me.uid, members, LocalDate.now()),
+                else doc.streak.afterCare(me.uid, members, CoupleClock.today(now)),
             )
             tx.set(ref, result.toMap())
             result
