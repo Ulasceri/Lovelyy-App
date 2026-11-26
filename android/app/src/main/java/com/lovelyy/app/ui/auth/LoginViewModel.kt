@@ -54,6 +54,14 @@ class LoginViewModel(
         resetSent = false
     }
 
+    /** Back to an empty Karşılama: nothing typed for the previous sign-in may show up after signing out. */
+    fun reset() {
+        switchMode(Mode.Welcome)
+        name = ""
+        email = ""
+        password = ""
+    }
+
     /** Called when a field is edited, so a stale error doesn't linger until resubmit. */
     fun clearError() { if (error != null) error = null }
 
@@ -62,14 +70,20 @@ class LoginViewModel(
     fun submitEmail() {
         if (email.isBlank()) { error = AppError.InvalidEmail; return }
         if (password.length < 6) { error = AppError.WeakPassword; return }
+        // Copy the form now: [reset] empties the fields as soon as the account exists and this screen leaves,
+        // which is before the name is stored below.
+        val signUp = mode == Mode.SignUp
+        val typedName = name
+        val typedEmail = email
+        val typedPassword = password
         launchAction {
-            if (mode == Mode.SignUp) {
-                auth.signUpWithEmail(name, email, password)
+            if (signUp) {
+                auth.signUpWithEmail(typedName, typedEmail, typedPassword)
                 auth.currentUser?.let { user ->
-                    runCatching { users.setNameIfBlank(user.uid, name) }
+                    runCatching { users.setNameIfBlank(user.uid, typedName) }
                 }
             } else {
-                auth.signInWithEmail(email, password)
+                auth.signInWithEmail(typedEmail, typedPassword)
             }
         }
     }
