@@ -80,11 +80,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lovelyy.app.R
 import com.lovelyy.app.data.PairingRepository
 import com.lovelyy.app.data.UserProfile
 import com.lovelyy.app.ui.components.BackButton
+import com.lovelyy.app.ui.components.ConfirmDialog
 import com.lovelyy.app.ui.components.ErrorText
 import com.lovelyy.app.ui.components.GhostButton
 import com.lovelyy.app.ui.components.PeachButton
@@ -92,6 +94,8 @@ import com.lovelyy.app.ui.components.Pill
 import com.lovelyy.app.ui.components.bounceClick
 import com.lovelyy.app.ui.components.softShadow
 import com.lovelyy.app.ui.lovelyyApp
+import com.lovelyy.app.ui.profile.LeaveEffects
+import com.lovelyy.app.ui.profile.LeaveViewModel
 import com.lovelyy.app.ui.theme.Brown
 import com.lovelyy.app.ui.theme.BrownSoft
 import com.lovelyy.app.ui.theme.CreamCard
@@ -113,6 +117,13 @@ fun PairingScreen(me: UserProfile) {
     val vm: PairingViewModel = viewModel { PairingViewModel(app.pairingRepository) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+
+    // Account sheet (boards 35-36): sign out or delete the account before pairing (Play requires in-app deletion).
+    val leave: LeaveViewModel = viewModel { LeaveViewModel(app) }
+    val deleting by leave.busy.collectAsStateWithLifecycle()
+    var accountSheet by remember { mutableStateOf(false) }
+    var confirmDelete by remember { mutableStateOf(false) }
+    LeaveEffects(leave)
 
     BackHandler(enabled = vm.tab == PairingViewModel.Tab.Enter) { vm.selectTab(PairingViewModel.Tab.Share) }
 
@@ -138,6 +149,8 @@ fun PairingScreen(me: UserProfile) {
                     onShare = { code -> shareCode(context, code) },
                     onNewCode = { vm.newCode(me) },
                     onEnter = { vm.selectTab(PairingViewModel.Tab.Enter) },
+                    deleting = deleting,
+                    onAccount = { accountSheet = true },
                 )
             }
             PairingViewModel.Tab.Enter -> EnterPage(
@@ -150,6 +163,30 @@ fun PairingScreen(me: UserProfile) {
                 onJoin = { vm.join(me) },
             )
         }
+    }
+
+    if (accountSheet) {
+        val user = app.authRepository.currentUser
+        val google = remember(user) { user?.providerData?.any { it.providerId == "google.com" } == true }
+        PairingAccountSheet(
+            email = user?.email.orEmpty(),
+            google = google,
+            busy = deleting,
+            // Same as the back arrow: no extra confirm, signing in again resumes here.
+            onSignOut = { accountSheet = false; scope.launch { app.authRepository.signOut(context) } },
+            onDelete = { accountSheet = false; confirmDelete = true },
+            onDismiss = { accountSheet = false },
+        )
+    }
+    if (confirmDelete) {
+        ConfirmDialog(
+            title = stringResource(R.string.acc_delete_title),
+            body = stringResource(R.string.acc_delete_body),
+            confirm = stringResource(R.string.acc_delete_yes),
+            // On success AppViewModel moves to the signed-out screen by itself; failures toast via LeaveEffects.
+            onConfirm = { confirmDelete = false; leave.deleteAccount(me) },
+            onDismiss = { confirmDelete = false },
+        )
     }
 }
 
@@ -171,6 +208,8 @@ private fun SharePage(
     onShare: (String) -> Unit,
     onNewCode: () -> Unit,
     onEnter: () -> Unit,
+    deleting: Boolean,
+    onAccount: () -> Unit,
 ) {
     BoxWithConstraints(Modifier.fillMaxSize().safeDrawingPadding()) {
         Column(
@@ -186,7 +225,7 @@ private fun SharePage(
                 Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
                     Pill(stringResource(R.string.pair_last_step), color = BrownSoft)
                 }
-                Spacer(Modifier.width(44.dp))
+                PairingAccountButton(busy = deleting, onClick = onAccount)
             }
 
             CoupleAvatars(me.displayName, Modifier.padding(top = 28.dp))

@@ -11,7 +11,7 @@ Android uygulaması Kotlin + Jetpack Compose + Material 3 ile yazılır, arka u�
 |---|---|
 | Karşılama, Giriş (Google + e-posta/şifre), isim belirleme | Hazır |
 | İlk açılış tanıtımı: 3 sayfalık "dene" tanıtımı (besle, kalp atışı gönder, birlikte çiz); "Atla" ile geçilebilir | Hazır |
-| Partnerle 6 haneli kodla eşleşme | Hazır |
+| Partnerle 6 haneli kodla eşleşme; eşleşme ekranının sağ üstündeki hesap düğmesinden çıkış ve hesap silme (eşleşmeden de hesap silinebilir) | Hazır |
 | Eşleşme sonrası: "Eşleştiniz" ekranı, bildirim ve konum izni ön ekranları (izin penceresi sadece düğmeye basınca açılır) | Hazır |
 | Anasayfa (Yuva / Anılar / Planlar / Biz) ve alt gezinme çubuğu | Hazır |
 | Ortak animasyonlu kedi: ana sayfa + kedi bakımı ekranı, seri ve aksesuarlar | Hazır (kısa videolar `assets/cat/` içinde, ExoPlayer ile oynar) |

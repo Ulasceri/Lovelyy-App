@@ -143,6 +143,14 @@
     </plurals>
     <string name="pair_enter_hint_ttl">Kod 30 dakika geçerli, sadece bir kez kullanılır.</string>
     <string name="pair_delete">Sil</string>
+    <string name="action_close">Kapat</string>
+
+    <!-- Pairing account sheet (boards 34-36): sign out or delete the account before pairing -->
+    <string name="pair_acc_title">Hesabın</string>
+    <string name="pair_acc_google">Google ile giriş yaptın</string>
+    <string name="pair_acc_email">E-posta ile giriş yaptın</string>
+    <string name="pair_acc_sign_out_sub">Yalnızca bu telefondan çıkarsın. Tekrar girince kaldığın yerden devam edersin.</string>
+    <string name="pair_acc_delete_sub">Hesabın ve profilin kalıcı olarak silinir. Silmeden önce senden onay isteriz.</string>
 
     <!-- Home (Yuva) + navigation -->
     <string name="tab_home">Yuva</string>

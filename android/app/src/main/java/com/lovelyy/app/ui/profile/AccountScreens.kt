@@ -65,16 +65,16 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.focus.onFocusChanged
 import timber.log.Timber
 
-private const val MAIL_D = "M6 6h12a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V9a3 3 0 0 1 3-3z M4 8l8 6 8-6"
+internal const val MAIL_D = "M6 6h12a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V9a3 3 0 0 1 3-3z M4 8l8 6 8-6"
 private const val KEY_D = "M14.5 9.5a4 4 0 1 1-8 0a4 4 0 1 1 8 0z M13.5 12.5L20 19M17 16l2-2M18.5 17.5l1.5-1.5"
-private const val LOGOUT_D = "M14 5h3a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-3M10 8l-4 4 4 4M6 12h9"
-private const val TRASH_D = "M5 7h14M10 7V5h4v2M7 7l1 12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2l1-12M10 11v6M14 11v6"
-private const val CHEVRON_D = "M9 5l7 7-7 7"
+internal const val LOGOUT_D = "M14 5h3a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-3M10 8l-4 4 4 4M6 12h9"
+internal const val TRASH_D = "M5 7h14M10 7V5h4v2M7 7l1 12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2l1-12M10 11v6M14 11v6"
+internal const val CHEVRON_D = "M9 5l7 7-7 7"
 private const val HEART_BREAK_D = "M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z M12 7.5l-1.5 4 3 1.5-1.5 4"
 private const val CAT_D = "M5 9l1-5 4 3h4l4-3 1 5v5a7 7 0 0 1-14 0z M9.5 13h.01M14.5 13h.01"
 private const val BOX_D = "M4 8l8-4 8 4v8l-8 4-8-4z M4 8l8 4 8-4M12 12v8"
 private const val BELL_D = "M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z M10 20.5a2 2 0 0 0 4 0"
-private const val USER_D = "M15.5 8a3.5 3.5 0 1 1-7 0a3.5 3.5 0 1 1 7 0z M5 20a7 7 0 0 1 14 0"
+internal const val USER_D = "M15.5 8a3.5 3.5 0 1 1-7 0a3.5 3.5 0 1 1 7 0z M5 20a7 7 0 0 1 14 0"
 private val SectionGrey = Color(0xFFF6EEE8)
 
 /** The confirm word for unpairing. Typed in capitals; compared without case so the keyboard can't trip it. */
@@ -212,8 +212,9 @@ private fun InfoRow(icon: String?, label: String, value: String, googleBadge: Bo
     }
 }
 
+/** A tappable account row (icon, label, optional sub line, chevron); also used by the pairing account sheet. */
 @Composable
-private fun ActionRow(icon: String, label: String, sub: String?, color: Color = Brown, enabled: Boolean = true, onClick: () -> Unit) {
+internal fun ActionRow(icon: String, label: String, sub: String?, color: Color = Brown, enabled: Boolean = true, onClick: () -> Unit) {
     val tint = if (enabled) color else Muted
     Row(
         Modifier.fillMaxWidth().heightIn(min = 52.dp).padding(vertical = 6.dp)
@@ -346,9 +347,9 @@ private fun Consequence(icon: String, title: String, body: String) {
     }
 }
 
-/** Friendly messages for what can go wrong while leaving. */
+/** Friendly messages for what can go wrong while leaving (also used by the pairing screen's account sheet). */
 @Composable
-private fun LeaveEffects(leave: LeaveViewModel) {
+internal fun LeaveEffects(leave: LeaveViewModel) {
     val context = LocalContext.current
     val failed = stringResource(R.string.leave_failed)
     val again = stringResource(R.string.acc_delete_sign_in_again)
