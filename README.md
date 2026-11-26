@@ -21,10 +21,19 @@ Android uygulaması Kotlin + Jetpack Compose + Material 3 ile yazılır, arka u�
 | Biz: profil, ayarlar, mesafe (şehir düzeyinde konum paylaşımı) | Hazır |
 | 4 ana ekran widget'ı (küçük kedi, geniş kedi, gün sayacı + kalp, canlı çizim) | Hazır |
 | Analytics, Crashlytics, Performance, Timber katmanı | Hazır, bkz. [docs/analytics.md](docs/analytics.md) |
+| Güvenlik: koleksiyon bazlı Firestore kuralları, sinyal sınırı (saatte 15 / günde 60, Console'daki `config/limits`'ten değişir), App Check (Play Integrity) | Hazır; kurallar yayınlanmalı, App Check konsolda kaydedilmeli, bkz. [docs/security.md](docs/security.md) ve [todo.md](todo.md) |
 | Geçmiş ekranları (ruh hali, önceki sorular, kalp atışı, çark), arama | Hazır |
 | Çizimlerimiz (kayıtlı çizimler, silme), açılmış mektuplar, aksesuarlar, bildirimler | Hazır |
 | Hesap (giriş yöntemi, şifre sıfırlama, çıkış, hesap silme) ve eşleşmeyi kaldırma; Biz sekmesinde "Kullanım verisi" anahtarı (analitik/hata/performans kapatılabilir) | Hazır; hesap silince profil, eşleşme kodu, ortak veriler ve telefondaki yerel veriler silinir; eşleşme kaldırılınca ortak veriler iki taraftan da kalıcı silinir (yeni Firestore kuralları yayınlanmalı) |
 | Henüz tasarlanıp kodlanmamış ekranlar | Arayüzde **"Yakında"** olarak görünür |
+
+## Localization
+
+Arayüz metinleri tamamen `android/app/src/main/res/values/strings.xml` içindedir (Türkçe varsayılan; çeviri henüz yok).
+Sayılar `<plurals>` ile, tarihler `text/AppLocale.kt` ile yerel dile göre biçimlenir. Yeni dil eklemek için:
+`res/values-xx/strings.xml` oluştur (tüm anahtarlar, plurals ve `cal_weekdays_short` dahil), `res/xml/locales_config.xml`
+dosyasına dili ekle, Quicksand'in kapsamadığı alfabeler için yedek yazı tipi düşün. Ayrıntılar, kalan işler
+(günlük soru listesi hâlâ kodda, varsayılan kedi adı Firestore verisi) ve doğrulama notları: [docs/LOCALIZATION.md](docs/LOCALIZATION.md).
 
 Ertelenen işler: [todo.md](todo.md).
 
@@ -42,9 +51,9 @@ Ertelenen işler: [todo.md](todo.md).
 |---|---|
 | `android/` | Android uygulaması (Gradle projesi, Android Studio'da bu klasörü aç) |
 | `firebase/` | Firestore / Realtime Database güvenlik kuralları, kural testleri (`tests/`), Cloud Functions iskeleti (`functions/`) |
-| `assets/` | Ortak dosyalar: Quicksand fontu, `animations/` ve `images/` (şimdilik boş, ileri için ayrıldı) |
+| `assets/` | Ortak dosyalar: Quicksand fontu, `brand/` (uygulama logosu), `animations/` ve `images/` (şimdilik boş, ileri için ayrıldı) |
 | `web/` | Play için herkese açık sayfalar (gizlilik, şartlar, hesap silme), Firebase Hosting; bkz. [web/README.md](web/README.md) |
-| `docs/` | Ürün özeti, tasarım prensipleri, mimari, analytics |
+| `docs/` | Ürün özeti, tasarım prensipleri, mimari, güvenlik, analytics |
 | `tools/` | Yardımcı araçlar: `tools/cat-animation/` kedi kliplerini fal.ai ile üretir (bkz. [tools/README.md](tools/README.md)) |
 | `ios/` | İleride iOS uygulaması (şimdilik sadece not) |
 
@@ -65,7 +74,7 @@ Testler: `android/app/src/test/`.
 
 - Rehber ve kurallar: [CLAUDE.md](CLAUDE.md) · Tasarım dili: [DESIGN.md](DESIGN.md)
 - Ürün: [docs/product.md](docs/product.md) · Tasarım prensipleri: [docs/design-principles.md](docs/design-principles.md)
-- Mimari: [docs/architecture.md](docs/architecture.md) · Analytics ve hata raporlama: [docs/analytics.md](docs/analytics.md)
+- Mimari: [docs/architecture.md](docs/architecture.md) · Güvenlik: [docs/security.md](docs/security.md) · Analytics ve hata raporlama: [docs/analytics.md](docs/analytics.md)
 
 ## Derleme, çalıştırma, test
 
@@ -140,6 +149,9 @@ Firebase Console → **Build → Authentication** → **Get started** → **Sign
 
    > Bu kurallar eşleşmeyi güvenli yapar: sadece iki partner kendi ortak verilerini görebilir.
    > Kuralları yüklemezsen uygulama "izin hatası" verir.
+   > Kurallar her ortak koleksiyon için sadece uygulamanın yazdığı alanları kabul eder. Yeni bir
+   > özellik yeni koleksiyon ya da alan eklerse kuralları da güncelleyip yeniden yayınla.
+   > App Check ve konsoldaki diğer güvenlik ayarları: [docs/security.md](docs/security.md).
 
 ### 6. Çalıştır ve eşleşmeyi dene
 

@@ -4,6 +4,9 @@ import android.content.Context
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FirebaseFirestoreException
+import com.google.firebase.firestore.Source
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.tasks.await
 import timber.log.Timber
 
@@ -13,7 +16,7 @@ object LeaveRules {
     val SHARED = listOf(
         Paths.CAT, Paths.SIGNALS, Paths.MOODS, Paths.MOOD_LOG, Paths.QUESTIONS, Paths.NOTES, Paths.EVENTS,
         Paths.LOCATIONS, Paths.DREAMS, Paths.WHEELS, Paths.WHEEL_SPINS, Paths.WHEEL_LOG, Paths.CAPSULES,
-        Paths.STROKES, Paths.DRAWING, Paths.DRAWINGS, Paths.SETTINGS,
+        Paths.STROKES, Paths.DRAWING, Paths.DRAWINGS, Paths.SETTINGS, Paths.LIMITS,
     )
 
     /**
@@ -30,10 +33,17 @@ object LeaveRules {
 
     /**
      * Firebase only deletes an account signed in "recently" (about 5 minutes). Checking first, with a margin,
-     * means we never delete the data and then fail on the account itself.
+     * means we never delete the data and then fail on the account itself. The check uses server time only:
+     * [authTimeSec] (when the user signed in) and [issuedAtSec] (when a just refreshed ID token was issued)
+     * both come from Firebase's clock, so a phone clock that runs behind or ahead cannot make a fresh
+     * sign-in look old (bug: "sign in again" right after signing in when the phone clock was behind).
      */
-    fun signInFresh(lastSignInMillis: Long?, now: Long): Boolean =
-        lastSignInMillis != null && now - lastSignInMillis in 0..FRESH_MS
+    fun signInFreshByToken(authTimeSec: Long?, issuedAtSec: Long?): Boolean =
+        authTimeSec != null && issuedAtSec != null && authTimeSec > 0 && issuedAtSec > 0 &&
+            (issuedAtSec - authTimeSec) * 1000L in -CLOCK_SLACK_MS..FRESH_MS
+
+    /** Tolerance for rounding between the two server timestamps. */
+    const val CLOCK_SLACK_MS = 5_000L
 
     const val FRESH_MS = 4 * 60_000L
 
@@ -59,22 +69,47 @@ class LeaveRepository(private val db: FirebaseFirestore, private val auth: Fireb
     /** Ends the couple and leaves it, then deletes all shared data of the couple (both partners lose it). */
     suspend fun unpair(context: Context, me: UserProfile) {
         val coupleId = me.coupleId ?: return
-        db.batch()
-            .update(coupleRef(coupleId), mapOf("endedAt" to FieldValue.serverTimestamp(), "endedBy" to me.uid, "endedByName" to me.displayName.take(40)))
-            .update(userRef(me.uid), "coupleId", null)
-            .commit().await()
+        // End the couple first: if the rules refuse, nothing has been deleted yet.
+        try {
+            db.batch()
+                .update(coupleRef(coupleId), mapOf("endedAt" to FieldValue.serverTimestamp(), "endedBy" to me.uid, "endedByName" to me.displayName.take(40)))
+                .update(userRef(me.uid), "coupleId", null)
+                .commit().await()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            // Both partners pressed "unpair" at the same moment: the other one already ended (or even removed)
+            // the couple, so ours is refused. The goal is reached anyway; just leave like the partner's app would.
+            if (!endedByOtherSide(coupleId)) throw e
+            Timber.i("Couple was already ended by the partner; leaving it")
+            leaveEndedCouple(coupleId, me.uid)
+        }
         // Already left: a failed purge must not stop account deletion. The partner's leaveEnded purges again.
         runCatching { purge(coupleId) }.onFailure { Timber.w(it, "Deleting the shared data after unpairing failed") }
         clearLocal(context)
     }
 
+    /** True when the couple doc is gone or already ended (by the partner, in a simultaneous unpair). */
+    private suspend fun endedByOtherSide(coupleId: String): Boolean {
+        val snap = runCatching { coupleRef(coupleId).get(Source.SERVER).await() }.getOrElse { e ->
+            // A removed couple can no longer be read (we are not a member of a missing doc).
+            return e is FirebaseFirestoreException && e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED
+        }
+        return !snap.exists() || snap.get("endedAt") != null
+    }
+
+    /** Clears my coupleId and removes the ended couple doc; tolerates the partner having removed it already. */
+    private suspend fun leaveEndedCouple(coupleId: String, myUid: String) {
+        val removed = runCatching {
+            db.batch().update(userRef(myUid), "coupleId", null).delete(coupleRef(coupleId)).commit().await()
+        }
+        if (removed.isFailure) userRef(myUid).update("coupleId", null).await()
+    }
+
     /** The partner ended the couple: delete whatever was written meanwhile, leave and remove the couple doc. */
     suspend fun leaveEnded(context: Context, me: UserProfile, coupleId: String) {
         runCatching { purge(coupleId) }.onFailure { Timber.w(it, "Cleaning up the ended couple failed") }
-        db.batch()
-            .update(userRef(me.uid), "coupleId", null)
-            .delete(coupleRef(coupleId))
-            .commit().await()
+        leaveEndedCouple(coupleId, me.uid)
         clearLocal(context)
     }
 
@@ -87,7 +122,10 @@ class LeaveRepository(private val db: FirebaseFirestore, private val auth: Fireb
     /** Unpairs (if paired), deletes users/{uid} and the Firebase account. Checks the sign-in age first. */
     suspend fun deleteAccount(context: Context, me: UserProfile): DeleteResult {
         val user = auth.currentUser ?: return DeleteResult.NeedsFreshSignIn
-        if (!LeaveRules.signInFresh(user.metadata?.lastSignInTimestamp, System.currentTimeMillis())) return DeleteResult.NeedsFreshSignIn
+        // Server clock only: a refreshed token's issue time vs. its sign-in time (the phone clock may be wrong).
+        // Network errors surface as a plain failure (not "sign in again", which would sign the user out).
+        val token = user.getIdToken(true).await()
+        if (!LeaveRules.signInFreshByToken(token.authTimestamp, token.issuedAtTimestamp)) return DeleteResult.NeedsFreshSignIn
         if (me.coupleId != null) unpair(context, me)
         me.pairCode?.let { code -> runCatching { db.collection(Paths.PAIR_CODES).document(code).delete().await() } }
         userRef(me.uid).delete().await()

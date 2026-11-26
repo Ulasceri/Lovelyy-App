@@ -1,5 +1,6 @@
 package com.lovelyy.app.ui.question
 
+import com.lovelyy.app.text.AppLocale
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -37,6 +38,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
@@ -91,11 +93,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
-import java.util.Locale
 
-private val TR = Locale.forLanguageTag("tr-TR")
 private val Skeleton = Color(0xFFF3EAE3)
 private val FieldBorder = Color(0xFFF0E2D8)
 private val StarInk = Color(0xFFB5532A)
@@ -171,14 +170,14 @@ fun QuestionScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBa
 
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                stringResource(R.string.q_chip, today.format(DateTimeFormatter.ofPattern("d MMMM", TR)), number),
+                stringResource(R.string.q_chip, today.format(AppLocale.formatter("dMMMM")), number),
                 fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Brown, maxLines = 1,
                 modifier = Modifier.clip(RoundedCornerShape(50)).background(PeachSoft).padding(horizontal = 12.dp, vertical = 7.dp),
             )
             Box(Modifier.weight(1f))
             SvgStrokeIcon(STAR_D, StarInk, Modifier.size(16.dp))
             Text(
-                stringResource(R.string.q_streak, streak),
+                pluralStringResource(R.plurals.q_streak, streak.toInt(), streak),
                 fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Brown, modifier = Modifier.padding(start = 6.dp),
             )
         }
@@ -236,7 +235,7 @@ fun QuestionScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBa
                 Box(
                     Modifier.size(36.dp).clip(CircleShape).background(Mint).border(3.dp, Cream, CircleShape),
                     contentAlignment = Alignment.Center,
-                ) { Text(partnerName.trim().firstOrNull()?.uppercase(TR) ?: "?", fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Brown) }
+                ) { Text(partnerName.trim().firstOrNull()?.uppercase(AppLocale.current()) ?: "?", fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Brown) }
                 Column(Modifier.weight(1f)) {
                     Text(stringResource(R.string.q_partner_answer, TurkishSuffix.genitive(partnerName)), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Brown)
                     Text(

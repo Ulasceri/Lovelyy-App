@@ -1,5 +1,6 @@
 package com.lovelyy.app.ui.capsule
 
+import com.lovelyy.app.text.AppLocale
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -45,6 +46,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -95,10 +97,8 @@ import timber.log.Timber
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
-import java.util.Locale
 
-private val TR = Locale.forLanguageTag("tr-TR")
-private val DATE = DateTimeFormatter.ofPattern("d MMMM yyyy", TR)
+private val DATE: DateTimeFormatter get() = AppLocale.formatter("dMMMMy")
 
 class CapsuleViewModel(private val app: LovelyyApplication, private val coupleId: String) : ViewModel() {
     val capsules: StateFlow<List<Capsule>?> = app.capsuleRepository.observe(coupleId)
@@ -187,7 +187,7 @@ fun CapsuleScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, on
                     fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Kit.CellLabel,
                     textAlign = TextAlign.Center, modifier = Modifier.padding(top = 6.dp),
                 )
-                Text(stringResource(R.string.tc_days, days), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 44.sp, lineHeight = 48.sp, color = Brown)
+                Text(pluralStringResource(R.plurals.tc_days, days.toInt(), days), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 44.sp, lineHeight = 48.sp, color = Brown)
                 Text(stringResource(R.string.tc_opens_in), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Brown)
                 Row(
                     Modifier.padding(top = 6.dp).clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = 0.8f)).padding(horizontal = 12.dp, vertical = 7.dp),
@@ -247,7 +247,7 @@ private fun LetterRow(c: Capsule, me: UserProfile, partnerName: String, today: L
                 )
             }
             if (open) TagChip(stringResource(R.string.tc_read), PeachSoft)
-            else TagChip(stringResource(R.string.tc_days, ChronoUnit.DAYS.between(today, c.openOn).toInt()), Kit.MintCell)
+            else TagChip(pluralStringResource(R.plurals.tc_days, ChronoUnit.DAYS.between(today, c.openOn).toInt(), ChronoUnit.DAYS.between(today, c.openOn).toInt()), Kit.MintCell)
         }
     }
 }

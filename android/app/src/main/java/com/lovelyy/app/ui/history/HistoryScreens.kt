@@ -1,5 +1,6 @@
 package com.lovelyy.app.ui.history
 
+import com.lovelyy.app.text.AppLocale
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -12,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -169,13 +171,13 @@ fun QuestionHistoryScreen(me: UserProfile, partner: UserProfile?, onBack: () -> 
         CenteredTopBar(stringResource(R.string.hi_q_title), onBack)
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                stringResource(R.string.hi_q_count, both), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Brown,
+                pluralStringResource(R.plurals.hi_q_count, both.toInt(), both), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Brown,
                 modifier = Modifier.clip(CircleShape).background(PeachSoft).padding(horizontal = 12.dp, vertical = 7.dp),
             )
             Spacer(Modifier.weight(1f))
             SvgStrokeIcon(STAR_D, Color(0xFFB5532A), Modifier.size(16.dp))
             Spacer(Modifier.width(6.dp))
-            Text(stringResource(R.string.q_streak, streak), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Brown)
+            Text(pluralStringResource(R.plurals.q_streak, streak.toInt(), streak), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Brown)
         }
         // Today's question, if I haven't answered yet.
         if (todayQ?.answers?.containsKey(me.uid) != true) {
@@ -260,7 +262,7 @@ fun HeartbeatHistoryScreen(me: UserProfile, partner: UserProfile?, onBack: () ->
                 val mine = s.from == me.uid
                 val nudge = s.kind == SignalKind.Nudge
                 val emotion = s.emotion ?: Emotion.Sevgi
-                val label = if (nudge) "" else stringResource(emotion.labelRes()).lowercase(TR)
+                val label = if (nudge) "" else stringResource(emotion.labelRes()).lowercase(AppLocale.current())
                 val title = when {
                     nudge && mine -> stringResource(R.string.hi_hb_nudge_out, com.lovelyy.app.text.TurkishSuffix.accusative(partnerName))
                     nudge -> stringResource(R.string.hi_hb_nudge_in, partnerName)

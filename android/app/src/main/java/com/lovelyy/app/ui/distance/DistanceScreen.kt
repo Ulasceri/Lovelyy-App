@@ -1,5 +1,6 @@
 package com.lovelyy.app.ui.distance
 
+import com.lovelyy.app.text.AppLocale
 import android.Manifest
 import android.content.Context
 import android.widget.Toast
@@ -52,6 +53,7 @@ import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
@@ -99,15 +101,12 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 private val MintCell = Color(0xFFD6F0E8)
 private val MintText = Color(0xFF3F5F56)
 private val SwitchOn = Color(0xFF3E9C82)
 private val SwitchOff = Color(0xFFE3D8D0)
 private val HeartOrange = Color(0xFFE07A45)
-private val TR = Locale.forLanguageTag("tr-TR")
 
 private const val PIN_D = "M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z M14.5 10a2.5 2.5 0 1 1-5 0a2.5 2.5 0 1 1 5 0z"
 private const val CAR_D = "M5 16l1.5-5a2 2 0 0 1 2-1.5h7a2 2 0 0 1 2 1.5L19 16v3H5z M8 16h.01M16 16h.01"
@@ -238,7 +237,7 @@ fun DistanceScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit) {
             Text(stringResource(R.string.ds_between), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MintText)
             if (km != null) {
                 Text(
-                    stringResource(R.string.ds_km, km.toInt()),
+                    pluralStringResource(R.plurals.ds_km, km.toInt(), km.toInt()),
                     fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 64.sp, lineHeight = 66.sp, color = Brown,
                 )
                 val last = minOf(mine!!.at, theirs!!.at)
@@ -269,14 +268,14 @@ fun DistanceScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit) {
                 Column(Modifier.weight(1f)) {
                     Text(stringResource(R.string.ds_next_meet), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = BrownSoft)
                     Text(
-                        next?.second?.format(DateTimeFormatter.ofPattern("d MMMM EEEE", TR)) ?: stringResource(R.string.ds_no_meet),
+                        next?.second?.format(AppLocale.formatter("dMMMMEEEE")) ?: stringResource(R.string.ds_no_meet),
                         fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = if (next != null) 16.sp else 14.sp, color = Brown,
                     )
                 }
                 if (next != null) {
                     val days = java.time.temporal.ChronoUnit.DAYS.between(today, next.second).toInt()
                     Text(
-                        if (days == 0) stringResource(R.string.ds_meet_today) else stringResource(R.string.ds_meet_days, days),
+                        if (days == 0) stringResource(R.string.ds_meet_today) else pluralStringResource(R.plurals.ds_meet_days, days.toInt(), days),
                         fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Brown, maxLines = 1,
                         modifier = Modifier.clip(RoundedCornerShape(50)).background(PeachSoft).padding(horizontal = 12.dp, vertical = 7.dp),
                     )
@@ -303,7 +302,7 @@ fun DistanceScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit) {
 private fun duration(minutes: Long): String {
     val h = (minutes / 60).toInt()
     val m = (minutes % 60).toInt()
-    return if (h > 0) stringResource(R.string.ds_duration, h, m) else stringResource(R.string.ds_duration_min, m)
+    return if (h > 0) stringResource(R.string.ds_duration, h, m) else pluralStringResource(R.plurals.ds_duration_min, m.toInt(), m)
 }
 
 @Composable

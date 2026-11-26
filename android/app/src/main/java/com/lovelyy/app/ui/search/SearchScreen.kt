@@ -16,6 +16,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -138,7 +139,7 @@ fun SearchScreen(
             total == 0 || (scope != SearchScope.All && counts[scope.ordinal] == 0) -> NoResults(q) { query = "" }
             else -> {
                 Text(
-                    stringResource(R.string.se_count, q, counts[scope.ordinal]),
+                    pluralStringResource(R.plurals.se_count, (counts[scope.ordinal]).toInt(), q, counts[scope.ordinal]),
                     fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = SubText, modifier = Modifier.padding(start = 4.dp),
                 )
                 if ((scope == SearchScope.All || scope == SearchScope.Notes) && noteHits.isNotEmpty()) {

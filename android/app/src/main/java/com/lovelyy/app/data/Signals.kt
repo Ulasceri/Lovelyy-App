@@ -118,11 +118,94 @@ object SignalFreshness {
         fresh.takeLast(cap) to fresh.dropLast(cap)
 }
 
+/** A signal was refused on the phone because the previous one went out less than the minimum gap ago. */
+class SignalThrottledException : Exception("Signals are sent at most once every few seconds")
+
+/** The hourly or daily signal limit is reached (see [SignalLimits]); the screens show a friendly message. */
+class SignalLimitException : Exception("Signal limit reached")
+
+/**
+ * Signal rate limit, mirrored by firestore.rules (validLimits). The numbers live in the Firestore doc
+ * config/limits (signalsPerHour, signalsPerDay, minGapSeconds), so they can be changed in the Firebase
+ * console without an app update; [Config] holds the defaults used when the doc or a field is missing.
+ * couples/{id}/limits/{uid} keeps one hourly and one daily window, both started with the server time.
+ * Pure (unit-tested in SignalLimitsTest).
+ */
+object SignalLimits {
+    const val HOUR_MS = 3_600_000L
+    const val DAY_MS = 24 * HOUR_MS
+
+    data class Config(val perHour: Int = 15, val perDay: Int = 60, val minGapMs: Long = 2_000L)
+
+    /** My limits doc: window starts (server time, millis) and counts; null starts = no window yet. */
+    data class State(val hourStart: Long?, val hourCount: Int, val dayStart: Long?, val dayCount: Int)
+
+    /** What the next write does: start a new window (count 1) or count up in the current one. */
+    data class Plan(val resetHour: Boolean, val hourCount: Int, val resetDay: Boolean, val dayCount: Int)
+
+    /**
+     * The next write, judged with the phone's clock [now]. A window is restarted once it is over.
+     * [flip] swaps the choice for windows that exist: the fallback when the server disagreed because
+     * this phone's clock is off (counting up in an expired window is always accepted by the rules).
+     */
+    fun plan(state: State?, now: Long, flip: Boolean = false): Plan {
+        fun reset(start: Long?, length: Long): Boolean {
+            if (start == null) return true
+            val over = now >= start + length
+            return if (flip) !over else over
+        }
+        val rh = reset(state?.hourStart, HOUR_MS)
+        val rd = reset(state?.dayStart, DAY_MS)
+        return Plan(
+            resetHour = rh, hourCount = if (rh) 1 else (state?.hourCount ?: 0) + 1,
+            resetDay = rd, dayCount = if (rd) 1 else (state?.dayCount ?: 0) + 1,
+        )
+    }
+
+    fun isOverLimit(plan: Plan, config: Config): Boolean = plan.hourCount > config.perHour || plan.dayCount > config.perDay
+}
+
 class SignalRepository(private val db: FirebaseFirestore) {
 
     private fun signals(coupleId: String) =
         db.collection(Paths.COUPLES).document(coupleId).collection(Paths.SIGNALS)
 
+    /** Uptime-clock time of the last send from this phone (any screen or widget). */
+    @Volatile private var lastSentAt: Long? = null
+
+    @Volatile private var config: SignalLimits.Config? = null
+    @Volatile private var configReadAt: Long = 0L
+
+    /** The limits from config/limits, re-read at most every 10 minutes; defaults if it can't be read. */
+    private suspend fun limitsConfig(): SignalLimits.Config {
+        val now = android.os.SystemClock.elapsedRealtime()
+        config?.let { if (now - configReadAt < CONFIG_TTL_MS) return it }
+        val defaults = SignalLimits.Config()
+        val read = try {
+            val snap = db.collection(Paths.CONFIG).document(Paths.LIMITS_CONFIG_DOC).get().await()
+            SignalLimits.Config(
+                perHour = snap.getLong("signalsPerHour")?.toInt() ?: defaults.perHour,
+                perDay = snap.getLong("signalsPerDay")?.toInt() ?: defaults.perDay,
+                minGapMs = snap.getLong("minGapSeconds")?.let { it * 1000 } ?: defaults.minGapMs,
+            )
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            timber.log.Timber.w(e, "Reading the signal limits failed, using defaults")
+            config ?: defaults
+        }
+        config = read
+        configReadAt = now
+        return read
+    }
+
+    /**
+     * Sends a signal to the partner. Rate limited on two levels: this phone refuses a send within the
+     * minimum gap ([SignalThrottledException]) or over the hourly/daily limit ([SignalLimitException]),
+     * and firestore.rules refuse a signal unless the same batch updates couples/{id}/limits/{me} within
+     * the same limits, in server time. That keeps a buggy loop, a modified client or a partner who
+     * won't stop from flooding the other phone (and the project's daily write quota).
+     */
     suspend fun send(
         coupleId: String,
         me: UserProfile,
@@ -132,19 +215,67 @@ class SignalRepository(private val db: FirebaseFirestore) {
         mood: MoodKind? = null,
         text: String? = null,
     ) {
-        signals(coupleId).add(
-            mapOf(
-                "kind" to kind.key,
-                "emotion" to emotion?.key,
-                "mood" to mood?.key,
-                "from" to me.uid,
-                "fromName" to me.displayName,
-                "to" to partnerUid,
-                "text" to text,
-                "at" to System.currentTimeMillis(),
-                "createdAt" to FieldValue.serverTimestamp(),
-            ),
-        ).await()
+        val cfg = limitsConfig()
+        val now = android.os.SystemClock.elapsedRealtime()
+        synchronized(this) {
+            val last = lastSentAt
+            if (last != null && now - last < cfg.minGapMs + GAP_MARGIN_MS) throw SignalThrottledException()
+            lastSentAt = now
+        }
+        val couple = db.collection(Paths.COUPLES).document(coupleId)
+        val limitRef = couple.collection(Paths.LIMITS).document(me.uid)
+        val current = limitRef.get().await()
+        val hourStart = current.getTimestamp("hourStart")
+        val dayStart = current.getTimestamp("dayStart")
+        val state = if (!current.exists()) null else SignalLimits.State(
+            hourStart = hourStart?.toDate()?.time,
+            hourCount = current.getLong("hourCount")?.toInt() ?: 0,
+            dayStart = dayStart?.toDate()?.time,
+            dayCount = current.getLong("dayCount")?.toInt() ?: 0,
+        )
+        val signal = mapOf(
+            "kind" to kind.key,
+            "emotion" to emotion?.key,
+            "mood" to mood?.key,
+            "from" to me.uid,
+            "fromName" to me.displayName,
+            "to" to partnerUid,
+            "text" to text?.take(MAX_TEXT),
+            "at" to System.currentTimeMillis(),
+            "createdAt" to FieldValue.serverTimestamp(),
+        )
+
+        suspend fun commit(plan: SignalLimits.Plan) {
+            // Kept windows are written back as the exact Timestamp read (server time has microseconds).
+            val limits = mapOf(
+                "signalAt" to FieldValue.serverTimestamp(),
+                "hourStart" to if (plan.resetHour) FieldValue.serverTimestamp() else hourStart,
+                "hourCount" to plan.hourCount,
+                "dayStart" to if (plan.resetDay) FieldValue.serverTimestamp() else dayStart,
+                "dayCount" to plan.dayCount,
+            )
+            val batch = db.batch()
+            batch.set(limitRef, limits)
+            batch.set(signals(coupleId).document(), signal)
+            batch.commit().await()
+        }
+
+        val plan = SignalLimits.plan(state, System.currentTimeMillis())
+        if (SignalLimits.isOverLimit(plan, cfg)) throw SignalLimitException()
+        try {
+            commit(plan)
+        } catch (e: com.google.firebase.firestore.FirebaseFirestoreException) {
+            if (e.code != com.google.firebase.firestore.FirebaseFirestoreException.Code.PERMISSION_DENIED) throw e
+            // The phone's clock may disagree with the server about a window being over: try the other way once.
+            val flipped = SignalLimits.plan(state, System.currentTimeMillis(), flip = true)
+            if (flipped == plan || SignalLimits.isOverLimit(flipped, cfg)) throw SignalLimitException()
+            try {
+                commit(flipped)
+            } catch (e2: com.google.firebase.firestore.FirebaseFirestoreException) {
+                if (e2.code == com.google.firebase.firestore.FirebaseFirestoreException.Code.PERMISSION_DENIED) throw SignalLimitException()
+                throw e2
+            }
+        }
     }
 
     /** The latest signals of the couple, newest first (both directions). */
@@ -179,5 +310,13 @@ class SignalRepository(private val db: FirebaseFirestore) {
             // Pending local writes have no server time yet: use the SDK's estimate instead of null.
             createdAt = getTimestamp("createdAt", DocumentSnapshot.ServerTimestampBehavior.ESTIMATE)?.toDate()?.time,
         )
+    }
+
+    companion object {
+        /** Added to the configured minimum gap, so phone-side timing never hits the server limit. */
+        const val GAP_MARGIN_MS = 100L
+        const val CONFIG_TTL_MS = 10 * 60_000L
+        /** Longest [Signal.text] the rules accept. */
+        const val MAX_TEXT = 120
     }
 }

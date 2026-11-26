@@ -6,7 +6,11 @@ rules_version = '2';
 //   users/{uid}            profile: displayName, photoUrl, coupleId, pairCode, createdAt
 //   pairCodes/{CODE}       a partner's one-time pairing code: ownerUid, createdAt
 //   couples/{coupleId}     the shared space: members [ownerUid, joinerUid], createdAt, startDate
-//   couples/{id}/**        every future shared feature (cat, notes, mood...) lives here
+//   couples/{id}/**        every shared feature (cat, notes, mood...) lives here; only the two
+//                          members read it, and each collection has its own write rule below
+//                          (exact fields, size limits, author = signed-in user). A new shared
+//                          collection needs a new match block, or the app's writes are denied.
+//   couples/{id}/limits/{uid}  signal rate limit: last signal + hourly/daily windows, server time
 //
 // Pairing (see android/.../data/PairingRepository.kt):
 //   A creates pairCodes/CODE. B, in ONE transaction, creates couples/CODE,
@@ -33,6 +37,144 @@ service cloud.firestore {
       return exists(userPath(uid)) && get(userPath(uid)).data.get('coupleId', null) == null;
     }
     function validName(n) { return n is string && n.size() <= 40; }
+
+    // ---------- field helpers ----------
+    // Kotlin's take(n) counts UTF-16 units, which is never fewer than the characters counted here,
+    // so every limit the app applies on the client also passes these checks.
+    function str(v, max) { return v is string && v.size() <= max; }
+    function optStr(v, max) { return v == null || str(v, max); }
+    function optInt(v) { return v == null || v is int; }
+    function isDay(v) { return v is string && v.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$'); }
+    function changedKeys() { return request.resource.data.diff(resource.data).affectedKeys(); }
+    function authoredByMe(d) { return d.by == me() && validName(d.byName) && d.at is int; }
+    function authorUnchanged() { return !changedKeys().hasAny(['by', 'byName', 'at']); }
+    function editedByMe() {
+      return request.resource.data.get('updatedBy', null) == me() && request.resource.data.get('updatedAt', null) is int
+        && changedKeys().hasAny(['updatedAt']);
+    }
+    // Up to 12 short strings (rules have no loops, so each index is checked).
+    function shortItems(l, max) {
+      return l is list && l.size() <= 12
+        && (l.size() < 1 || str(l[0], max)) && (l.size() < 2 || str(l[1], max))
+        && (l.size() < 3 || str(l[2], max)) && (l.size() < 4 || str(l[3], max))
+        && (l.size() < 5 || str(l[4], max)) && (l.size() < 6 || str(l[5], max))
+        && (l.size() < 7 || str(l[6], max)) && (l.size() < 8 || str(l[7], max))
+        && (l.size() < 9 || str(l[8], max)) && (l.size() < 10 || str(l[9], max))
+        && (l.size() < 11 || str(l[10], max)) && (l.size() < 12 || str(l[11], max));
+    }
+
+    // ---------- shared feature documents (field names match the Android repositories) ----------
+    function validCat(d) {
+      return d.keys().hasOnly(['name', 'hunger', 'thirst', 'energy', 'love', 'sleepingSince',
+                               'lastAction', 'recent', 'streak', 'wearing'])
+        && optStr(d.get('name', null), 20)
+        && optStr(d.get('wearing', null), 32)
+        && d.get('hunger', {}) is map && d.get('thirst', {}) is map
+        && d.get('energy', {}) is map && d.get('love', {}) is map
+        && d.get('streak', {}) is map
+        && (d.get('lastAction', null) == null || d.lastAction is map)
+        && d.get('recent', []) is list && d.get('recent', []).size() <= 10;
+    }
+    function validSignal(d, members) {
+      return d.keys().hasOnly(['kind', 'emotion', 'mood', 'from', 'fromName', 'to', 'text', 'at', 'createdAt'])
+        && d.kind in ['heartbeat', 'nudge', 'mood', 'question', 'note', 'event', 'wheel']
+        && d.from == me() && d.to != me() && d.to in members
+        && validName(d.fromName)
+        && optStr(d.get('emotion', null), 20)
+        && optStr(d.get('mood', null), 20)
+        && optStr(d.get('text', null), 120)
+        && d.at is int
+        && d.createdAt == request.time;
+    }
+    // A fixed rate-limit window: either a new window starting now (only once the old one is over)
+    // or one more in the current window, never above max. Counting up in an expired window is
+    // allowed too (only stricter), so a phone with a wrong clock can always fall back to it.
+    function windowOk(d, old, startKey, countKey, length, max) {
+      return d[countKey] is int && d[countKey] <= max && (
+        (d[startKey] == request.time && d[countKey] == 1
+          && (old == null || !(startKey in old) || request.time >= old[startKey] + length))
+        || (old != null && startKey in old && countKey in old
+          && d[startKey] == old[startKey] && d[countKey] == old[countKey] + 1)
+      );
+    }
+    // Limits come from config/limits (editable in the Firebase console, no app update needed):
+    // signalsPerHour, signalsPerDay, minGapSeconds. Missing doc or field = the defaults below.
+    function signalConfig() {
+      let p = /databases/$(database)/documents/config/limits;
+      return exists(p) ? get(p).data : {};
+    }
+    function validLimits(d, old) {
+      let cfg = signalConfig();
+      return d.keys().hasOnly(['signalAt', 'hourStart', 'hourCount', 'dayStart', 'dayCount'])
+        && d.signalAt == request.time
+        && (old == null || !('signalAt' in old)
+            || request.time > old.signalAt + duration.value(cfg.get('minGapSeconds', 2), 's'))
+        && windowOk(d, old, 'hourStart', 'hourCount', duration.value(1, 'h'), cfg.get('signalsPerHour', 15))
+        && windowOk(d, old, 'dayStart', 'dayCount', duration.value(24, 'h'), cfg.get('signalsPerDay', 60));
+    }
+    function validMood(d) {
+      return d.keys().hasOnly(['kind', 'note', 'at']) && str(d.kind, 20) && str(d.note, 140) && d.at is int;
+    }
+    function validMoodLog(d) {
+      return d.keys().hasOnly(['kind', 'note', 'at', 'uid', 'day'])
+        && str(d.kind, 20) && str(d.note, 140) && d.at is int && d.uid == me() && isDay(d.day);
+    }
+    // old = the answers map before this write. Mine is added or changed, nobody else's is touched,
+    // and once both of us answered mine is locked (same rule as QuestionMath.isLocked).
+    function validQuestion(d, old) {
+      return d.keys().hasOnly(['question', 'answers', 'updatedAt', 'day'])
+        && str(d.question, 300)
+        && d.updatedAt == request.time
+        && d.answers is map
+        && d.answers.diff(old).affectedKeys().hasOnly([me()])
+        && validAnswer(d.answers[me()])
+        && !(me() in old && old.size() > 1);
+    }
+    function validAnswer(a) {
+      return a is map && a.keys().hasOnly(['name', 'text', 'at']) && validName(a.name) && str(a.text, 500) && a.at is int;
+    }
+    function validNote(d) {
+      return d.keys().hasOnly(['text', 'color', 'pinned', 'by', 'byName', 'at', 'updatedAt', 'updatedBy'])
+        && str(d.text, 1000) && d.color is int && d.color >= 0 && d.color < 5 && d.pinned is bool
+        && optInt(d.get('updatedAt', null)) && optStr(d.get('updatedBy', null), 128);
+    }
+    function validEvent(d) {
+      return d.keys().hasOnly(['title', 'date', 'emoji', 'yearly', 'by', 'byName', 'at', 'updatedAt', 'updatedBy'])
+        && str(d.title, 60) && isDay(d.date) && str(d.emoji, 32) && d.yearly is bool
+        && optInt(d.get('updatedAt', null)) && optStr(d.get('updatedBy', null), 128);
+    }
+    function validDream(d) {
+      return d.keys().hasOnly(['title', 'category', 'goal', 'by', 'byName', 'at', 'doneAt', 'updatedAt', 'updatedBy'])
+        && str(d.title, 80) && d.category in ['seyahat', 'deneyim', 'hayat', 'diger'] && str(d.goal, 40)
+        && optInt(d.get('doneAt', null))
+        && optInt(d.get('updatedAt', null)) && optStr(d.get('updatedBy', null), 128);
+    }
+    function validLocation(d) {
+      return d.keys().hasOnly(['city', 'lat', 'lng', 'cityOnly', 'at'])
+        && str(d.city, 60)
+        && d.lat is number && d.lat >= -90 && d.lat <= 90
+        && d.lng is number && d.lng >= -180 && d.lng <= 180
+        && d.cityOnly is bool && d.at is int;
+    }
+    function validWheel(d) {
+      return d.keys().hasOnly(['label', 'items', 'at']) && str(d.label, 24) && shortItems(d.items, 20) && d.at is int;
+    }
+    function validSpin(d) {
+      return d.keys().hasOnly(['label', 'result', 'by', 'byName', 'at', 'wheelId'])
+        && str(d.label, 24) && str(d.result, 20) && validName(d.byName) && d.at is int;
+    }
+    function validCapsule(d) {
+      return d.keys().hasOnly(['title', 'text', 'openOn', 'by', 'byName', 'at'])
+        && str(d.title, 60) && str(d.text, 4000) && isDay(d.openOn);
+    }
+    function validStroke(d) {
+      return d.keys().hasOnly(['by', 'color', 'width', 'points', 'at'])
+        && d.color is int && d.width is number && d.width > 0 && d.width <= 1
+        && d.points is list && d.points.size() <= 1000 && d.at is int;
+    }
+    function validSavedDrawing(d) {
+      return d.keys().hasOnly(['strokes', 'by', 'byName', 'at']) && d.strokes is list && d.strokes.size() <= 600;
+    }
 
     // ---------- users ----------
     match /users/{userId} {
@@ -72,6 +214,7 @@ service cloud.firestore {
       allow create: if signedIn() && me() == userId
         && request.resource.data.keys().hasOnly(['displayName', 'photoUrl', 'coupleId', 'pairCode', 'createdAt'])
         && validName(request.resource.data.displayName)
+        && optStr(request.resource.data.get('photoUrl', null), 1000)
         && request.resource.data.get('coupleId', null) == null
         && request.resource.data.get('pairCode', null) == null
         && request.resource.data.createdAt == request.time;
@@ -81,6 +224,7 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly(['displayName', 'photoUrl', 'coupleId', 'pairCode', 'createdAt'])
         && request.resource.data.createdAt == resource.data.createdAt
         && validName(request.resource.data.displayName)
+        && optStr(request.resource.data.get('photoUrl', null), 1000)
         && validPairCode()
         && (coupleUnchanged() || joiningCouple() || leavingCouple());
 
@@ -92,6 +236,14 @@ service cloud.firestore {
 
       // Deleting my account: only once I'm no longer in a couple.
       allow delete: if signedIn() && me() == userId && resource.data.get('coupleId', null) == null;
+    }
+
+    // ---------- config ----------
+    // App-wide settings edited only in the Firebase console (e.g. config/limits). Readable by any
+    // signed-in user so the app can show the same limits; never writable from the app.
+    match /config/{docId} {
+      allow get: if signedIn();
+      allow list, write: if false;
     }
 
     // ---------- pairCodes ----------
@@ -158,14 +310,117 @@ service cloud.firestore {
       // The partner who stayed removes the ended couple when leaving it.
       allow delete: if isMember() && isEnded();
 
-      // Everything the couple shares (cat, notes, moods...): only the two of them.
-      // ({sub}/ is required: a bare {document=**} would also match the couple doc itself.)
+      // ---------- shared features: couples/{id}/** ----------
+      // Only the two members read or delete anything here (unpairing deletes everything, so
+      // deletes stay open to both). Writes are allowed per collection only, with the exact
+      // fields the app writes, size limits, the author bound to the signed-in user and author
+      // fields immutable. A collection that is not listed below cannot be written at all.
       // After the couple ended nothing new is written, it can only be deleted.
+      function coupleData() { return get(couplePath(coupleId)).data; }
+      function isMemberHere() { return signedIn() && me() in coupleData().members; }
+      function openCouple() { return isMemberHere() && coupleData().get('endedAt', null) == null; }
+      function limitPath() { return /databases/$(database)/documents/couples/$(coupleId)/limits/$(me()); }
+
+      // ({sub}/ is required: a bare {document=**} would also match the couple doc itself.)
       match /{sub}/{document=**} {
-        function couple() { return get(couplePath(coupleId)).data; }
-        function member() { return signedIn() && me() in couple().members; }
-        allow read, delete: if member();
-        allow create, update: if member() && couple().get('endedAt', null) == null;
+        allow read, delete: if isMemberHere();
+      }
+
+      // cat/main (CatRepository). Written as a whole doc in a transaction, or merged for "wearing".
+      match /cat/{docId} {
+        allow create, update: if openCouple() && docId == 'main' && validCat(request.resource.data);
+      }
+
+      // signals/{auto} (SignalRepository.send): heartbeat, nudge and "I did something" notices.
+      // Rate limited: each send also stamps limits/{me}.signalAt in the same batch (see below).
+      match /signals/{id} {
+        allow create: if openCouple()
+          && validSignal(request.resource.data, coupleData().members)
+          && getAfter(limitPath()).data.get('signalAt', null) == request.time;
+      }
+
+      // limits/{uid}: my signal rate limit, all in server time. Defaults: one signal every 2 seconds,
+      // 15 per hour, 60 per day per person; overridden by config/limits (see signalConfig).
+      match /limits/{uid} {
+        allow create, update: if openCouple() && uid == me()
+          && validLimits(request.resource.data, resource == null ? null : resource.data);
+      }
+
+      // moods/{uid}: my current mood. moodLog/{uid}_{day}: my last mood of that day.
+      match /moods/{uid} {
+        allow create, update: if openCouple() && uid == me() && validMood(request.resource.data);
+      }
+      match /moodLog/{id} {
+        allow create, update: if openCouple() && validMoodLog(request.resource.data) && id == me() + '_' + request.resource.data.day;
+      }
+
+      // questions/{yyyy-MM-dd}: I can only write my own answer, and not after both of us answered.
+      match /questions/{day} {
+        allow create, update: if openCouple() && isDay(day)
+          && validQuestion(request.resource.data, resource == null ? {} : resource.data.get('answers', {}));
+      }
+
+      // notes, events (plans), dreams: anyone of us edits, the author fields never change and
+      // a content edit is stamped with the editor's own uid.
+      match /notes/{id} {
+        allow create: if openCouple() && validNote(request.resource.data) && authoredByMe(request.resource.data);
+        allow update: if openCouple() && validNote(request.resource.data) && authorUnchanged()
+          && (!changedKeys().hasAny(['text', 'color', 'updatedAt', 'updatedBy']) || editedByMe());
+      }
+      match /events/{id} {
+        allow create: if openCouple() && validEvent(request.resource.data) && authoredByMe(request.resource.data);
+        allow update: if openCouple() && validEvent(request.resource.data) && authorUnchanged() && editedByMe();
+      }
+      match /dreams/{id} {
+        allow create: if openCouple() && validDream(request.resource.data) && authoredByMe(request.resource.data);
+        allow update: if openCouple() && validDream(request.resource.data) && authorUnchanged()
+          && (!changedKeys().hasAny(['title', 'category', 'goal', 'updatedAt', 'updatedBy']) || editedByMe());
+      }
+
+      // locations/{uid}: only my own (already rounded) location.
+      match /locations/{uid} {
+        allow create, update: if openCouple() && uid == me() && validLocation(request.resource.data);
+      }
+
+      // Decision wheel: custom wheels, the last spin of each wheel and the spin history.
+      match /wheels/{id} {
+        allow create, update: if openCouple() && validWheel(request.resource.data);
+      }
+      match /wheelSpins/{wheelId} {
+        allow create, update: if openCouple() && validSpin(request.resource.data) && request.resource.data.by == me();
+      }
+      match /wheelLog/{id} {
+        allow create: if openCouple() && validSpin(request.resource.data) && request.resource.data.by == me()
+          && str(request.resource.data.wheelId, 100);
+      }
+
+      // capsules/{auto}: time capsule letters. Written once, never edited.
+      match /capsules/{id} {
+        allow create: if openCouple() && validCapsule(request.resource.data) && authoredByMe(request.resource.data);
+      }
+
+      // Live drawing: strokes on the canvas, who is drawing now, and drawings saved to Anılar.
+      match /strokes/{id} {
+        allow create: if openCouple() && validStroke(request.resource.data) && request.resource.data.by == me();
+      }
+      match /drawing/{docId} {
+        allow create, update: if openCouple() && docId == 'presence'
+          && request.resource.data.keys().hasOnly(coupleData().members)
+          && request.resource.data.diff(resource == null ? {} : resource.data).affectedKeys().hasOnly([me()])
+          && request.resource.data[me()] is int;
+      }
+      match /drawings/{id} {
+        allow create: if openCouple() && id.matches('^d_.+') && validSavedDrawing(request.resource.data)
+          && authoredByMe(request.resource.data);
+      }
+
+      // settings/main: the couple's shared time zone (CoupleClock).
+      match /settings/{docId} {
+        allow create, update: if openCouple() && docId == 'main'
+          && request.resource.data.keys().hasOnly(['zone', 'setBy', 'at'])
+          && str(request.resource.data.zone, 64)
+          && request.resource.data.setBy == me()
+          && request.resource.data.at == request.time;
       }
     }
   }

@@ -1,5 +1,6 @@
 package com.lovelyy.app.ui.memories
 
+import com.lovelyy.app.text.AppLocale
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -65,9 +67,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.stateIn
 import timber.log.Timber
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
-import java.util.Locale
 
 private const val NOTE_D = "M6 4h12a2 2 0 0 1 2 2v8l-6 6H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z M14 20v-6h6"
 
@@ -143,7 +143,7 @@ fun MemoriesScreen(
             val latest = notes.maxByOrNull { it.at }
             SmallTile(
                 NOTE_D, PeachSoft, stringResource(R.string.feature_notes),
-                if (notes.isEmpty()) stringResource(R.string.mm_notes_none) else stringResource(R.string.mm_notes_count, notes.size),
+                if (notes.isEmpty()) stringResource(R.string.mm_notes_none) else pluralStringResource(R.plurals.mm_notes_count, notes.size.toInt(), notes.size),
                 latest?.let { stringResource(R.string.mm_notes_new, it.text.lineSequence().first().take(18).let { t -> if (it.text.length > 18) "$t…" else t }) },
                 Modifier.weight(1f), onNotes,
             )
@@ -151,8 +151,8 @@ fun MemoriesScreen(
             val nearest = sealed.minByOrNull { it.openOn }
             SmallTile(
                 Kit.ENVELOPE_D, Kit.MintCell, stringResource(R.string.tc_title),
-                if (sealed.isEmpty()) stringResource(R.string.mm_capsule_none) else stringResource(R.string.mm_capsule_count, sealed.size),
-                nearest?.let { stringResource(R.string.mm_capsule_next, ChronoUnit.DAYS.between(today, it.openOn).toInt()) }
+                if (sealed.isEmpty()) stringResource(R.string.mm_capsule_none) else pluralStringResource(R.plurals.mm_capsule_count, sealed.size.toInt(), sealed.size),
+                nearest?.let { pluralStringResource(R.plurals.mm_capsule_next, ChronoUnit.DAYS.between(today, it.openOn).toInt(), ChronoUnit.DAYS.between(today, it.openOn).toInt()) }
                     ?: stringResource(R.string.mm_capsule_write),
                 Modifier.weight(1f), onCapsule,
             )
@@ -235,6 +235,6 @@ private fun dayLabel(at: Long, today: LocalDate): String {
     return when (d) {
         today -> stringResource(R.string.mm_today)
         today.minusDays(1) -> stringResource(R.string.mm_yesterday)
-        else -> d.format(DateTimeFormatter.ofPattern(if (d.year == today.year) "d MMM" else "d MMM yyyy", Locale.forLanguageTag("tr-TR")))
+        else -> d.format(AppLocale.formatter(if (d.year == today.year) "dMMM" else "dMMMy"))
     }
 }

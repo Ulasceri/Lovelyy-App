@@ -9,14 +9,18 @@ import org.junit.Test
 class LeaveRulesTest {
 
     @Test
-    fun signInFreshOnlyWithinFourMinutes() {
-        val now = 10_000_000L
-        assertTrue(LeaveRules.signInFresh(now - 60_000, now))
-        assertTrue(LeaveRules.signInFresh(now - LeaveRules.FRESH_MS, now))
-        assertFalse(LeaveRules.signInFresh(now - LeaveRules.FRESH_MS - 1, now))
-        assertFalse(LeaveRules.signInFresh(null, now))
-        // A sign-in "in the future" means a wrong clock: don't trust it.
-        assertFalse(LeaveRules.signInFresh(now + 60_000, now))
+    fun signInFreshOnlyWithinFourMinutesOfServerTime() {
+        val auth = 1_700_000_000L // seconds, Firebase's clock
+        assertTrue(LeaveRules.signInFreshByToken(auth, auth + 60))
+        assertTrue(LeaveRules.signInFreshByToken(auth, auth + LeaveRules.FRESH_MS / 1000))
+        assertFalse(LeaveRules.signInFreshByToken(auth, auth + LeaveRules.FRESH_MS / 1000 + 1))
+        // Token issued in the same second as the sign-in (or rounded a second earlier) is fresh.
+        assertTrue(LeaveRules.signInFreshByToken(auth, auth))
+        assertTrue(LeaveRules.signInFreshByToken(auth, auth - 1))
+        assertFalse(LeaveRules.signInFreshByToken(auth, auth - 60))
+        assertFalse(LeaveRules.signInFreshByToken(null, auth))
+        assertFalse(LeaveRules.signInFreshByToken(auth, null))
+        assertFalse(LeaveRules.signInFreshByToken(0, auth))
     }
 
     @Test
@@ -31,9 +35,9 @@ class LeaveRulesTest {
 
     @Test
     fun everySharedCollectionIsDeleted() {
-        // Every collection name in Paths except the top-level ones and the cat doc id: a new shared feature
+        // Every collection name in Paths except the top-level ones (users, couples, pairCodes, config) and doc ids: a new shared feature
         // must be added to LeaveRules.SHARED, or unpairing would leave its data behind.
-        val notShared = setOf(Paths.USERS, Paths.COUPLES, Paths.PAIR_CODES, Paths.CAT_DOC, Paths.SETTINGS_DOC)
+        val notShared = setOf(Paths.USERS, Paths.COUPLES, Paths.PAIR_CODES, Paths.CAT_DOC, Paths.SETTINGS_DOC, Paths.CONFIG)
         val all = Paths::class.java.declaredFields
             .filter { java.lang.reflect.Modifier.isStatic(it.modifiers) && it.type == String::class.java && !it.name.endsWith("_DOC") }
             .map { it.isAccessible = true; it.get(null) as String }
