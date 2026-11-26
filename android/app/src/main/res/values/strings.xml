@@ -382,6 +382,7 @@
     <string name="hb2_nudge_body">Tek dokunuş: “%1$s seni düşünüyor”</string>
     <string name="hb2_nudge_action">Dürt</string>
     <string name="hb2_nudge_done">Dürtüldü</string>
+    <string name="hb2_cooldown">Kalbin yolda, birazdan tekrar gönderebilirsin</string>
     <string name="time_ago_minutes">%1$d dakika önce</string>
     <string name="time_ago_hours">%1$d saat önce</string>
     <string name="time_ago_days">%1$d gün önce</string>
