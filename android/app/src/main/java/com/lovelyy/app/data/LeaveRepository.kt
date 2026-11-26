@@ -29,7 +29,7 @@ object LeaveRules {
     )
 
     /** Paths that are not shared couple data. Everything else in [Paths] must be in [SHARED]. */
-    val NOT_SHARED = setOf(Paths.USERS, Paths.COUPLES, Paths.PAIR_CODES)
+    val NOT_SHARED = setOf(Paths.USERS, Paths.COUPLES, Paths.PAIR_CODES, Paths.CONFIG)
 
     /**
      * Firebase only deletes an account signed in "recently" (about 5 minutes). Checking first, with a margin,
