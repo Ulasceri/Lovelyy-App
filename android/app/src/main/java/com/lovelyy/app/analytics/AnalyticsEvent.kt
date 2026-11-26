@@ -170,6 +170,58 @@ sealed interface AnalyticsEvent {
         override val params: Map<String, Any> get() = mapOf("permission" to permission, "allowed" to allowed)
     }
 
+    /** The couple's 14-day Plus trial was started (logged once, by the phone that wrote it). */
+    data object TrialStarted : AnalyticsEvent {
+        override val name = "trial_started"
+    }
+
+    /**
+     * A Plus plan screen opened. [source] is a fixed key: "trial_end" (automatic), "lock_<feature>" (P4),
+     * "biz_card", "home_card", "management", "takeover".
+     */
+    data class PaywallShown(val source: String) : AnalyticsEvent {
+        override val name = "paywall_shown"
+        override val params: Map<String, Any> get() = mapOf("source" to source)
+    }
+
+    /** Google Play's purchase window was opened. [product] is "yearly", "monthly" or "gift". */
+    data class PurchaseStarted(val product: String) : AnalyticsEvent {
+        override val name = "purchase_started"
+        override val params: Map<String, Any> get() = mapOf("product" to product)
+    }
+
+    /** A Plus purchase was recorded for the couple. [product] is "yearly", "monthly" or "gift". */
+    data class PurchaseCompleted(val product: String) : AnalyticsEvent {
+        override val name = "purchase_completed"
+        override val params: Map<String, Any> get() = mapOf("product" to product)
+    }
+
+    /**
+     * A Plus purchase did not complete. [reason] is a fixed code: "cancelled", "pending", "not_loaded",
+     * "blocked", "record_failed" or "play_<response code>".
+     */
+    data class PurchaseFailed(val reason: String) : AnalyticsEvent {
+        override val name = "purchase_failed"
+        override val params: Map<String, Any> get() = mapOf("reason" to reason)
+    }
+
+    /** "Satın alımları geri yükle" was tapped. [found] = an owned purchase was found and recorded. */
+    data class RestoreTapped(val found: Boolean) : AnalyticsEvent {
+        override val name = "restore_tapped"
+        override val params: Map<String, Any> get() = mapOf("found" to found)
+    }
+
+    /** A Plus gift was bought. [hasNote] only says whether a note was added (never the note). */
+    data class GiftSent(val hasNote: Boolean) : AnalyticsEvent {
+        override val name = "gift_sent"
+        override val params: Map<String, Any> get() = mapOf("has_note" to hasNote)
+    }
+
+    /** The "Plus bitiyor, sen devam ettir" sheet (P10) was shown to the partner who did not buy. */
+    data object TakeoverShown : AnalyticsEvent {
+        override val name = "takeover_shown"
+    }
+
     /**
      * A screen was shown. [screenName] is a fixed route name like "home", never anything dynamic.
      * Sent as the standard `screen_view` event, so it shows up in the Screens report.
