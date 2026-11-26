@@ -124,9 +124,11 @@ class NoteRepository(private val db: FirebaseFirestore) {
         awaitClose { reg.remove() }
     }
 
-    private fun DocumentSnapshot.toNote(): Note? = Note(
+    private fun DocumentSnapshot.toNote(): Note? {
+        val text = getString("text") ?: return null
+        return Note(
         id = id,
-        text = getString("text") ?: return null,
+        text = text,
         color = (getLong("color") ?: 0L).toInt(),
         pinned = getBoolean("pinned") == true,
         by = getString("by").orEmpty(),
@@ -134,7 +136,8 @@ class NoteRepository(private val db: FirebaseFirestore) {
         at = getLong("at") ?: 0L,
         updatedAt = getLong("updatedAt"),
         updatedBy = getString("updatedBy"),
-    )
+        )
+    }
 
     companion object {
         const val MAX_NOTE = 1000
