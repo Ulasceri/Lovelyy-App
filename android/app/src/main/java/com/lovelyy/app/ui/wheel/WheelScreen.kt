@@ -35,6 +35,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -256,13 +257,22 @@ fun WheelScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onHi
         if (selectNewest && newest != null) { selectedId = newest.id; selectNewest = false }
     }
 
+    // The Spin button's callback is memoized by the Compose compiler (strong skipping), so it must not
+    // capture the wheel of the first composition: it reads the current one through these holders.
+    // (Bug: spinning "Ne izlesek?" saved a "Ne yesek?" result and the screen showed "?".)
+    val currentWheel by rememberUpdatedState(wheel)
+    val currentBusy by rememberUpdatedState(busy)
+    val currentMe by rememberUpdatedState(me)
+    val currentPartner by rememberUpdatedState(partner)
+
     fun spin() {
-        if (busy || items.size < WheelMath.MIN_ITEMS) return
+        val spunWheel = currentWheel
+        val spunItems = spunWheel.items
+        if (currentBusy || spunItems.size < WheelMath.MIN_ITEMS) return
         spinning = true
-        val spunItems = items
         val target = Random.nextInt(spunItems.size)
         val to = WheelMath.spinTo(rotation.value, target, spunItems.size, turns = 4, jitter = Random.nextFloat() * 2f - 1f)
-        val claim = vm.claimSpin(me, partner, wheel, spunItems[target])
+        val claim = vm.claimSpin(currentMe, currentPartner, spunWheel, spunItems[target])
         val startedAt = System.currentTimeMillis()
         scope.launch {
             try {
@@ -369,7 +379,7 @@ fun WheelScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onHi
             }
         }
 
-        MainAction(stringResource(R.string.wh_spin), WHEEL_D, ::spin, enabled = !busy && items.size >= WheelMath.MIN_ITEMS)
+        MainAction(stringResource(R.string.wh_spin), WHEEL_D, { spin() }, enabled = !busy && items.size >= WheelMath.MIN_ITEMS)
 
         // Options.
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
