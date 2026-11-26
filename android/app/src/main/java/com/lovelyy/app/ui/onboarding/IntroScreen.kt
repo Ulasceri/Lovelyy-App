@@ -34,6 +34,7 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -203,17 +204,21 @@ fun IntroScreen(onBack: () -> Unit, onDone: (skipped: Boolean, tried: Int) -> Un
                 )
             }
             Spacer(Modifier.height(10.dp))
-            Text(
-                stringResource(when (page) { 0 -> R.string.onb_cat_title; 1 -> R.string.onb_heart_title; else -> R.string.onb_draw_title }),
-                fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 30.sp, lineHeight = 35.sp, color = Brown,
-                // Two lines on every page, so the stage keeps its height when a longer title wraps.
-                minLines = 2,
-            )
-            Spacer(Modifier.height(10.dp))
-            Text(
-                stringResource(when (page) { 0 -> R.string.onb_cat_body; 1 -> R.string.onb_heart_body; else -> R.string.onb_draw_body }),
-                fontFamily = Quicksand, fontWeight = FontWeight.Medium, fontSize = 16.sp, lineHeight = 24.sp, color = BrownSoft,
-            )
+            // The copy block keeps one height on every page (tallest case: a two-line title with a
+            // two-line body), so the stage above does not resize between pages. Measured in sp so it
+            // follows the font scale.
+            val copyHeight = with(LocalDensity.current) { (35 * 2 + 24 * 2).sp.toDp() } + 10.dp
+            Column(Modifier.heightIn(min = copyHeight)) {
+                Text(
+                    stringResource(when (page) { 0 -> R.string.onb_cat_title; 1 -> R.string.onb_heart_title; else -> R.string.onb_draw_title }),
+                    fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 30.sp, lineHeight = 35.sp, color = Brown,
+                )
+                Spacer(Modifier.height(10.dp))
+                Text(
+                    stringResource(when (page) { 0 -> R.string.onb_cat_body; 1 -> R.string.onb_heart_body; else -> R.string.onb_draw_body }),
+                    fontFamily = Quicksand, fontWeight = FontWeight.Medium, fontSize = 16.sp, lineHeight = 24.sp, color = BrownSoft,
+                )
+            }
         }
         Spacer(Modifier.height(24.dp))
         PeachButton(
