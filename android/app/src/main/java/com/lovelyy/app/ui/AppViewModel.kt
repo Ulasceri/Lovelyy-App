@@ -5,9 +5,13 @@ import androidx.lifecycle.viewModelScope
 import com.lovelyy.app.LovelyyApplication
 import com.lovelyy.app.analytics.AnalyticsEvent
 import com.lovelyy.app.analytics.screenName
+import android.widget.Toast
+import com.lovelyy.app.R
 import com.lovelyy.app.data.Couple
+import com.lovelyy.app.data.LeaveRules
 import com.lovelyy.app.data.UserProfile
 import com.lovelyy.app.telemetry.Telemetry
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -113,13 +117,39 @@ class AppViewModel(private val app: LovelyyApplication) : ViewModel() {
         return AppState.Home(me, couple, partner)
     }
 
+    /** Couples this phone is already leaving (the partner unpaired), so it runs once. */
+    private val leaving = mutableSetOf<String>()
+
     private fun homeState(me: UserProfile, coupleId: String): Flow<AppState> =
-        app.userRepository.observeCouple(coupleId).flatMapLatest { couple ->
-            val partnerUid = couple?.partnerOf(me.uid)
-            if (partnerUid == null) {
-                flowOf<AppState>(AppState.Home(me, couple, null))
-            } else {
-                app.userRepository.observeUser(partnerUid).map { partner -> AppState.Home(me, couple, partner) }
+        app.userRepository.observeCouple(coupleId)
+            .onEach { couple -> if (couple != null && LeaveRules.partnerEnded(couple, me.uid)) leaveEnded(me, couple) }
+            .flatMapLatest { couple ->
+                val partnerUid = couple?.partnerOf(me.uid)
+                if (partnerUid == null) {
+                    flowOf<AppState>(AppState.Home(me, couple, null))
+                } else {
+                    // After the partner unpairs, their profile is no longer readable: keep Home without it.
+                    app.userRepository.observeUser(partnerUid)
+                        .map<UserProfile?, AppState> { partner -> AppState.Home(me, couple, partner) }
+                        .catch { emit(AppState.Home(me, couple, null)) }
+                }
+            }
+
+    /** The partner removed the pairing: leave too (the user doc change then shows the pairing screen). */
+    private fun leaveEnded(me: UserProfile, couple: Couple) {
+        if (!leaving.add(couple.id)) return
+        viewModelScope.launch {
+            try {
+                app.leaveRepository.leaveEnded(app, me, couple.id)
+                val who = couple.endedByName?.takeIf { it.isNotBlank() } ?: app.getString(R.string.home_partner_fallback)
+                Toast.makeText(app, app.getString(R.string.un_partner_left, who), Toast.LENGTH_LONG).show()
+            } catch (e: CancellationException) {
+                leaving.remove(couple.id)
+                throw e
+            } catch (e: Exception) {
+                leaving.remove(couple.id)
+                Timber.e(e, "Leaving the ended couple failed")
             }
         }
+    }
 }

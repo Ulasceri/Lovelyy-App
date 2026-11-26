@@ -115,6 +115,7 @@ treats them as valid for 30 minutes (the rules still allow up to 24h).
 | Path | Fields | Notes |
 |---|---|---|
 | `couples/{id}.startDate` | timestamp | day counter; start of the chosen day in the phone's zone |
+| `couples/{id}.endedAt / endedBy / endedByName` | server time, uid, name | set once when a partner unpairs; the other phone then leaves and deletes the couple doc |
 | `couples/{id}/signals/{auto}` | kind (heartbeat/nudge/mood/question/note/event), emotion, mood, text, from, fromName, to, at, createdAt | heartbeats, nudges and notices for the partner |
 | `couples/{id}/moods/{uid}` | kind, note, at | each partner's current mood |
 | `couples/{id}/moodLog/{uid}_{yyyy-MM-dd}` | kind, note, at, uid, day | one entry per person per day (the last mood that day), written next to `moods/{uid}`; read by Ruh hali geçmişi (last 31 days). Started 2026-11-26, older moods were not logged |
@@ -139,6 +140,22 @@ a couple's own data. Calendar date math (yearly repeats, 29 Feb, countdowns) is 
 History, search and inbox screens read what is already there: Kalp atışı geçmişi and Bildirimler use the last
 `signals` (150 / 100), Önceki sorular uses `questions`, and Arama searches notes, dreams and opened letters on the
 phone (sealed letters never match). The inbox's read state is per phone (`InboxSeen`, SharedPreferences), not shared.
+
+## Unpairing and deleting the account (Spark, no server code)
+
+Decision (Ulaş, 2026-11-26): unpairing deletes the shared data **for both** partners. `data/LeaveRepository.kt`:
+1. The leaving partner deletes every doc of every shared collection (`LeaveRules.SHARED`; a unit test checks it
+   lists every collection in `Paths`), then in one batch sets `endedAt/endedBy/endedByName` on the couple and
+   clears their own `coupleId`.
+2. The other phone (`AppViewModel`) sees the ended couple, deletes anything written meanwhile, clears its own
+   `coupleId` and deletes the couple doc in one batch, and shows "X eşleşmeyi kaldırdı".
+3. Deleting the account unpairs first, then deletes `users/{uid}` and the Firebase account. Firebase needs a
+   recent sign-in, so the app checks the sign-in is under 4 minutes old *before* deleting anything; otherwise it
+   signs out and asks to sign in again.
+
+The rules allow exactly this: ending once with the server time and your own uid, leaving only an ended (or
+missing) couple, deleting your user doc only when unpaired, and no new shared writes after the couple ended
+(deletes still work). Covered by three tests in `firebase/tests`.
 
 All of these are covered by the existing "members only" rule for `couples/{id}/**`; no rules
 deploy was needed.

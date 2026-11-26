@@ -35,6 +35,8 @@ class AnalyticsEventTest {
         AnalyticsEvent.AccessoryWorn(null),
         AnalyticsEvent.InboxReadAll,
         AnalyticsEvent.PasswordResetSent,
+        AnalyticsEvent.CoupleUnpaired,
+        AnalyticsEvent.AccountDeleted,
         AnalyticsEvent.ScreenView("home"),
         AnalyticsEvent.ScreenView("day_counter"),
     )

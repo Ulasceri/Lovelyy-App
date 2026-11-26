@@ -45,6 +45,9 @@ internal fun DocumentSnapshot.toCouple(): Couple? =
         members = (get("members") as? List<String>).orEmpty(),
         createdAt = getTimestamp("createdAt"),
         startDate = getTimestamp("startDate"),
+        endedAt = getTimestamp("endedAt"),
+        endedBy = getString("endedBy"),
+        endedByName = getString("endedByName"),
     )
 
 /** The shared item being edited was deleted (usually by the partner) before the edit reached the server. */

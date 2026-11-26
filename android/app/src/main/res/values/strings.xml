@@ -868,7 +868,12 @@
     <string name="acc_danger">Tehlikeli bölge</string>
     <string name="acc_delete">Hesabı sil</string>
     <string name="acc_delete_sub">Hesabın silinir, %1$s ile eşleşmen kalkar. Geri alınamaz; silmeden önce senden onay isteriz.</string>
-    <string name="acc_delete_pending">Hesap silme çok yakında açılacak. Ortak verilerin ne olacağına karar veriyoruz.</string>
+
+    <string name="acc_delete_title">Hesabın silinsin mi?</string>
+    <string name="acc_delete_body_paired">Önce %1$s ile eşleşmen kalkar ve ortak her şey ikiniz için de silinir, sonra hesabın silinir. Geri alınamaz.</string>
+    <string name="acc_delete_body">Hesabın ve profilin kalıcı olarak silinir. Geri alınamaz.</string>
+    <string name="acc_delete_yes">Hesabı sil</string>
+    <string name="acc_delete_sign_in_again">Güvenlik için yeniden giriş yapman gerekiyor. Giriş yaptıktan sonra hesabını hemen silebilirsin.</string>
 
     <!-- Unpair (board 34) -->
     <string name="un_title">%1$s ile eşleşmeyi kaldırmak üzeresin</string>
@@ -886,5 +891,6 @@
     <string name="un_field">Onay kelimesi</string>
     <string name="un_button">Eşleşmeyi kalıcı olarak kaldır</string>
     <string name="un_keep">Vazgeç, eşleşme kalsın</string>
-    <string name="un_pending">Eşleşmeyi kaldırma çok yakında açılacak. Ortak verilerin ne olacağına karar veriyoruz.</string>
+    <string name="un_partner_left">%1$s eşleşmeyi kaldırdı. Ortak verileriniz silindi.</string>
+    <string name="leave_failed">Bir sorun çıktı, internet bağlantını kontrol edip tekrar dene.</string>
 </resources>

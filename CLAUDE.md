@@ -40,7 +40,7 @@ Planlar, Biz), the cat and Kedi bakımı (streak, accessories), day counter, hea
 notes, calendar, bucket list, decision wheel, live drawing, time capsule, distance, profile/settings,
 4 home-screen widgets, telemetry, and the second design round (mood/question/heartbeat/wheel history, search,
 saved drawings, opened letters, accessories, inbox, account, unpair screen).
-**Pending:** the final unpair / delete-account action waits for Ulaş's decision on what happens to shared data.
+Unpairing deletes the shared data for both partners (Ulaş, 2026-11-26; `LeaveRepository`, see docs/architecture.md).
 **Not designed yet = "Yakında" placeholder** (`home_soon` string).
 
 ## Architecture and where things live

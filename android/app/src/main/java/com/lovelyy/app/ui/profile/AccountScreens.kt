@@ -77,7 +77,7 @@ private const val CONFIRM_WORD = "KALDIR"
 
 /**
  * Hesap (approved board 33): how I sign in, my e-mail, password reset (e-mail accounts only), sign out,
- * and the entry to deleting the account. Deleting stays closed until the unpair data rule is decided.
+ * and deleting the account (unpairs first, so the shared data is deleted for both).
  */
 @Composable
 fun AccountScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBack: () -> Unit) {
@@ -93,7 +93,10 @@ fun AccountScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBac
     var confirmReset by remember { mutableStateOf(false) }
     val resetSent = stringResource(R.string.acc_reset_sent, email)
     val resetFailed = stringResource(R.string.acc_reset_failed)
-    val pending = stringResource(R.string.acc_delete_pending)
+    val leave: LeaveViewModel = viewModel { LeaveViewModel(app) }
+    val busy by leave.busy.collectAsStateWithLifecycle()
+    var confirmDelete by remember { mutableStateOf(false) }
+    LeaveEffects(leave)
 
     InnerColumn(spacing = 10) {
         CenteredTopBar(stringResource(R.string.pf_account), onBack)
@@ -129,13 +132,21 @@ fun AccountScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBac
 
         Section(stringResource(R.string.acc_danger))
         Card {
-            ActionRow(TRASH_D, stringResource(R.string.acc_delete), stringResource(R.string.acc_delete_sub, partnerName), color = Danger) {
-                // Waiting on Ulaş: should unpairing (and so deleting the account) remove the shared data for both?
-                Toast.makeText(context, pending, Toast.LENGTH_LONG).show()
+            ActionRow(TRASH_D, stringResource(R.string.acc_delete), stringResource(R.string.acc_delete_sub, partnerName), color = Danger, enabled = !busy) {
+                confirmDelete = true
             }
         }
     }
 
+    if (confirmDelete) {
+        ConfirmDialog(
+            title = stringResource(R.string.acc_delete_title),
+            body = stringResource(if (me.coupleId != null) R.string.acc_delete_body_paired else R.string.acc_delete_body, partnerName),
+            confirm = stringResource(R.string.acc_delete_yes),
+            onConfirm = { confirmDelete = false; leave.deleteAccount(me) },
+            onDismiss = { confirmDelete = false },
+        )
+    }
     if (confirmSignOut) {
         ConfirmDialog(
             title = stringResource(R.string.sign_out_title),
@@ -217,7 +228,7 @@ private fun ActionRow(icon: String, label: String, sub: String?, color: Color = 
 
 /**
  * Eşleşmeyi kaldır (approved board 34): what unpairing does, then type KALDIR to enable the red button.
- * The final step is not wired yet: whether the shared data is deleted for both partners is Ulaş's call.
+ * Unpairing deletes the shared data for both partners (LeaveRepository).
  */
 @Composable
 fun UnpairScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit) {
@@ -231,7 +242,9 @@ fun UnpairScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit) {
     val partnerName = partner?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.home_partner_fallback)
     var typed by rememberSaveable { mutableStateOf("") }
     val ok = typed.trim().equals(CONFIRM_WORD, ignoreCase = true)
-    val pending = stringResource(R.string.un_pending)
+    val leave: LeaveViewModel = viewModel { LeaveViewModel(app) }
+    val busy by leave.busy.collectAsStateWithLifecycle()
+    LeaveEffects(leave)
 
     InnerColumn(spacing = 14) {
         CenteredTopBar(stringResource(R.string.pf_unpair), onBack)
@@ -290,10 +303,14 @@ fun UnpairScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit) {
         Box(
             Modifier.fillMaxWidth().height(56.dp).clip(btnShape).background(if (ok) Danger else DangerTint)
                 .semantics { role = Role.Button }
-                .bounceClick(enabled = ok) { Toast.makeText(context, pending, Toast.LENGTH_LONG).show() },
+                .bounceClick(enabled = ok && !busy) { leave.unpair(me) },
             contentAlignment = Alignment.Center,
         ) {
-            Text(stringResource(R.string.un_button), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 17.sp, color = if (ok) Color.White else Danger.copy(alpha = 0.6f))
+            if (busy) {
+                androidx.compose.material3.CircularProgressIndicator(color = Color.White, strokeWidth = 2.5.dp, modifier = Modifier.size(24.dp))
+            } else {
+                Text(stringResource(R.string.un_button), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 17.sp, color = if (ok) Color.White else Danger.copy(alpha = 0.6f))
+            }
         }
         Text(
             stringResource(R.string.un_keep), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Brown,
@@ -311,6 +328,19 @@ private fun Consequence(icon: String, title: String, body: String) {
         Column(Modifier.weight(1f)) {
             Text(title, fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Brown)
             Text(body, fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, lineHeight = 18.sp, color = SubText)
+        }
+    }
+}
+
+/** Friendly messages for what can go wrong while leaving. */
+@Composable
+private fun LeaveEffects(leave: LeaveViewModel) {
+    val context = LocalContext.current
+    val failed = stringResource(R.string.leave_failed)
+    val again = stringResource(R.string.acc_delete_sign_in_again)
+    LaunchedEffect(leave) {
+        leave.oneTimeEvents.collect { e ->
+            Toast.makeText(context, if (e == LeaveEvent.SignInAgain) again else failed, Toast.LENGTH_LONG).show()
         }
     }
 }

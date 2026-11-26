@@ -146,6 +146,16 @@ sealed interface AnalyticsEvent {
         override val name = "inbox_read_all"
     }
 
+    /** This user removed the pairing; the shared data was deleted for both. */
+    data object CoupleUnpaired : AnalyticsEvent {
+        override val name = "couple_unpaired"
+    }
+
+    /** This user deleted their account. */
+    data object AccountDeleted : AnalyticsEvent {
+        override val name = "account_deleted"
+    }
+
     /** A password reset mail was sent from Hesap. */
     data object PasswordResetSent : AnalyticsEvent {
         override val name = "password_reset_sent"
