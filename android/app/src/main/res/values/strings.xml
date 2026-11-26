@@ -778,7 +778,7 @@
     <string name="onb_notif_allow">Bildirimlere izin ver</string>
     <string name="onb_loc_title">Aradaki çizgi kaç kilometre?</string>
     <string name="onb_loc_body">Konumunu paylaşırsan Lovelyy ikinizin arasındaki mesafeyi gösterir.</string>
-    <string name="onb_loc_unknown_km">? km</string>
+    <string name="onb_loc_unknown_km">\? km</string>
     <string name="onb_loc_promise_who">Yalnızca sevgilin görür</string>
     <string name="onb_loc_promise_what">Sadece şehir ve mesafe; tam adresin hiçbir zaman gösterilmez</string>
     <string name="onb_loc_allow">Konumumu paylaş</string>
