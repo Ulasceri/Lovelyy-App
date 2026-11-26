@@ -89,7 +89,12 @@ fun NudgeCard(
                     val coupleId = me.coupleId ?: return@bounceClick
                     state = 1
                     scope.launch {
-                        val ok = runCatching { app.signalRepository.send(coupleId, me, p.uid, SignalKind.Nudge) }.isSuccess
+                        val ok = runCatching { app.signalRepository.send(coupleId, me, p.uid, SignalKind.Nudge) }
+                            .onFailure {
+                                if (it is com.lovelyy.app.data.SignalLimitException) {
+                                    android.widget.Toast.makeText(context, R.string.signal_limit, android.widget.Toast.LENGTH_LONG).show()
+                                }
+                            }.isSuccess
                         if (ok) {
                             SignalCenter.vibrate(context, SignalKind.Nudge)
                             com.lovelyy.app.telemetry.Telemetry.track(com.lovelyy.app.analytics.AnalyticsEvent.NudgeSent)

@@ -28,6 +28,8 @@ class LovelyyApplication : Application() {
         super.onCreate()
         // Logging, analytics, crash reports, performance. See docs/analytics.md.
         Telemetry.init(this)
+        // App Check before any Firestore call, so every request carries a token (docs/security.md).
+        if (isFirebaseConfigured) com.lovelyy.app.security.AppCheckSetup.install()
         // The couple's shared time zone saved last time (shared "today"s, also for widgets).
         com.lovelyy.app.data.CoupleClock.init(this)
         // Partner signals: listen from process start, not only once Home is shown (see SignalCenter).

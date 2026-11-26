@@ -95,6 +95,10 @@ dependencies {
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.crashlytics)
     implementation(libs.firebase.perf)
+    // App Check: Firestore only answers the real app (Play Integrity); debug builds use a debug token.
+    // See docs/security.md.
+    implementation(libs.firebase.appcheck.playintegrity)
+    debugImplementation(libs.firebase.appcheck.debug)
     implementation(libs.timber)
     implementation(libs.kotlinx.coroutines.play.services)
 

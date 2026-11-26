@@ -421,6 +421,7 @@
     <string name="hb2_nudge_action">Dürt</string>
     <string name="hb2_nudge_done">Dürtüldü</string>
     <string name="hb2_cooldown">Kalbin yolda, birazdan tekrar gönderebilirsin</string>
+    <string name="signal_limit">Şimdilik yeterince sinyal gönderdin, biraz sonra tekrar dene 🙂</string>
     <plurals name="time_ago_minutes">
         <item quantity="one">%1$d dakika önce</item>
         <item quantity="other">%1$d dakika önce</item>

@@ -75,8 +75,11 @@ JustPaired, Home, Failed) is computed in `AppViewModel` and `LovelyyRoot` cross-
 
 Firestore layout: `users/{uid}`, `pairCodes/{CODE}`, `couples/{id}` (members, startDate) and
 `couples/{id}/**` for all shared features (`cat/main`, `signals`, `moods`, `questions`, `notes`, `events`),
-readable/writable by the two members only. Realtime Database is locked. Rules and tests must change
-together (`firebase/firestore.rules` + `firebase/tests/firestore.rules.test.mjs`).
+readable by the two members only, with a **per-collection write rule** (exact field list, size limits,
+author fields = signed-in user and immutable). A new shared collection or a new field needs a rules change, or
+the write is denied. Realtime Database is locked. Rules and tests must change together
+(`firebase/firestore.rules` + `firebase/tests/firestore.rules.test.mjs`). Security setup (App Check, rate limit,
+console checklist): [docs/security.md](docs/security.md).
 
 ## Build, test, run
 
@@ -133,6 +136,6 @@ Compose BOM 2025.06.00, Firebase BoM 33.15.0 (versions in `android/gradle/libs.v
 ## Links
 
 [README.md](README.md) (setup, Turkish) · [DESIGN.md](DESIGN.md) (UI tokens/components) ·
-[docs/architecture.md](docs/architecture.md) · [docs/analytics.md](docs/analytics.md) ·
+[docs/architecture.md](docs/architecture.md) · [docs/security.md](docs/security.md) · [docs/analytics.md](docs/analytics.md) ·
 [docs/design-principles.md](docs/design-principles.md) · [docs/product.md](docs/product.md) ·
 [tools/README.md](tools/README.md)

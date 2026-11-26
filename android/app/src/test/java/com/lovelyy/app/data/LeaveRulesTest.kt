@@ -35,9 +35,9 @@ class LeaveRulesTest {
 
     @Test
     fun everySharedCollectionIsDeleted() {
-        // Every collection name in Paths except the top-level ones and the cat doc id: a new shared feature
+        // Every collection name in Paths except the top-level ones (users, couples, pairCodes, config) and doc ids: a new shared feature
         // must be added to LeaveRules.SHARED, or unpairing would leave its data behind.
-        val notShared = setOf(Paths.USERS, Paths.COUPLES, Paths.PAIR_CODES, Paths.CAT_DOC, Paths.SETTINGS_DOC)
+        val notShared = setOf(Paths.USERS, Paths.COUPLES, Paths.PAIR_CODES, Paths.CAT_DOC, Paths.SETTINGS_DOC, Paths.CONFIG)
         val all = Paths::class.java.declaredFields
             .filter { java.lang.reflect.Modifier.isStatic(it.modifiers) && it.type == String::class.java }
             .map { it.isAccessible = true; it.get(null) as String }
