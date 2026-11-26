@@ -107,7 +107,7 @@ fun MemoriesScreen(
     val strokes by vm.strokes.collectAsStateWithLifecycle()
     val presence by vm.presence.collectAsStateWithLifecycle()
     val partnerName = partner?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.home_partner_fallback)
-    val today = LocalDate.now()
+    val today = com.lovelyy.app.ui.coupleToday()
     val partnerLive = partner?.uid?.let { presence[it] }?.let { System.currentTimeMillis() - it < DrawingMath.ACTIVE_MS } == true
 
     Column(
@@ -227,7 +227,7 @@ private fun recentMemories(
     return list.sortedByDescending { it.at }.take(5)
 }
 
-private fun LocalDate.toEpochMillis(): Long = atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli() + 12 * 3_600_000L
+private fun LocalDate.toEpochMillis(): Long = atStartOfDay(com.lovelyy.app.data.CoupleClock.zone()).toInstant().toEpochMilli() + 12 * 3_600_000L
 
 @Composable
 private fun dayLabel(at: Long, today: LocalDate): String {

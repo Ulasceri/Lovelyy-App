@@ -59,6 +59,7 @@ import com.lovelyy.app.R
 import com.lovelyy.app.data.CareRewards
 import com.lovelyy.app.data.CareRewards.Accessory
 import com.lovelyy.app.data.CatAction
+import com.lovelyy.app.data.displayCatName
 import com.lovelyy.app.data.CatActionType
 import com.lovelyy.app.data.CatRules
 import com.lovelyy.app.data.Couple
@@ -173,8 +174,8 @@ fun CatCareScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBac
         vm.act(me, members, type)
     }
 
-    val catName = ui?.doc?.name?.takeIf { it.isNotBlank() } ?: stringResource(R.string.cat_generic)
-    val today = LocalDate.now()
+    val catName = displayCatName(ui?.doc?.name)
+    val today = com.lovelyy.app.ui.coupleToday()
     val todayLine = ui?.doc?.recent?.let { todayLineText(it, me.uid, partnerName) }
 
     Column(
@@ -275,7 +276,8 @@ fun CatCareScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBac
 /** "Bugün: sen sevdin · Elif su verdi" — shared by Yuva and Kedi bakımı so both show the same line. */
 @Composable
 internal fun todayLineText(recent: List<CatAction>, myUid: String, partnerName: String): String {
-    val latest = CareRewards.todayLatest(recent, myUid, LocalDate.now())
+    val zone by com.lovelyy.app.data.CoupleClock.zone.collectAsStateWithLifecycle()
+    val latest = CareRewards.todayLatest(recent, myUid, com.lovelyy.app.data.CoupleDay.today(zone, System.currentTimeMillis()), zone)
     return if (latest.isEmpty()) stringResource(R.string.cc_today_none)
     else stringResource(R.string.cc_today, latest.map { todayText(it, myUid, partnerName) }.joinToString(" · "))
 }

@@ -13,7 +13,8 @@ import kotlin.math.min
  * the new snapshot. Both partners always see the same numbers.
  */
 data class CatDoc(
-    val name: String? = null,
+    /** Never blank in practice: new cats and blank stored names fall back to [DEFAULT_CAT_NAME]. */
+    val name: String? = DEFAULT_CAT_NAME,
     val hunger: Need = Need.fresh(),
     val thirst: Need = Need.fresh(),
     val energy: Need = Need.fresh(),
@@ -26,6 +27,12 @@ data class CatDoc(
     /** The accessory the cat wears ([CareRewards.Accessory] name), chosen on Kedi bakımı. */
     val wearing: String? = null,
 )
+
+/** The name every cat starts with; the couple can rename it later. */
+const val DEFAULT_CAT_NAME = "Mırmır"
+
+/** The name to show for a stored cat name (null or blank shows the default). */
+fun displayCatName(stored: String?): String = stored?.trim()?.takeIf { it.isNotEmpty() } ?: DEFAULT_CAT_NAME
 
 /** A need's level (0..100) at the time [at] (epoch millis). */
 data class Need(val level: Double, val at: Long) {

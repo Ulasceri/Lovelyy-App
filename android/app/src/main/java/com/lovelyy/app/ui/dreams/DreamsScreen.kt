@@ -53,6 +53,7 @@ import com.lovelyy.app.analytics.AnalyticsEvent
 import com.lovelyy.app.data.DayCounter
 import com.lovelyy.app.data.Dream
 import com.lovelyy.app.data.DreamCategory
+import com.lovelyy.app.data.DreamConflictException
 import com.lovelyy.app.data.DreamRepository
 import com.lovelyy.app.data.ItemGoneException
 import com.lovelyy.app.data.UserProfile
@@ -91,12 +92,31 @@ class DreamsViewModel(private val app: LovelyyApplication, private val coupleId:
         .catch { Timber.w(it, "Dreams unavailable") }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
-    /** [onGone]: the edited dream was deleted by the partner meanwhile (it is not re-created). */
-    fun save(me: UserProfile, id: String?, title: String, category: DreamCategory, goal: String, onGone: () -> Unit) {
+    /**
+     * [opened]: the dream as it was when the editor opened (null for a new one). [onGone]: the partner deleted
+     * it meanwhile (it is not re-created). [onConflict]: the partner changed it meanwhile; gets the server
+     * version. [force] overwrites.
+     */
+    fun save(
+        me: UserProfile,
+        opened: Dream?,
+        title: String,
+        category: DreamCategory,
+        goal: String,
+        force: Boolean = false,
+        onGone: () -> Unit,
+        onConflict: (Dream) -> Unit = {},
+    ) {
         viewModelScope.launch {
-            runCatching { app.dreamRepository.save(coupleId, me, id, title, category, goal) }
-                .onSuccess { if (id == null) Telemetry.track(AnalyticsEvent.DreamAdded(category.key)) }
-                .onFailure { Timber.w(it, "Saving the dream failed"); if (it is ItemGoneException) onGone() }
+            runCatching { app.dreamRepository.save(coupleId, me, opened, title, category, goal, force) }
+                .onSuccess { if (opened == null) Telemetry.track(AnalyticsEvent.DreamAdded(category.key)) }
+                .onFailure {
+                    when (it) {
+                        is DreamConflictException -> onConflict(it.current)
+                        is ItemGoneException -> { Timber.w(it, "Saving the dream failed"); onGone() }
+                        else -> Timber.w(it, "Saving the dream failed")
+                    }
+                }
         }
     }
 
@@ -114,6 +134,9 @@ class DreamsViewModel(private val app: LovelyyApplication, private val coupleId:
 }
 
 private class Editing(val dream: Dream?)
+
+/** An edit that hit a newer change by the partner: [current] is the server version, the rest is my unsaved edit. */
+private class DreamConflict(val current: Dream, val title: String, val category: DreamCategory, val goal: String)
 
 /** Hayaller listesi (approved design 12): the shared bucket list. */
 @Composable
@@ -201,13 +224,39 @@ fun DreamsScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onS
         MainAction(stringResource(R.string.dr_add), Kit.PLUS_D, { editing = Editing(null) })
     }
 
-    editing?.let { e ->
-        DreamEditor(
-            dream = e.dream,
-            onDismiss = { editing = null },
-            onSave = { title, cat, goal -> vm.save(me, e.dream?.id, title, cat, goal, showGone); editing = null },
-            onDelete = e.dream?.let { d -> { askDelete = { vm.delete(d.id); editing = null } } },
+    // The partner changed the dream while it was open here: ask before overwriting their version.
+    var conflict by remember { mutableStateOf<DreamConflict?>(null) }
+    conflict?.let { c ->
+        com.lovelyy.app.ui.components.ConfirmDialog(
+            title = stringResource(R.string.dr_conflict_title),
+            body = stringResource(R.string.dr_conflict_body, partnerName),
+            confirm = stringResource(R.string.n_conflict_overwrite),
+            onConfirm = {
+                conflict = null
+                vm.save(me, c.current, c.title, c.category, c.goal, force = true, onGone = showGone)
+            },
+            // Keep the partner version: reopen the editor with it.
+            onDismiss = { conflict = null; editing = Editing(c.current) },
         )
+    }
+
+    editing?.let { e ->
+        // key(): a reopened editor (after a conflict) starts from the new version, not the old draft.
+        androidx.compose.runtime.key(e.dream?.id, e.dream?.updatedAt, e.dream?.title, e.dream?.goal, e.dream?.category) {
+            DreamEditor(
+                dream = e.dream,
+                onDismiss = { editing = null },
+                onSave = { title, cat, goal ->
+                    vm.save(
+                        me, e.dream, title, cat, goal,
+                        onGone = showGone,
+                        onConflict = { current -> conflict = DreamConflict(current, title, cat, goal) },
+                    )
+                    editing = null
+                },
+                onDelete = e.dream?.let { d -> { askDelete = { vm.delete(d.id); editing = null } } },
+            )
+        }
     }
 }
 

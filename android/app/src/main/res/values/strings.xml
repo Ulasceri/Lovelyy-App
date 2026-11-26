@@ -41,7 +41,6 @@
     <string name="feature_notes">Notlar</string>
 
     <!-- Cat -->
-    <string name="cat_generic">Kediniz</string>
     <string name="cat_unnamed">İsim ver</string>
     <string name="cat_you">Sen</string>
     <string name="cat_feed">Besle</string>
@@ -444,6 +443,10 @@
     <string name="n_conflict_title">Bu not az önce değişti</string>
     <string name="n_conflict_body">Sen düzenlerken %1$s bu notu değiştirdi. Kaydedersen onun yazdıkları silinir.</string>
     <string name="n_conflict_overwrite">Yine de kaydet</string>
+    <string name="p_conflict_title">Bu plan az önce değişti</string>
+    <string name="p_conflict_body">Sen düzenlerken %1$s bu planı değiştirdi. Kaydedersen onun yaptığı değişiklik silinir.</string>
+    <string name="dr_conflict_title">Bu hayal az önce değişti</string>
+    <string name="dr_conflict_body">Sen düzenlerken %1$s bu hayali değiştirdi. Kaydedersen onun yaptığı değişiklik silinir.</string>
 
     <!-- Planlar: takvim + özel günler (approved design 11) -->
     <string name="p_title">Planlar</string>

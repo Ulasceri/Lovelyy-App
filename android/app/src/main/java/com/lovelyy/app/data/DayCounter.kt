@@ -24,11 +24,12 @@ data class Milestone(val day: Long, val years: Int?) {
 object DayCounter {
     private const val DAY = 86_400_000L
 
-    /** Start of the given day in the phone's time zone. The couple picks a date, not a time. */
-    fun startMillis(date: LocalDate, zone: ZoneId = ZoneId.systemDefault()): Long =
+    /** Start of the given day in the couple's shared time zone. The couple picks a date, not a time. */
+    fun startMillis(date: LocalDate, zone: ZoneId = CoupleClock.zone()): Long =
         date.atStartOfDay(zone).toInstant().toEpochMilli()
 
-    fun dateOf(millis: Long, zone: ZoneId = ZoneId.systemDefault()): LocalDate =
+    /** The day of [millis] in the couple's shared zone, so both phones show the same start date. */
+    fun dateOf(millis: Long, zone: ZoneId = CoupleClock.zone()): LocalDate =
         Instant.ofEpochMilli(millis).atZone(zone).toLocalDate()
 
     fun together(startMillis: Long, now: Long): Together {

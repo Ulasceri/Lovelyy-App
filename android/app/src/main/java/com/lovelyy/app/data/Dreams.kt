@@ -1,5 +1,6 @@
 package com.lovelyy.app.data
 
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.channels.awaitClose
@@ -28,26 +29,48 @@ data class Dream(
     val at: Long,
     /** When it came true; null while it's still a dream. */
     val doneAt: Long?,
-)
+    /** Last title/category/goal edit (millis) and who made it; null on dreams written before these fields existed. */
+    val updatedAt: Long? = null,
+    val updatedBy: String? = null,
+) {
+    /** The part an editor changes (not doneAt: ticking a dream off is never a conflict). */
+    val content: DreamContent get() = DreamContent(title, category, goal)
+}
+
+data class DreamContent(val title: String, val category: DreamCategory, val goal: String)
+
+/** The partner changed the dream after this edit was opened. [current] is the version on the server now. */
+class DreamConflictException(val current: Dream) : EditConflictException("Dream changed meanwhile")
 
 class DreamRepository(private val db: FirebaseFirestore) {
 
     private fun dreams(coupleId: String) =
         db.collection(Paths.COUPLES).document(coupleId).collection(Paths.DREAMS)
 
-    /** Adds ([id] null) or edits a dream; editing throws [ItemGoneException] if the partner deleted it meanwhile. */
-    suspend fun save(coupleId: String, me: UserProfile, id: String?, title: String, category: DreamCategory, goal: String) {
+    /**
+     * Adds ([opened] null) or edits a dream ([opened] = it as it was when the editor opened). Editing throws
+     * [ItemGoneException] if the partner deleted it meanwhile and [DreamConflictException] if the partner
+     * changed it meanwhile, unless [force]. Offline, the edit is written without the conflict check.
+     */
+    suspend fun save(coupleId: String, me: UserProfile, opened: Dream?, title: String, category: DreamCategory, goal: String, force: Boolean = false) {
         val data = mapOf(
             "title" to title.trim().take(MAX_TITLE),
             "category" to category.key,
             "goal" to goal.trim().take(MAX_GOAL),
         )
-        if (id == null) {
+        if (opened == null) {
             dreams(coupleId).add(
                 data + mapOf("by" to me.uid, "byName" to me.displayName, "at" to System.currentTimeMillis(), "doneAt" to null),
             ).await()
         } else {
-            dreams(coupleId).document(id).updateExisting(data)
+            dreams(coupleId).document(opened.id).updateUnlessChanged(
+                db,
+                data + mapOf("updatedAt" to System.currentTimeMillis(), "updatedBy" to me.uid),
+                force,
+                parse = { it.toDream() },
+                isConflict = { EditRules.isConflict(opened.content, opened.updatedAt, it.content, it.updatedAt, it.updatedBy, me.uid) },
+                conflict = { DreamConflictException(it) },
+            )
         }
     }
 
@@ -65,23 +88,26 @@ class DreamRepository(private val db: FirebaseFirestore) {
             if (err != null) {
                 close(err)
             } else if (snap != null) {
-                trySend(
-                    snap.documents.mapNotNull { d ->
-                        Dream(
-                            id = d.id,
-                            title = d.getString("title") ?: return@mapNotNull null,
-                            category = DreamCategory.of(d.getString("category")),
-                            goal = d.getString("goal").orEmpty(),
-                            by = d.getString("by").orEmpty(),
-                            byName = d.getString("byName").orEmpty(),
-                            at = d.getLong("at") ?: 0L,
-                            doneAt = d.getLong("doneAt"),
-                        )
-                    },
-                )
+                trySend(snap.documents.mapNotNull { it.toDream() })
             }
         }
         awaitClose { reg.remove() }
+    }
+
+    private fun DocumentSnapshot.toDream(): Dream? {
+        val title = getString("title") ?: return null
+        return Dream(
+        id = id,
+        title = title,
+        category = DreamCategory.of(getString("category")),
+        goal = getString("goal").orEmpty(),
+        by = getString("by").orEmpty(),
+        byName = getString("byName").orEmpty(),
+        at = getLong("at") ?: 0L,
+        doneAt = getLong("doneAt"),
+        updatedAt = getLong("updatedAt"),
+        updatedBy = getString("updatedBy"),
+        )
     }
 
     companion object {

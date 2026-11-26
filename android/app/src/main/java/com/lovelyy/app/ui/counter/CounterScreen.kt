@@ -71,6 +71,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lovelyy.app.LovelyyApplication
 import com.lovelyy.app.R
 import com.lovelyy.app.analytics.AnalyticsEvent
+import com.lovelyy.app.data.displayCatName
 import com.lovelyy.app.data.Couple
 import com.lovelyy.app.data.DayCounter
 import com.lovelyy.app.data.Milestone
@@ -126,7 +127,7 @@ private const val CHECK_D = "M5 12.5l4.5 4.5L19 7.5"
 class CounterViewModel(private val app: LovelyyApplication, private val coupleId: String) : ViewModel() {
     /** The cat's name, for "O gün Mırmır parti şapkasını takacak". */
     val catName: StateFlow<String?> = app.catRepository.observe(coupleId)
-        .map { it.name?.takeIf(String::isNotBlank) }
+        .map { displayCatName(it.name) }
         .catch { Timber.w(it, "Cat name unavailable on the counter") }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 

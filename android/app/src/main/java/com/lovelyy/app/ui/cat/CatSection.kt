@@ -101,6 +101,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lovelyy.app.R
 import com.lovelyy.app.data.CatAction
+import com.lovelyy.app.data.displayCatName
 import com.lovelyy.app.data.CatActionType
 import com.lovelyy.app.data.CatLevels
 import com.lovelyy.app.data.CatMood
@@ -213,7 +214,7 @@ fun CatSection(me: UserProfile, couple: Couple?, partner: UserProfile?, modifier
                 animator = animator,
                 sleepingPoster = ui?.levels?.sleeping == true,
                 name = ui?.doc?.name,
-                streak = ui?.doc?.streak?.current(LocalDate.now()) ?: 0,
+                streak = ui?.doc?.streak?.current(com.lovelyy.app.ui.coupleToday()) ?: 0,
                 bubble = mood?.let { stringResource(it.bubbleRes()) },
                 banner = banner,
                 onNameClick = { naming = true },
@@ -256,12 +257,11 @@ fun CatSection(me: UserProfile, couple: Couple?, partner: UserProfile?, modifier
         }
     }
 
-    // First time: the couple names their cat together.
-    val needsName = ui != null && ui?.doc?.name.isNullOrBlank()
-    if (naming || needsName) {
+    // Renaming is optional; the cat starts out as DEFAULT_CAT_NAME.
+    if (naming) {
         NameCatDialog(
-            initial = ui?.doc?.name.orEmpty(),
-            canDismiss = !needsName,
+            initial = displayCatName(ui?.doc?.name),
+            canDismiss = true,
             onDismiss = { naming = false },
             onSave = { n ->
                 naming = false
@@ -675,7 +675,7 @@ private fun StatusLine(
     partnerName: String,
     modifier: Modifier = Modifier,
 ) {
-    val today = LocalDate.now()
+    val today = com.lovelyy.app.ui.coupleToday()
     val parts = buildList {
         val meDone = streak.caredToday(me.uid, today)
         val partnerDone = partnerUid != null && streak.caredToday(partnerUid, today)
@@ -720,7 +720,7 @@ internal fun actionTexts(partnerName: String, myUid: String): (CatAction) -> Str
 @Composable
 internal fun refusalTexts(catName: String?): (CatRules.Refusal) -> String {
     val context = LocalContext.current
-    val name = catName?.takeIf { it.isNotBlank() } ?: context.getString(R.string.cat_generic)
+    val name = displayCatName(catName)
     return remember(name) {
         { r: CatRules.Refusal ->
             context.getString(

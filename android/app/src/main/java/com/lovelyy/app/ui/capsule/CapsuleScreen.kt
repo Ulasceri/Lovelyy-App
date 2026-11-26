@@ -110,7 +110,7 @@ class CapsuleViewModel(private val app: LovelyyApplication, private val coupleId
             runCatching { app.capsuleRepository.add(coupleId, me, title, text, openOn) }
                 .onSuccess {
                     CapsuleDraft.clear(app)
-                    Telemetry.track(AnalyticsEvent.CapsuleSealed(ChronoUnit.DAYS.between(LocalDate.now(), openOn).toInt()))
+                    Telemetry.track(AnalyticsEvent.CapsuleSealed(ChronoUnit.DAYS.between(com.lovelyy.app.data.CoupleClock.today(), openOn).toInt()))
                 }
                 .onFailure { Timber.w(it, "Sealing the letter failed") }
         }
@@ -129,7 +129,7 @@ fun CapsuleScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, on
     val vm: CapsuleViewModel = viewModel(key = "capsule-$coupleId") { CapsuleViewModel(app, coupleId) }
     val capsules by vm.capsules.collectAsStateWithLifecycle()
     val partnerName = partner?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.home_partner_fallback)
-    val today = LocalDate.now()
+    val today = com.lovelyy.app.ui.coupleToday()
     var writing by remember { mutableStateOf(false) }
     var viewing by remember { mutableStateOf<Capsule?>(null) }
 
@@ -283,7 +283,7 @@ private fun WriteSheet(onDismiss: () -> Unit, onSeal: (String, String, LocalDate
     var title by rememberSaveable { mutableStateOf(draft.first) }
     var text by rememberSaveable { mutableStateOf(draft.second) }
     var dateText by rememberSaveable {
-        mutableStateOf(draft.third?.takeIf { runCatching { LocalDate.parse(it).isAfter(LocalDate.now()) }.getOrDefault(false) } ?: LocalDate.now().plusMonths(3).toString())
+        mutableStateOf(draft.third?.takeIf { runCatching { LocalDate.parse(it).isAfter(com.lovelyy.app.data.CoupleClock.today()) }.getOrDefault(false) } ?: com.lovelyy.app.data.CoupleClock.today().plusMonths(3).toString())
     }
     androidx.compose.runtime.LaunchedEffect(title, text, dateText) { CapsuleDraft.save(context, title, text, dateText) }
     val keptText = stringResource(R.string.tc_draft_kept)

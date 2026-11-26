@@ -26,7 +26,7 @@ object CareRewards {
     }
 
     /** Each person's latest action today, mine first ("Bugün: sen sevdin · Elif su verdi"). Naming isn't care. */
-    fun todayLatest(recent: List<CatAction>, myUid: String, today: LocalDate, zone: ZoneId = ZoneId.systemDefault()): List<CatAction> =
+    fun todayLatest(recent: List<CatAction>, myUid: String, today: LocalDate, zone: ZoneId): List<CatAction> =
         recent
             .filter { it.type != CatActionType.Name && Instant.ofEpochMilli(it.at).atZone(zone).toLocalDate() == today }
             .sortedByDescending { it.at }

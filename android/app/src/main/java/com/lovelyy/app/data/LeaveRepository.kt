@@ -13,7 +13,7 @@ object LeaveRules {
     val SHARED = listOf(
         Paths.CAT, Paths.SIGNALS, Paths.MOODS, Paths.MOOD_LOG, Paths.QUESTIONS, Paths.NOTES, Paths.EVENTS,
         Paths.LOCATIONS, Paths.DREAMS, Paths.WHEELS, Paths.WHEEL_SPINS, Paths.WHEEL_LOG, Paths.CAPSULES,
-        Paths.STROKES, Paths.DRAWING, Paths.DRAWINGS,
+        Paths.STROKES, Paths.DRAWING, Paths.DRAWINGS, Paths.SETTINGS,
     )
 
     /**
