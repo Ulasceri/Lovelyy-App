@@ -50,11 +50,11 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
-        (application as LovelyyApplication).signalCenter.appVisible = true
+        (application as LovelyyApplication).signalCenter.onAppVisible(true)
     }
 
     override fun onStop() {
-        (application as LovelyyApplication).signalCenter.appVisible = false
+        (application as LovelyyApplication).signalCenter.onAppVisible(false)
         super.onStop()
     }
 

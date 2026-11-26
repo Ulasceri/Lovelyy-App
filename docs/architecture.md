@@ -143,9 +143,21 @@ Real push (FCM) needs a trusted sender (a Cloud Function), and functions need th
 So `signals/SignalCenter.kt` does the best possible without a server:
 
 - While the app process is alive (open or recently backgrounded) a Firestore listener sees a new
-  signal within about a second and posts a local notification.
-- When the app is closed, `SignalWorker` (WorkManager) checks every ~15 minutes, Android's
-  minimum, and posts what was missed.
+  signal within about a second and posts a local notification. The listener starts with the
+  process (`LovelyyApplication.onCreate`) and re-subscribes after transient errors.
+- When the app goes to the background, a few one-time `SignalWorker` checks run ~1, 3, 7 and 15
+  minutes later; after that (and when the app is closed) the periodic `SignalWorker` checks every
+  ~15 minutes, Android's minimum, and posts what was missed.
+- "Is this new?" never uses the sender's clock (`at` is only for display): `SignalFreshness`
+  remembers the ids of signals already seen and compares the server `createdAt` with a floor set
+  on the first check (first-run grace: only the last 10 minutes notify after install or sign-in).
+  The query is ordered by `createdAt` too.
+- At most 3 notifications one by one; older new signals become one summary notification
+  ("Bora sana 5 kalp daha gönderdi").
+
+Remaining platform limits: Android freezes cached background processes (cached apps freezer,
+Doze, App Standby), so a backgrounded app's listener can still lag by minutes until a job or the
+user wakes it, and WorkManager delays are "at the earliest" (Doze can defer them further).
 
 With Blaze: add `firebase-messaging`, store each user's FCM token, and a function on
 `couples/{id}/signals/{sid}` create that sends to the partner's token. Then delivery is instant
