@@ -49,7 +49,7 @@ class DayCounterTest {
         assertEquals(1096L, third.day)
         assertEquals(LocalDate.of(2027, 2, 14), start.plusDays(third.day))
         val (prev, next) = DayCounter.next(1017, start)
-        assertEquals(2, prev?.years)
+        assertEquals(1000L, prev?.day) // the round day 1000 is the latest milestone before day 1017
         assertEquals(3, next.years)
         assertEquals(79L, next.day - 1017)
     }
