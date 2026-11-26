@@ -44,7 +44,6 @@ import com.lovelyy.app.ui.history.InnerColumn
 import com.lovelyy.app.ui.history.Muted
 import com.lovelyy.app.ui.history.OutChip
 import com.lovelyy.app.ui.history.SubText
-import com.lovelyy.app.ui.history.AppLocale.current()
 import com.lovelyy.app.ui.history.WHEEL_ICON_D
 import com.lovelyy.app.ui.history.dayTitle
 import com.lovelyy.app.ui.history.localDate
