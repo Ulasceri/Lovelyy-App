@@ -24,6 +24,8 @@ data class Couple(
     val endedAt: Timestamp? = null,
     val endedBy: String? = null,
     val endedByName: String? = null,
+    /** Lovelyy Plus for both partners (null until the trial is written; see PlusRules). */
+    val plus: PlusInfo? = null,
 ) {
     fun partnerOf(uid: String): String? = members.firstOrNull { it != uid }
 }

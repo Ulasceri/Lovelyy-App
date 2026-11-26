@@ -16,6 +16,7 @@ coroutinesPlayServices = "1.10.2"
 splashscreen = "1.0.1"
 media3 = "1.6.1"
 work = "2.10.1"
+billing = "7.1.1"
 junit = "4.13.2"
 
 [libraries]
@@ -51,6 +52,8 @@ kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "ko
 
 androidx-media3-exoplayer = { group = "androidx.media3", name = "media3-exoplayer", version.ref = "media3" }
 androidx-work-runtime = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "work" }
+# Lovelyy Plus: Google Play Billing (subscriptions + the one-time gift). See docs/architecture.md.
+android-billing-ktx = { group = "com.android.billingclient", name = "billing-ktx", version.ref = "billing" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 
 [plugins]

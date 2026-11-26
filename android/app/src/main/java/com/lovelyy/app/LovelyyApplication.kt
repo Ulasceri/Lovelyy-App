@@ -57,6 +57,9 @@ class LovelyyApplication : Application() {
     val drawingRepository by lazy { DrawingRepository(FirebaseFirestore.getInstance()) }
     val leaveRepository by lazy { LeaveRepository(FirebaseFirestore.getInstance(), FirebaseAuth.getInstance()) }
     val signalCenter by lazy { SignalCenter(this) }
+    /** Lovelyy Plus: the couple's plus map (Firestore) and Google Play purchases. */
+    val plusRepository by lazy { com.lovelyy.app.data.PlusRepository(FirebaseFirestore.getInstance()) }
+    val billingRepository by lazy { com.lovelyy.app.billing.BillingRepository(this) }
 
     /** A screen asked for by a widget or notification tap; Home opens it and clears it. */
     val pendingRoute = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
