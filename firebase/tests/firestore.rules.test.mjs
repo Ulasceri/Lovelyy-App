@@ -167,7 +167,7 @@ test("joiner who was also sharing a code can still pair", async () => {
 
 // ---------- unpairing (LeaveRepository) ----------
 
-// What the leaving partner's app does: delete shared docs, then end the couple and leave it in one batch.
+// What the leaving partner's app does: end the couple and leave it in one batch, then delete the shared docs.
 async function endAsAlice() {
   const d = db("alice");
   const b = writeBatch(d);
@@ -188,8 +188,9 @@ function leaveAsBob() {
 test("unpair: delete shared data, end, partner leaves, both can pair again", async () => {
   await pairAB();
   await assertSucceeds(setDoc(doc(db("alice"), "couples", CODE, "notes", "n1"), { text: "hi" }));
-  await assertSucceeds(deleteDoc(doc(db("alice"), "couples", CODE, "notes", "n1")));
   await assertSucceeds(endAsAlice());
+  // Alice already left (coupleId null) but is still a member, so she can delete the shared data.
+  await assertSucceeds(deleteDoc(doc(db("alice"), "couples", CODE, "notes", "n1")));
   // Ended: nothing new can be written, deletes still work, reads still work for members.
   await assertFails(setDoc(doc(db("bob"), "couples", CODE, "notes", "n2"), { text: "late" }));
   await assertSucceeds(getDoc(doc(db("bob"), "couples", CODE)));

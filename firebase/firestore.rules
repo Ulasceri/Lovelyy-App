@@ -14,9 +14,10 @@ rules_version = '2';
 //   These rules accept only that exact shape.
 //
 // Unpairing (see android/.../data/LeaveRepository.kt), Spark plan so no server code:
-//   A deletes every shared doc under couples/{id}/**, then in ONE batch marks the couple
-//   ended (endedAt, endedBy, endedByName) and clears users/A.coupleId. B's app sees the
-//   ended couple, clears users/B.coupleId and deletes the couple doc in one batch.
+//   A in ONE batch marks the couple ended (endedAt, endedBy, endedByName) and clears
+//   users/A.coupleId, then deletes every shared doc under couples/{id}/** (still a member).
+//   B's app sees the ended couple, deletes what is left, clears users/B.coupleId and deletes
+//   the couple doc in one batch.
 //   An ended couple accepts no new shared writes, only deletes.
 
 service cloud.firestore {

@@ -45,7 +45,9 @@ object LeaveRules {
 /**
  * Unpairing and account deletion on the free Spark plan (no server code). The rules
  * (firebase/firestore.rules, "Unpairing") accept exactly these steps:
- * 1. [unpair]: delete every shared doc, then end the couple and clear my coupleId in one batch.
+ * 1. [unpair]: end the couple and clear my coupleId in one batch, then delete every shared doc. Ending first means
+ *    nothing is deleted when that batch is refused, and the rules block new shared writes (e.g. the cat doc an open
+ *    screen recreates) while the purge runs.
  * 2. The partner's app sees the ended couple and calls [leaveEnded]: clear their coupleId and delete the couple.
  * Shared data is gone for both (Ulaş's decision, 2026-11-26).
  */
@@ -54,14 +56,15 @@ class LeaveRepository(private val db: FirebaseFirestore, private val auth: Fireb
     private fun userRef(uid: String) = db.collection(Paths.USERS).document(uid)
     private fun coupleRef(id: String) = db.collection(Paths.COUPLES).document(id)
 
-    /** Deletes all shared data of the couple (both partners lose it), then ends the couple and leaves it. */
+    /** Ends the couple and leaves it, then deletes all shared data of the couple (both partners lose it). */
     suspend fun unpair(context: Context, me: UserProfile) {
         val coupleId = me.coupleId ?: return
-        purge(coupleId)
         db.batch()
             .update(coupleRef(coupleId), mapOf("endedAt" to FieldValue.serverTimestamp(), "endedBy" to me.uid, "endedByName" to me.displayName.take(40)))
             .update(userRef(me.uid), "coupleId", null)
             .commit().await()
+        // Already left: a failed purge must not stop account deletion. The partner's leaveEnded purges again.
+        runCatching { purge(coupleId) }.onFailure { Timber.w(it, "Deleting the shared data after unpairing failed") }
         clearLocal(context)
     }
 

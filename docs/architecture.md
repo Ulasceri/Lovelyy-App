@@ -146,9 +146,10 @@ phone (sealed letters never match). The inbox's read state is per phone (`InboxS
 ## Unpairing and deleting the account (Spark, no server code)
 
 Decision (Ulaş, 2026-11-26): unpairing deletes the shared data **for both** partners. `data/LeaveRepository.kt`:
-1. The leaving partner deletes every doc of every shared collection (`LeaveRules.SHARED`; a unit test checks it
-   lists every collection in `Paths`), then in one batch sets `endedAt/endedBy/endedByName` on the couple and
-   clears their own `coupleId`.
+1. The leaving partner in one batch sets `endedAt/endedBy/endedByName` on the couple and clears their own
+   `coupleId`, then deletes every doc of every shared collection (`LeaveRules.SHARED`; a unit test checks it lists
+   every collection in `Paths`). Ending first means a refused batch deletes nothing, and the rules block new
+   shared writes while the purge runs.
 2. The other phone (`AppViewModel`) sees the ended couple, deletes anything written meanwhile, clears its own
    `coupleId` and deletes the couple doc in one batch, and shows "X eşleşmeyi kaldırdı".
 3. Deleting the account unpairs first, then deletes `users/{uid}` and the Firebase account. Firebase needs a
