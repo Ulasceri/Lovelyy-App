@@ -49,6 +49,10 @@ Source: `ui/theme/Color.kt`. Theme mapping: `ui/theme/Theme.kt` (`lightColorSche
 | NeedLow | `#F07B45` | `NeedLow` | Need bar, low level |
 | NeedOk | `#5DB89E` | `NeedOk` | Need bar, normal level |
 | ErrorRose | `#D9534F` | `ErrorRose` | Error (`error`) |
+| StageMint | `#D3EFE7` | `StageMint` | Onboarding split stage: the partner's side |
+| StagePeach | `#FFDCC6` | `StagePeach` | Onboarding split stage: your side |
+| HeartInk | `#E0602B` | `HeartInk` | Onboarding: your drawn stroke, flying heart |
+| MintDeep | `#2F8F7A` | `MintDeep` | Onboarding: the partner's drawn stroke |
 
 `res/values/colors.xml` (only for window/splash background): `peach #FFB38A`, `mint #9ED9C8`, `brown #4A3B35`, `cream #FFF8F2`, `brown_soft #8A7A72` (note: DIFFERENT from `BrownSoft #75655E` in Color.kt; `docs/design-principles.md` also lists the old `#8A7A72` value. Color.kt is correct).
 
@@ -266,8 +270,10 @@ The app navigates via `AppState` (no NavController): `LovelyyRoot.kt`. The `scre
 | Firebase setup | `setup/SetupScreens.kt` | `firebase_setup` | Done |
 | Error | `setup/SetupScreens.kt` | `error` | Done |
 | Welcome + Login/Sign-up | `auth/LoginScreen.kt` | `login` | Done (canvas 1, 2) |
+| Intro (try-it onboarding, 3 pages) | `onboarding/IntroScreen.kt`, `onboarding/SplitStage.kt` | `onboarding_intro` | Done (canvas A1-A3) |
 | Name | `profile/NameScreen.kt` | `name_setup` | Done |
 | Pairing (share code / enter code) | `pairing/PairingScreen.kt` | `pairing` | Done (canvas 3a, 3b) |
+| Paired + notification primer + location primer | `onboarding/PairedFlow.kt` | `paired_onboarding` | Done (canvas A4-A6); no names on these screens, always "Sevgilin"/"Sen" |
 | Home / Yuva tab (cat, need bars, care, together card, nudge, mood, heartbeat inbox) | `home/HomeScreen.kt`, `cat/*` | `home` | Done; some cards may still show the `Yakında` toast (which card is wired is passed via the `soon` parameter in code; unverified one by one) |
 | Biz tab | `HomeScreen.kt: BizTab` | `home` | Partial: "X & Y" title, sign-out, card list; details unverified |
 | Anılar tab | `HomeScreen` | `home` | **Yakında** (`ComingSoon`) |

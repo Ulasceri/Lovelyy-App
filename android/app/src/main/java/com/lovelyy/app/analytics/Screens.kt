@@ -13,12 +13,15 @@ val AppState.screenName: String?
         AppState.SignedOut -> "login"
         is AppState.NeedsName -> "name_setup"
         is AppState.Pairing -> "pairing"
+        is AppState.JustPaired -> "paired_onboarding"
         is AppState.Home -> "home"
         is AppState.Failed -> "error"
     }
 
 /** Inner screens opened on top of the home tabs (logged by HomeScreen when they open). */
 object InnerScreens {
+    /** The try-it intro between Karşılama and Giriş (part of the signed-out state). */
+    const val INTRO = "onboarding_intro"
     const val DAY_COUNTER = "day_counter"
     const val HEARTBEAT = "heartbeat"
     const val MOOD = "mood"

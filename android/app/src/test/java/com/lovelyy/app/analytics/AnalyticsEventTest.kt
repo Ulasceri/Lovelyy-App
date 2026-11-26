@@ -30,6 +30,8 @@ class AnalyticsEventTest {
         AnalyticsEvent.WheelCreated,
         AnalyticsEvent.CapsuleSealed(days = 81),
         AnalyticsEvent.DrawingSaved(strokes = 12),
+        AnalyticsEvent.IntroFinished(skipped = false, demosTried = 3),
+        AnalyticsEvent.PermissionPrimerAnswered(permission = "location", allowed = true),
         AnalyticsEvent.ScreenView("home"),
         AnalyticsEvent.ScreenView("day_counter"),
     )

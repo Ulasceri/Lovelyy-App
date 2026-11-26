@@ -35,7 +35,8 @@ Android app for couples with a **shared cat** they care for together. Kotlin + J
 Material 3, Firebase only (Auth, Firestore, Crashlytics, Analytics, Performance), monorepo.
 iOS comes later (`ios/` is a stub). Product: [docs/product.md](docs/product.md).
 
-**Built (designed + approved):** Karşılama, Giriş, Eşleşme, Anasayfa with the bottom nav (Yuva, Anılar,
+**Built (designed + approved):** Karşılama, the try-it intro (onboarding), Giriş, Eşleşme, the post-pairing
+flow (Eşleştiniz + notification and location primers), Anasayfa with the bottom nav (Yuva, Anılar,
 Planlar, Biz), the cat and Kedi bakımı (streak, accessories), day counter, heartbeat, mood, daily question,
 notes, calendar, bucket list, decision wheel, live drawing, time capsule, distance, profile/settings,
 4 home-screen widgets, and telemetry.
@@ -58,7 +59,7 @@ android/app/src/main/java/com/lovelyy/app/
   ui/LovelyyRoot       renders the screen for the current AppState
   ui/theme/            Color, Type (Quicksand), Shape, Theme
   ui/components/       Components.kt (buttons, text field, avatar), Design.kt (approved shared blocks)
-  ui/{auth,profile,pairing,home,cat,heartbeat,setup}/
+  ui/{auth,onboarding,profile,pairing,home,cat,heartbeat,setup}/
 android/app/src/debug/   debug-only telemetry receiver
 android/app/src/main/assets/cat/   14 mp4 clips (played by CatAnimator, ExoPlayer)
 firebase/                firestore.rules, database.rules.json (deny all), functions/ (TS), tests/
@@ -67,7 +68,7 @@ assets/                  shared fonts/images; docs/  product, architecture, anal
 ```
 
 **Navigation has no NavController.** `AppState` (Loading, FirebaseMissing, SignedOut, NeedsName, Pairing,
-Home, Failed) is computed in `AppViewModel` and `LovelyyRoot` cross-fades via `when (state)`. Inside Home,
+JustPaired, Home, Failed) is computed in `AppViewModel` and `LovelyyRoot` cross-fades via `when (state)`. Inside Home,
 `HomeScreen` has the bottom nav. A new top-level screen means a new `AppState` case plus its `Screens.kt` name.
 
 Firestore layout: `users/{uid}`, `pairCodes/{CODE}`, `couples/{id}` (members, startDate) and
