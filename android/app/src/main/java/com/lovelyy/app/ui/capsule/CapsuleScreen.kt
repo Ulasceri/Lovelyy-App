@@ -59,6 +59,7 @@ import com.lovelyy.app.LovelyyApplication
 import com.lovelyy.app.R
 import com.lovelyy.app.analytics.AnalyticsEvent
 import com.lovelyy.app.data.Capsule
+import com.lovelyy.app.data.CapsuleDraft
 import com.lovelyy.app.data.CapsuleRepository
 import com.lovelyy.app.data.UserProfile
 import com.lovelyy.app.telemetry.Telemetry
@@ -107,7 +108,10 @@ class CapsuleViewModel(private val app: LovelyyApplication, private val coupleId
     fun seal(me: UserProfile, title: String, text: String, openOn: LocalDate) {
         viewModelScope.launch {
             runCatching { app.capsuleRepository.add(coupleId, me, title, text, openOn) }
-                .onSuccess { Telemetry.track(AnalyticsEvent.CapsuleSealed(ChronoUnit.DAYS.between(LocalDate.now(), openOn).toInt())) }
+                .onSuccess {
+                    CapsuleDraft.clear(app)
+                    Telemetry.track(AnalyticsEvent.CapsuleSealed(ChronoUnit.DAYS.between(LocalDate.now(), openOn).toInt()))
+                }
                 .onFailure { Timber.w(it, "Sealing the letter failed") }
         }
     }
@@ -306,7 +310,7 @@ private fun WriteSheet(onDismiss: () -> Unit, onSeal: (String, String, LocalDate
                 SvgStrokeIcon(Kit.LOCK_D, Brown, Modifier.size(18.dp))
                 Text(stringResource(R.string.tc_editor_date, date.format(DATE)), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Brown)
             }
-            MainAction(stringResource(R.string.tc_seal), Kit.LOCK_D, { CapsuleDraft.clear(context); onSeal(title.trim(), text, date) }, enabled = title.isNotBlank() && text.isNotBlank())
+            MainAction(stringResource(R.string.tc_seal), Kit.LOCK_D, { onSeal(title.trim(), text, date) }, enabled = title.isNotBlank() && text.isNotBlank())
         }
     }
     if (picking) {
@@ -328,7 +332,12 @@ private fun LetterSheet(c: Capsule, today: LocalDate, mine: Boolean, onDismiss: 
             Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 20.dp).padding(bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text(c.title, fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = Brown)
+            val heading = when {
+                open -> c.title
+                mine -> stringResource(R.string.tc_from_me)
+                else -> stringResource(R.string.tc_from_partner, c.byName.ifBlank { stringResource(R.string.home_partner_fallback) })
+            }
+            Text(heading, fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = Brown)
             if (open) {
                 WhiteCard(padding = 18.dp) {
                     Text(c.text, fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 16.sp, lineHeight = 24.sp, color = Brown)
@@ -347,24 +356,5 @@ private fun LetterSheet(c: Capsule, today: LocalDate, mine: Boolean, onDismiss: 
                 )
             }
         }
-    }
-}
-
-/** The unsealed letter, kept on this phone only (SharedPreferences). */
-private object CapsuleDraft {
-    private const val PREFS = "capsule_draft"
-
-    fun load(context: android.content.Context): Triple<String, String, String?> {
-        val p = context.getSharedPreferences(PREFS, android.content.Context.MODE_PRIVATE)
-        return Triple(p.getString("title", "").orEmpty(), p.getString("text", "").orEmpty(), p.getString("date", null))
-    }
-
-    fun save(context: android.content.Context, title: String, text: String, date: String) {
-        context.getSharedPreferences(PREFS, android.content.Context.MODE_PRIVATE).edit()
-            .putString("title", title).putString("text", text).putString("date", date).apply()
-    }
-
-    fun clear(context: android.content.Context) {
-        context.getSharedPreferences(PREFS, android.content.Context.MODE_PRIVATE).edit().clear().apply()
     }
 }
