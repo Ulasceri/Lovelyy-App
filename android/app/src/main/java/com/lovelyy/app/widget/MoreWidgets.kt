@@ -76,6 +76,21 @@ object WidgetData {
 
     fun clear(context: Context) = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit { clear() }
 
+    /**
+     * Until when the couple is Plus (PlusRules.activeUntil), so the Plus-only widgets (wide cat, the days widget's
+     * heart) know it while the app is closed. Saved by Home whenever the plus map changes.
+     */
+    fun savePlus(context: Context, activeUntil: Long?) {
+        val p = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        if (p.getLong("plusUntil", 0L) == (activeUntil ?: 0L)) return
+        p.edit { putLong("plusUntil", activeUntil ?: 0L) }
+        DaysWidget.updateAll(context)
+        CatWidget.updateAll(context)
+    }
+
+    fun plusActive(context: Context, now: Long = System.currentTimeMillis()): Boolean =
+        now < context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getLong("plusUntil", 0L)
+
     fun anyWidgets(context: Context): Boolean {
         val m = AppWidgetManager.getInstance(context)
         return listOf(CatWidgetProvider::class.java, CatWideWidgetProvider::class.java, DaysWidgetProvider::class.java, DrawingWidgetProvider::class.java)
@@ -112,10 +127,15 @@ object DaysWidget {
             R.id.days_count,
             if (c?.startMillis != null) context.resources.getQuantityString(R.plurals.widget_days, (c.days()).toInt(), c.days()) else context.getString(R.string.widget_open_app),
         )
-        val heart = PendingIntent.getBroadcast(
-            context, 1, Intent(context, HeartReceiver::class.java).setAction(ACTION_HEART),
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
-        )
+        // The one-tap heart is Plus; without Plus the heart opens the app on the Plus lock (P4) instead.
+        val heart = if (WidgetData.plusActive(context)) {
+            PendingIntent.getBroadcast(
+                context, 1, Intent(context, HeartReceiver::class.java).setAction(ACTION_HEART),
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+            )
+        } else {
+            CatWidget.openApp(context, DeepLink.PLUS_LOCK_HEART)
+        }
         views.setOnClickPendingIntent(R.id.days_heart, heart)
         return views
     }
