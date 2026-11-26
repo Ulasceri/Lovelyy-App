@@ -131,7 +131,7 @@ private fun Map<String, Any?>?.toAction(): CatAction? {
 internal fun DocumentSnapshot.toCatDoc(): CatDoc {
     val s = get("streak").asMap()
     return CatDoc(
-        name = getString("name"),
+        name = displayCatName(getString("name")),
         hunger = get("hunger").asMap().toNeed(),
         thirst = get("thirst").asMap().toNeed(),
         energy = get("energy").asMap().toNeed(),

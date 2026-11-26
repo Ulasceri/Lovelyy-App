@@ -59,6 +59,7 @@ import com.lovelyy.app.R
 import com.lovelyy.app.data.CareRewards
 import com.lovelyy.app.data.CareRewards.Accessory
 import com.lovelyy.app.data.CatAction
+import com.lovelyy.app.data.displayCatName
 import com.lovelyy.app.data.CatActionType
 import com.lovelyy.app.data.CatRules
 import com.lovelyy.app.data.Couple
@@ -173,7 +174,7 @@ fun CatCareScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBac
         vm.act(me, members, type)
     }
 
-    val catName = ui?.doc?.name?.takeIf { it.isNotBlank() } ?: stringResource(R.string.cat_generic)
+    val catName = displayCatName(ui?.doc?.name)
     val today = com.lovelyy.app.ui.coupleToday()
     val todayLine = ui?.doc?.recent?.let { todayLineText(it, me.uid, partnerName) }
 

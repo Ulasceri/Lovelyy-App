@@ -19,6 +19,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.lovelyy.app.LovelyyApplication
 import com.lovelyy.app.DeepLink
 import com.lovelyy.app.R
+import com.lovelyy.app.data.displayCatName
 import com.lovelyy.app.data.CareStreak
 import com.lovelyy.app.data.CatDoc
 import com.lovelyy.app.ui.cat.bubbleRes
@@ -112,7 +113,7 @@ object CatWidget {
         }
         val levels = CatRules.levels(doc)
         views.setImageViewResource(R.id.wide_cat, levels.mood.picture())
-        views.setTextViewText(R.id.wide_name, doc.name?.takeIf { it.isNotBlank() } ?: context.getString(R.string.cat_generic))
+        views.setTextViewText(R.id.wide_name, displayCatName(doc.name))
         views.setTextViewText(R.id.wide_streak, context.getString(R.string.widget_streak, doc.streak.current(com.lovelyy.app.data.CoupleClock.today())))
         fun bar(ok: Int, low: Int, value: Double) {
             val v = value.toInt().coerceIn(0, 100)
@@ -142,7 +143,7 @@ object CatWidget {
         }
         val mood = CatRules.levels(doc).mood
         views.setImageViewResource(R.id.widget_cat, mood.picture())
-        views.setTextViewText(R.id.widget_name, doc.name?.takeIf { it.isNotBlank() } ?: context.getString(R.string.cat_generic))
+        views.setTextViewText(R.id.widget_name, displayCatName(doc.name))
         views.setTextViewText(R.id.widget_status, context.getString(mood.bubbleRes()))
         return views
     }
