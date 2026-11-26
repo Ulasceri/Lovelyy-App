@@ -24,7 +24,7 @@ Android uygulaması Kotlin + Jetpack Compose + Material 3 ile yazılır, arka u�
 | Güvenlik: koleksiyon bazlı Firestore kuralları, sinyal sınırı (saatte 15 / günde 60, Console'daki `config/limits`'ten değişir), App Check (Play Integrity) | Hazır; kurallar yayınlanmalı, App Check konsolda kaydedilmeli, bkz. [docs/security.md](docs/security.md) ve [todo.md](todo.md) |
 | Geçmiş ekranları (ruh hali, önceki sorular, kalp atışı, çark), arama | Hazır |
 | Çizimlerimiz (kayıtlı çizimler, silme), açılmış mektuplar, aksesuarlar, bildirimler | Hazır |
-| Hesap (giriş yöntemi, şifre sıfırlama, çıkış, hesap silme) ve eşleşmeyi kaldırma | Hazır; eşleşme kaldırılınca ortak veriler iki taraftan da kalıcı silinir (yeni Firestore kuralları yayınlanmalı) |
+| Hesap (giriş yöntemi, şifre sıfırlama, çıkış, hesap silme) ve eşleşmeyi kaldırma; Biz sekmesinde "Kullanım verisi" anahtarı (analitik/hata/performans kapatılabilir) | Hazır; hesap silince profil, eşleşme kodu, ortak veriler ve telefondaki yerel veriler silinir; eşleşme kaldırılınca ortak veriler iki taraftan da kalıcı silinir (yeni Firestore kuralları yayınlanmalı) |
 | Henüz tasarlanıp kodlanmamış ekranlar | Arayüzde **"Yakında"** olarak görünür |
 
 ## Localization
@@ -34,6 +34,8 @@ Sayılar `<plurals>` ile, tarihler `text/AppLocale.kt` ile yerel dile göre biç
 `res/values-xx/strings.xml` oluştur (tüm anahtarlar, plurals ve `cal_weekdays_short` dahil), `res/xml/locales_config.xml`
 dosyasına dili ekle, Quicksand'in kapsamadığı alfabeler için yedek yazı tipi düşün. Ayrıntılar, kalan işler
 (günlük soru listesi hâlâ kodda, varsayılan kedi adı Firestore verisi) ve doğrulama notları: [docs/LOCALIZATION.md](docs/LOCALIZATION.md).
+
+Ertelenen işler: [todo.md](todo.md).
 
 ## Teknoloji
 
@@ -50,6 +52,7 @@ dosyasına dili ekle, Quicksand'in kapsamadığı alfabeler için yedek yazı ti
 | `android/` | Android uygulaması (Gradle projesi, Android Studio'da bu klasörü aç) |
 | `firebase/` | Firestore / Realtime Database güvenlik kuralları, kural testleri (`tests/`), Cloud Functions iskeleti (`functions/`) |
 | `assets/` | Ortak dosyalar: Quicksand fontu, `brand/` (uygulama logosu), `animations/` ve `images/` (şimdilik boş, ileri için ayrıldı) |
+| `web/` | Play için herkese açık sayfalar (gizlilik, şartlar, hesap silme), Firebase Hosting; bkz. [web/README.md](web/README.md) |
 | `docs/` | Ürün özeti, tasarım prensipleri, mimari, güvenlik, analytics |
 | `tools/` | Yardımcı araçlar: `tools/cat-animation/` kedi kliplerini fal.ai ile üretir (bkz. [tools/README.md](tools/README.md)) |
 | `ios/` | İleride iOS uygulaması (şimdilik sadece not) |

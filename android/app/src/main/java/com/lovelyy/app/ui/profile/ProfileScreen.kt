@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.material3.Switch
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -100,6 +102,7 @@ private const val GRID_D = "M6 4h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2
 private const val PEOPLE_D = "M12.5 8a3.5 3.5 0 1 1-7 0a3.5 3.5 0 1 1 7 0z M19.5 9a2.5 2.5 0 1 1-5 0a2.5 2.5 0 1 1 5 0z M3 20a6 6 0 0 1 12 0M15 20a4 4 0 0 1 6-3.5"
 private const val X_D = "M7 7l10 10M17 7L7 17"
 private const val LOGOUT_D = "M14 5h3a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-3M10 8l-4 4 4 4M6 12h9"
+private const val SHIELD_D = "M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3zM9 12l2 2 4-4"
 private const val CHEVRON_D = "M9 5l7 7-7 7"
 
 /** Biz tab (approved design 10): the two of you, shortcuts and settings. */
@@ -226,6 +229,12 @@ fun ProfileScreen(
             )
             SettingRow(PENCIL_D, stringResource(R.string.pf_cat_name), displayCatName(catUi?.doc?.name)) { naming = true }
             SettingRow(PEOPLE_D, stringResource(R.string.pf_account), stringResource(if (google) R.string.pf_account_google else R.string.pf_account_email), onClick = onAccount)
+            // Opt-out for Analytics, Crashlytics and Performance (one switch, see TelemetryConsent).
+            val telemetryOn by Telemetry.consent.enabled.collectAsStateWithLifecycle()
+            ToggleRow(
+                SHIELD_D, stringResource(R.string.pf_telemetry), stringResource(R.string.pf_telemetry_hint),
+                telemetryOn,
+            ) { Telemetry.consent.setEnabled(it) }
         }
         SettingsCard {
             SettingRow(X_D, stringResource(R.string.pf_unpair), "", color = Danger, onClick = onUnpair)
@@ -332,6 +341,25 @@ private fun SettingRow(icon: String, label: String, value: String, color: Color 
             Text(value, fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = BrownSoft, maxLines = 1)
         }
         SvgStrokeIcon(CHEVRON_D, BrownSoft, Modifier.size(16.dp))
+    }
+}
+
+@Composable
+private fun ToggleRow(icon: String, label: String, hint: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .heightIn(min = 56.dp)
+            .toggleable(value = checked, role = Role.Switch, onValueChange = onChange),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        SvgStrokeIcon(icon, Brown, Modifier.size(20.dp))
+        Column(Modifier.weight(1f)) {
+            Text(label, fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Brown, maxLines = 1)
+            Text(hint, fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, color = BrownSoft, maxLines = 2)
+        }
+        Switch(checked = checked, onCheckedChange = null)
     }
 }
 
