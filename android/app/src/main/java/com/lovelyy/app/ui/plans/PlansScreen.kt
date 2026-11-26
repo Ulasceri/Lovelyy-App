@@ -66,6 +66,7 @@ import com.lovelyy.app.data.CalEvent
 import com.lovelyy.app.data.CalendarMath
 import com.lovelyy.app.data.Couple
 import com.lovelyy.app.data.DayCounter
+import com.lovelyy.app.data.EventConflictException
 import com.lovelyy.app.data.EventRepository
 import com.lovelyy.app.data.ItemGoneException
 import com.lovelyy.app.data.SignalKind
@@ -116,19 +117,39 @@ class PlansViewModel(private val app: LovelyyApplication, private val coupleId: 
         .catch { Timber.w(it, "Calendar unavailable") }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
-    /** [onGone]: the edited plan was deleted by the partner meanwhile (it is not re-created). */
-    fun save(me: UserProfile, partner: UserProfile?, id: String?, title: String, date: LocalDate, yearly: Boolean, onGone: () -> Unit) {
+    /**
+     * [opened]: the plan as it was when the editor opened (null for a new one). [onGone]: the partner deleted
+     * it meanwhile (it is not re-created). [onConflict]: the partner changed it meanwhile; gets the server
+     * version. [force] overwrites.
+     */
+    fun save(
+        me: UserProfile,
+        partner: UserProfile?,
+        opened: CalEvent?,
+        title: String,
+        date: LocalDate,
+        yearly: Boolean,
+        force: Boolean = false,
+        onGone: () -> Unit,
+        onConflict: (CalEvent) -> Unit = {},
+    ) {
         viewModelScope.launch {
-            runCatching { app.eventRepository.save(coupleId, me, id, title, date, "", yearly) }
+            runCatching { app.eventRepository.save(coupleId, me, opened, title, date, "", yearly, force) }
                 .onSuccess {
-                    if (id == null) {
+                    if (opened == null) {
                         Telemetry.track(AnalyticsEvent.PlanAdded(yearly))
                         if (partner != null) {
                             runCatching { app.signalRepository.send(coupleId, me, partner.uid, SignalKind.Event, text = title.trim()) }
                         }
                     }
                 }
-                .onFailure { Timber.w(it, "Saving the plan failed"); if (it is ItemGoneException) onGone() }
+                .onFailure {
+                    when (it) {
+                        is EventConflictException -> onConflict(it.current)
+                        is ItemGoneException -> { Timber.w(it, "Saving the plan failed"); onGone() }
+                        else -> Timber.w(it, "Saving the plan failed")
+                    }
+                }
         }
     }
 
@@ -140,6 +161,9 @@ class PlansViewModel(private val app: LovelyyApplication, private val coupleId: 
 }
 
 private data class Editing(val event: CalEvent?, val date: LocalDate)
+
+/** An edit that hit a newer change by the partner: [current] is the server version, the rest is my unsaved edit. */
+private data class PlanConflict(val current: CalEvent, val title: String, val date: LocalDate, val yearly: Boolean)
 
 /** Planlar tab (approved design 11): countdowns to special days, the month, upcoming plans. */
 @Composable
@@ -296,14 +320,40 @@ fun PlansScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBucke
         if (editingId != null && list != null && list.none { it.id == editingId }) { editing = null; showGone() }
     }
 
-    editing?.let { ed ->
-        PlanEditor(
-            event = ed.event,
-            initialDate = ed.date,
-            onDismiss = { editing = null },
-            onSave = { title, date, yearly -> vm.save(me, partner, ed.event?.id, title, date, yearly, showGone); editing = null },
-            onDelete = ed.event?.let { e -> { askDelete = { vm.delete(e.id); editing = null } } },
+    // The partner changed the plan while it was open here: ask before overwriting their version.
+    var conflict by remember { mutableStateOf<PlanConflict?>(null) }
+    conflict?.let { c ->
+        com.lovelyy.app.ui.components.ConfirmDialog(
+            title = stringResource(R.string.p_conflict_title),
+            body = stringResource(R.string.p_conflict_body, partnerName),
+            confirm = stringResource(R.string.n_conflict_overwrite),
+            onConfirm = {
+                conflict = null
+                vm.save(me, partner, c.current, c.title, c.date, c.yearly, force = true, onGone = showGone)
+            },
+            // Keep the partner version: reopen the editor with it.
+            onDismiss = { conflict = null; editing = Editing(c.current, c.current.date) },
         )
+    }
+
+    editing?.let { ed ->
+        // key(): a reopened editor (after a conflict) starts from the new version, not the old draft.
+        androidx.compose.runtime.key(ed.event?.id, ed.event?.updatedAt, ed.event?.title, ed.event?.date, ed.event?.yearly) {
+            PlanEditor(
+                event = ed.event,
+                initialDate = ed.date,
+                onDismiss = { editing = null },
+                onSave = { title, date, yearly ->
+                    vm.save(
+                        me, partner, ed.event, title, date, yearly,
+                        onGone = showGone,
+                        onConflict = { current -> conflict = PlanConflict(current, title, date, yearly) },
+                    )
+                    editing = null
+                },
+                onDelete = ed.event?.let { e -> { askDelete = { vm.delete(e.id); editing = null } } },
+            )
+        }
     }
 }
 
