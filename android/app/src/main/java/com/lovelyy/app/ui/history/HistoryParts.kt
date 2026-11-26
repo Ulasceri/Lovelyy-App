@@ -147,13 +147,10 @@ internal fun EmptyNote(text: String, modifier: Modifier = Modifier) {
 
 /** Standard scrolling column of the inner screens (top bar + content above the bottom nav). */
 @Composable
-internal fun InnerColumn(spacing: Int = 8, content: @Composable ColumnScope.() -> Unit) {
+internal fun InnerColumn(spacing: Int = 8, scroll: androidx.compose.foundation.ScrollState = rememberScrollState(), content: @Composable ColumnScope.() -> Unit) {
     Column(
-        Modifier.fillMaxSize().imePadding().verticalScrollState().padding(horizontal = 20.dp).navigationBarsPadding().padding(top = 20.dp, bottom = 140.dp),
+        Modifier.fillMaxSize().imePadding().verticalScroll(scroll).padding(horizontal = 20.dp).navigationBarsPadding().padding(top = 20.dp, bottom = 140.dp),
         verticalArrangement = Arrangement.spacedBy(spacing.dp),
         content = content,
     )
 }
-
-@Composable
-private fun Modifier.verticalScrollState(): Modifier = this.then(Modifier.verticalScroll(rememberScrollState()))

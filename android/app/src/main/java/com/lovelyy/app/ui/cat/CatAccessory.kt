@@ -30,8 +30,8 @@ fun CatAccessoryLayer(accessory: Accessory, modifier: Modifier) {
     Canvas(modifier) {
         val k = size.width / 720f
         when (accessory) {
-            // On top of the head, left of center (176 covered the forehead and the right eye's brow).
-            Accessory.Kurdele -> bow(Offset(338f * k, 158f * k), 29f * k, Rose, RoseDeep, tilt = -10f)
+            // On top of the head, left of center (176 and 158 covered the forehead and the right eye's brow).
+            Accessory.Kurdele -> bow(Offset(338f * k, 138f * k), 29f * k, Rose, RoseDeep, tilt = -10f)
             Accessory.Papyon -> bow(Offset(360f * k, 352f * k), 40f * k, Orange, OrangeDeep, tilt = 0f)
             Accessory.Sapka -> hat(k)
             Accessory.Gozluk -> glasses(k)

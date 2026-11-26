@@ -110,7 +110,7 @@ fun AccessoriesScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit
                     else -> stringResource(R.string.ac_preview, selLabel)
                 },
                 fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Brown,
-                modifier = Modifier.align(Alignment.TopStart).padding(14.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.9f))
+                modifier = Modifier.align(Alignment.BottomStart).padding(14.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.9f))
                     .padding(horizontal = 12.dp, vertical = 6.dp),
             )
             Row(
