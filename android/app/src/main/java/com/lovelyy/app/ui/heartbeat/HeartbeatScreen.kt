@@ -1,6 +1,7 @@
 package com.lovelyy.app.ui.heartbeat
 
 import android.view.HapticFeedbackConstants
+import android.widget.Toast
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
@@ -154,7 +155,9 @@ fun HeartbeatScreen(me: UserProfile, partner: UserProfile?, initial: Emotion?, o
     var hold by remember { mutableStateOf(Hold.Idle) }
     val progress = remember { Animatable(0f) }
     val recent by app.signalCenter.recent.collectAsState()
-    val lastIn = recent.firstOrNull { it.to == me.uid && it.kind == SignalKind.Heartbeat }
+    // The newest heartbeat either way (recent is newest first), so a heart I just sent shows up too.
+    val last = recent.firstOrNull { it.kind == SignalKind.Heartbeat && (it.to == me.uid || it.from == me.uid) }
+    val sentText = stringResource(R.string.widget_heart_sent)
     val look = emotion.look()
     val color by animateColorAsState(look.color, label = "emotion")
 
@@ -175,7 +178,7 @@ fun HeartbeatScreen(me: UserProfile, partner: UserProfile?, initial: Emotion?, o
                 .padding(top = 20.dp, bottom = 140.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        // Header: both of you, who to send to, the last heart you got.
+        // Header: both of you, who to send to, the last heart either of you sent.
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy((-14).dp)) {
                 Initial(me.displayName, Peach)
@@ -187,10 +190,17 @@ fun HeartbeatScreen(me: UserProfile, partner: UserProfile?, initial: Emotion?, o
                     fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Brown, maxLines = 1, overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    if (lastIn != null) stringResource(
-                        R.string.hb2_last, lastIn.fromName.ifBlank { partnerName }, timeAgo(lastIn.at),
-                        stringResource((lastIn.emotion ?: Emotion.Sevgi).labelRes()).lowercase(TR),
-                    ) else stringResource(R.string.hb2_none),
+                    when {
+                        last == null -> stringResource(R.string.hb2_none)
+                        last.from == me.uid -> stringResource(
+                            R.string.hb2_last_sent, timeAgo(last.time),
+                            stringResource((last.emotion ?: Emotion.Sevgi).labelRes()).lowercase(TR),
+                        )
+                        else -> stringResource(
+                            R.string.hb2_last, last.fromName.ifBlank { partnerName }, timeAgo(last.time),
+                            stringResource((last.emotion ?: Emotion.Sevgi).labelRes()).lowercase(TR),
+                        )
+                    },
                     fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = BrownSoft, maxLines = 2,
                 )
             }
@@ -276,7 +286,10 @@ fun HeartbeatScreen(me: UserProfile, partner: UserProfile?, initial: Emotion?, o
                                     ticker.cancel()
                                     hold = Hold.Sending
                                     val ok = vm.sendHeartbeat(me, p.uid, emotion)
-                                    if (ok) SignalCenter.vibrate(context, SignalKind.Heartbeat)
+                                    if (ok) {
+                                        SignalCenter.vibrate(context, SignalKind.Heartbeat)
+                                        Toast.makeText(context, sentText, Toast.LENGTH_SHORT).show()
+                                    }
                                     hold = if (ok) Hold.Sent else Hold.Failed
                                 }
                                 waitForUpOrCancellation()

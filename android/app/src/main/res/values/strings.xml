@@ -315,6 +315,8 @@
     <string name="wh_by">%1$s çevirdi · %2$s</string>
     <string name="wh_by_me">Sen çevirdin · %1$s</string>
     <string name="signal_event_msg">%1$s takvime ekledi: %2$s 📅</string>
+    <string name="signal_summary_hearts">%1$s sana %2$d kalp daha gönderdi 💗</string>
+    <string name="signal_summary_mixed">%1$s sana %2$d bildirim daha gönderdi 💌</string>
 
     <!-- Setup / errors -->
     <string name="setup_title">Firebase kurulumu gerekiyor</string>
@@ -365,6 +367,7 @@
     <string name="hb2_title">%1$s kalbini gönder</string>
     <string name="hb2_last">%1$s %2$s sana %3$s gönderdi</string>
     <string name="hb2_none">İlk kalbi sen gönder</string>
+    <string name="hb2_last_sent">Sen %1$s ona %2$s gönderdin</string>
     <string name="hb2_history">Geçmiş</string>
     <string name="hb2_preview_label">%1$s telefonunda böyle görünecek</string>
     <string name="hb2_preview_app">Lovelyy · şimdi</string>

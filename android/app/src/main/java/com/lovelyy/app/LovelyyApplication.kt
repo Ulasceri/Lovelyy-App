@@ -27,6 +27,8 @@ class LovelyyApplication : Application() {
         super.onCreate()
         // Logging, analytics, crash reports, performance. See docs/analytics.md.
         Telemetry.init(this)
+        // Partner signals: listen from process start, not only once Home is shown (see SignalCenter).
+        if (isFirebaseConfigured) runCatching { signalCenter.resumeIfSignedIn() }.onFailure { timber.log.Timber.w(it, "Resuming signal updates failed") }
     }
 
     /** False until app/google-services.json is added (see README). */
