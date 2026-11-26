@@ -65,3 +65,11 @@ internal suspend fun DocumentReference.updateExisting(data: Map<String, Any?>) {
         throw e
     }
 }
+
+/** Our own exceptions thrown inside a transaction can come back wrapped; this finds one in the cause chain. */
+internal inline fun <reified T : Throwable> Throwable.causeOf(): T? =
+    generateSequence(this) { it.cause }.filterIsInstance<T>().firstOrNull()
+
+/** True if a Firestore call failed because the device is offline (transactions need the server). */
+internal fun Throwable.isOffline(): Boolean =
+    causeOf<FirebaseFirestoreException>()?.code == FirebaseFirestoreException.Code.UNAVAILABLE

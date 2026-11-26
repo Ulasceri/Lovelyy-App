@@ -1,5 +1,6 @@
 package com.lovelyy.app.ui.heartbeat
 
+import android.os.SystemClock
 import android.view.HapticFeedbackConstants
 import android.widget.Toast
 import androidx.compose.animation.animateColorAsState
@@ -123,10 +124,17 @@ private const val NUDGE_D = "M9 13V5.5a1.5 1.5 0 0 1 3 0V11l4.6 1.2a2 2 0 0 1 1.
 private const val HOLD_MS = 1500
 
 class HeartbeatViewModel(private val app: LovelyyApplication) : ViewModel() {
+    /** Uptime-clock time of the last successful heartbeat / nudge, kept here so leaving the screen doesn't reset the cooldown. */
+    var lastHeartbeatAt: Long? = null
+    var lastNudgeAt: Long? = null
+
     suspend fun sendHeartbeat(me: UserProfile, partnerUid: String, emotion: Emotion): Boolean {
         val coupleId = me.coupleId ?: return false
         return runCatching { app.signalRepository.send(coupleId, me, partnerUid, SignalKind.Heartbeat, emotion) }
-            .onSuccess { Telemetry.track(AnalyticsEvent.HeartbeatSent(emotion.key)) }
+            .onSuccess {
+                lastHeartbeatAt = SystemClock.elapsedRealtime()
+                Telemetry.track(AnalyticsEvent.HeartbeatSent(emotion.key))
+            }
             .onFailure { Timber.w(it, "Sending a heartbeat failed") }
             .isSuccess
     }
@@ -134,7 +142,10 @@ class HeartbeatViewModel(private val app: LovelyyApplication) : ViewModel() {
     suspend fun nudge(me: UserProfile, partnerUid: String): Boolean {
         val coupleId = me.coupleId ?: return false
         return runCatching { app.signalRepository.send(coupleId, me, partnerUid, SignalKind.Nudge) }
-            .onSuccess { Telemetry.track(AnalyticsEvent.NudgeSent) }
+            .onSuccess {
+                lastNudgeAt = SystemClock.elapsedRealtime()
+                Telemetry.track(AnalyticsEvent.NudgeSent)
+            }
             .onFailure { Timber.w(it, "Sending a nudge failed") }
             .isSuccess
     }
@@ -158,6 +169,7 @@ fun HeartbeatScreen(me: UserProfile, partner: UserProfile?, initial: Emotion?, o
     // The newest heartbeat either way (recent is newest first), so a heart I just sent shows up too.
     val last = recent.firstOrNull { it.kind == SignalKind.Heartbeat && (it.to == me.uid || it.from == me.uid) }
     val sentText = stringResource(R.string.widget_heart_sent)
+    val cooldownText = stringResource(R.string.hb2_cooldown)
     val look = emotion.look()
     val color by animateColorAsState(look.color, label = "emotion")
 
@@ -270,6 +282,10 @@ fun HeartbeatScreen(me: UserProfile, partner: UserProfile?, initial: Emotion?, o
                             awaitEachGesture {
                                 awaitFirstDown()
                                 val p = partner
+                                if (p != null && cooldownRemainingMs(vm.lastHeartbeatAt, SystemClock.elapsedRealtime(), HEARTBEAT_COOLDOWN_MS) > 0L) {
+                                    Toast.makeText(context, cooldownText, Toast.LENGTH_SHORT).show()
+                                    return@awaitEachGesture
+                                }
                                 if ((hold != Hold.Idle && hold != Hold.Holding) || p == null) return@awaitEachGesture
                                 hold = Hold.Holding
                                 holdJob = scope.launch {
@@ -354,8 +370,16 @@ fun HeartbeatScreen(me: UserProfile, partner: UserProfile?, initial: Emotion?, o
 private fun NudgeRow(me: UserProfile, partner: UserProfile?, vm: HeartbeatViewModel) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    var state by remember { mutableStateOf(0) } // 0 ready, 1 sending, 2 sent
-    LaunchedEffect(state) { if (state == 2) { delay(2000); state = 0 } }
+    // 0 ready, 1 sending, 2 sent (cooldown). Starts in "sent" if the last nudge is still cooling down.
+    var state by remember {
+        mutableStateOf(if (cooldownRemainingMs(vm.lastNudgeAt, SystemClock.elapsedRealtime(), NUDGE_COOLDOWN_MS) > 0L) 2 else 0)
+    }
+    LaunchedEffect(state) {
+        if (state == 2) {
+            delay(cooldownRemainingMs(vm.lastNudgeAt, SystemClock.elapsedRealtime(), NUDGE_COOLDOWN_MS))
+            state = 0
+        }
+    }
     val shape = RoundedCornerShape(24.dp)
     Row(
         Modifier.fillMaxWidth().softShadow(shape, 6.dp).clip(shape).background(CreamCard).padding(start = 16.dp, top = 14.dp, end = 14.dp, bottom = 14.dp),

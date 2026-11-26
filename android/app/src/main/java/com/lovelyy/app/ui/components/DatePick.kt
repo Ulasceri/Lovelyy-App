@@ -53,6 +53,7 @@ fun LovelyyDatePicker(
         selectedDayContentColor = Brown,
         todayDateBorderColor = Peach,
         todayContentColor = Brown,
+        disabledDayContentColor = BrownSoft.copy(alpha = 0.4f),
         selectedYearContainerColor = Peach,
         selectedYearContentColor = Brown,
     )

@@ -109,6 +109,7 @@
     <string name="login_body_signup">Birkaç saniye sürer. Sonra sevgilinle eşleşip kedinizi tanıyacaksınız.</string>
     <string name="login_or_email">ya da e-postayla</string>
     <string name="field_name_ph">Adın</string>
+    <string name="field_name_hint">Adını yaz, sevgilin seni böyle görecek</string>
     <string name="field_email_ph">E-posta adresin</string>
     <string name="field_password_ph">Şifren</string>
     <string name="login_show_password">Şifreyi göster</string>
@@ -128,6 +129,7 @@
     <string name="pair_have_code">Sevgilimin kodu var, onu gireceğim</string>
     <string name="pair_enter_title">Kodu gir</string>
     <string name="pair_enter_body">Sevgilinin ekranındaki 6 haneli kodu yaz.</string>
+    <string name="pair_enter_hint_short">Kod 6 haneli, %1$d hane kaldı</string>
     <string name="pair_enter_hint_ttl">Kod 30 dakika geçerli, sadece bir kez kullanılır.</string>
     <string name="pair_delete">Sil</string>
 
@@ -380,6 +382,7 @@
     <string name="hb2_nudge_body">Tek dokunuş: “%1$s seni düşünüyor”</string>
     <string name="hb2_nudge_action">Dürt</string>
     <string name="hb2_nudge_done">Dürtüldü</string>
+    <string name="hb2_cooldown">Kalbin yolda, birazdan tekrar gönderebilirsin</string>
     <string name="time_ago_minutes">%1$d dakika önce</string>
     <string name="time_ago_hours">%1$d saat önce</string>
     <string name="time_ago_days">%1$d gün önce</string>
@@ -415,6 +418,7 @@
     <string name="q_locked">Sen cevaplayınca açılır. Önce bakmak yok!</string>
     <string name="q_partner_pending">Cevaplayınca burada görünecek.</string>
     <string name="q_send">Cevabımı gönder</string>
+    <string name="q_answers_locked">İkiniz de cevapladınız, cevaplar kilitlendi 🔒</string>
     <string name="q_sent">Cevabın %1$s ulaştı</string>
     <string name="q_failed">Gönderilemedi, tekrar dene</string>
 
@@ -437,6 +441,9 @@
     <string name="n_unpin">Sabitlemeyi kaldır</string>
     <string name="n_delete">Sil</string>
     <string name="n_save">Kaydet</string>
+    <string name="n_conflict_title">Bu not az önce değişti</string>
+    <string name="n_conflict_body">Sen düzenlerken %1$s bu notu değiştirdi. Kaydedersen onun yazdıkları silinir.</string>
+    <string name="n_conflict_overwrite">Yine de kaydet</string>
 
     <!-- Planlar: takvim + özel günler (approved design 11) -->
     <string name="p_title">Planlar</string>

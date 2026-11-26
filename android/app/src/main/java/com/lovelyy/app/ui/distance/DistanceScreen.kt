@@ -287,7 +287,7 @@ fun DistanceScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit) {
         // Privacy switches.
         WhiteCard {
             Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                SwitchRow(stringResource(R.string.ds_share), stringResource(R.string.ds_share_sub, partnerName), sharing) { on ->
+                SwitchRow(stringResource(R.string.ds_share), stringResource(R.string.ds_share_sub, partnerName), sharing || busy) { on ->
                     if (on) shareNow(first = true) else vm.stop(me.uid)
                 }
                 SwitchRow(stringResource(R.string.ds_city_only), stringResource(R.string.ds_city_only_sub), cityOnly) { on ->

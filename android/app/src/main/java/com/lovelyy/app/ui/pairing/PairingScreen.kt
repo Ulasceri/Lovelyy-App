@@ -415,7 +415,9 @@ private fun EnterPage(
             }
         }
         Text(
-            stringResource(R.string.pair_enter_hint_ttl),
+            if (input.isNotEmpty() && input.length < PairingRepository.CODE_LENGTH)
+                stringResource(R.string.pair_enter_hint_short, PairingRepository.CODE_LENGTH - input.length)
+            else stringResource(R.string.pair_enter_hint_ttl),
             fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = BrownSoft,
             textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 14.dp),
         )
