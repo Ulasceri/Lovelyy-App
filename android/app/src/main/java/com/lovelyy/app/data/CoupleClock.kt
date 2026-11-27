@@ -57,8 +57,8 @@ object CoupleClock {
 
     fun zone(): ZoneId = _zone.value
 
-    /** Today in the couple's zone. */
-    fun today(nowMillis: Long = System.currentTimeMillis()): LocalDate = CoupleDay.today(_zone.value, nowMillis)
+    /** Today in the couple's zone, at server time ([TrustedClock]). */
+    fun today(nowMillis: Long = TrustedClock.now()): LocalDate = CoupleDay.today(_zone.value, nowMillis)
 
     /** Following [id]: a zone saved for another couple must not be used for this one. */
     fun select(id: String) {

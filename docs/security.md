@@ -92,6 +92,15 @@ Console steps (in this order; **do not enforce before step 5**, or the app stops
   App Check. A per-hour or per-day quota for every write needs a server (see below).
 - Later (needs a design first): a "sessize al / rahatsız etme" switch for the receiver.
 
+## 3b. Phone clock (Spark, no server code)
+
+- The app counts time from the server (`TrustedClock`, see docs/architecture.md "Cat"), so moving the phone's
+  clock changes neither the cat nor any shared "today".
+- The rules reject cat writes whose times are more than 5 minutes from `request.time` and care days that are not
+  "today" somewhere at the server's time, so even a modified app can't stamp the cat in the future.
+- Still client-side: what the app shows (a capsule's body, the partner's answer) is only hidden by the app; see
+  "Spark, but needs a data change" below for doing those in rules.
+
 ## 4. Console checklist (Spark, no cost)
 
 - [ ] Publish the latest `firebase/firestore.rules` (Firestore → Rules → paste → Publish), then run the app

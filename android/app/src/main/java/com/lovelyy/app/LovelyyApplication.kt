@@ -36,6 +36,8 @@ class LovelyyApplication : Application() {
         if (isFirebaseConfigured) com.lovelyy.app.security.AppCheckSetup.install()
         // The couple's shared time zone saved last time (shared "today"s, also for widgets).
         com.lovelyy.app.data.CoupleClock.init(this)
+        // Server time learned last time (unless the phone restarted since), see TrustedClock.
+        com.lovelyy.app.data.TrustedClock.init(this)
         // Partner signals: listen from process start, not only once Home is shown (see SignalCenter).
         if (isFirebaseConfigured) runCatching { signalCenter.resumeIfSignedIn() }.onFailure { timber.log.Timber.w(it, "Resuming signal updates failed") }
     }
@@ -57,7 +59,8 @@ class LovelyyApplication : Application() {
     val authRepository by lazy { AuthRepository(FirebaseAuth.getInstance()) }
     val userRepository by lazy { UserRepository(FirebaseFirestore.getInstance()) }
     val pairingRepository by lazy { PairingRepository(FirebaseFirestore.getInstance()) }
-    val catRepository by lazy { CatRepository(FirebaseFirestore.getInstance()) }
+    val clockSync by lazy { com.lovelyy.app.data.ClockSync(FirebaseFirestore.getInstance()) }
+    val catRepository by lazy { CatRepository(FirebaseFirestore.getInstance(), clockSync) }
     val signalRepository by lazy { SignalRepository(FirebaseFirestore.getInstance()) }
     val moodRepository by lazy { MoodRepository(FirebaseFirestore.getInstance()) }
     val questionRepository by lazy { QuestionRepository(FirebaseFirestore.getInstance()) }

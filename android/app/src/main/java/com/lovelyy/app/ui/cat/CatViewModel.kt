@@ -18,6 +18,7 @@ import com.lovelyy.app.data.SignalLimitException
 import com.lovelyy.app.data.StreakProtection
 import com.lovelyy.app.data.StreakExplainer
 import com.lovelyy.app.data.StreakExplainerSource
+import com.lovelyy.app.data.TrustedClock
 import com.lovelyy.app.data.UserProfile
 import com.lovelyy.app.telemetry.Telemetry
 import com.lovelyy.app.widget.CatWidget
@@ -63,7 +64,7 @@ class CatViewModel(private val app: LovelyyApplication, private val coupleId: St
 
     private val repo = app.catRepository
     private val doc = MutableStateFlow<CatDoc?>(null)
-    private val clock = MutableStateFlow(System.currentTimeMillis())
+    private val clock = MutableStateFlow(TrustedClock.now())
     private val events = Channel<CatEvent>(Channel.BUFFERED)
     val oneTimeEvents = events.receiveAsFlow()
 
@@ -81,10 +82,10 @@ class CatViewModel(private val app: LovelyyApplication, private val coupleId: St
                 }
                 .collect { d ->
                     doc.value = d
-                    clock.value = System.currentTimeMillis()
+                    clock.value = TrustedClock.now()
                     val last = d.lastAction
                     if (!first && last != null && last != previous && last.uid != myUid &&
-                        System.currentTimeMillis() - last.at < PARTNER_EVENT_MAX_AGE_MS
+                        TrustedClock.now() - last.at < PARTNER_EVENT_MAX_AGE_MS
                     ) {
                         events.send(CatEvent.PartnerAction(last))
                     }
@@ -98,7 +99,7 @@ class CatViewModel(private val app: LovelyyApplication, private val coupleId: St
         viewModelScope.launch {
             while (true) {
                 delay(TICK_MS)
-                clock.value = System.currentTimeMillis()
+                clock.value = TrustedClock.now()
             }
         }
     }
@@ -124,7 +125,7 @@ class CatViewModel(private val app: LovelyyApplication, private val coupleId: St
 
     /** Checks locally first so the UI can answer instantly (e.g. "it's asleep"). */
     fun canDo(type: CatActionType): CatRules.Refusal? =
-        doc.value?.let { CatRules.refusal(it, type, System.currentTimeMillis()) }
+        doc.value?.let { CatRules.refusal(it, type, TrustedClock.now()) }
 
     fun act(me: UserProfile, members: List<String>, type: CatActionType, strokes: Int = 0, name: String? = null) {
         canDo(type)?.let { r -> viewModelScope.launch { events.send(CatEvent.Refused(r)) }; return }
@@ -146,7 +147,7 @@ class CatViewModel(private val app: LovelyyApplication, private val coupleId: St
     }
 
     /**
-     * The time the streak day is counted at: real time, or the Plus debug clock in debug builds (P8 "+1 gün"),
+     * The time the streak day is counted at: server time ([TrustedClock]), or the Plus debug clock in debug builds (P8 "+1 gün"),
      * so streak protection can be tested on an emulator. Need levels always use real time.
      */
     fun streakNow(): Long = PlusClock.now(app)
