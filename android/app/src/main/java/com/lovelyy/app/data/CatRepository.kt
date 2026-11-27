@@ -132,10 +132,13 @@ internal fun CatDoc.toMap(): Map<String, Any?> = mapOf(
     "lastAction" to lastAction?.toMap(),
     "recent" to recent.map { it.toMap() },
     "streak" to streak.toMap(),
-    "items" to items?.toMap(),
-    "itemsAt" to itemsAt?.ts(),
-    "itemsNew" to itemsNew?.id,
-    "sleepRefillMin" to sleepRefillMin,
+) + listOfNotNull(
+    // The item fields only when set: a care action then writes no new keys, so it still passes rules that
+    // predate items (set() replaces the doc, so a field left out is cleared just like a null).
+    items?.let { "items" to it.toMap() },
+    itemsAt?.let { "itemsAt" to it.ts() },
+    itemsNew?.let { "itemsNew" to it.id },
+    sleepRefillMin?.let { "sleepRefillMin" to it },
 )
 
 /** Field names match firestore.rules `validStreak`. */
