@@ -3,10 +3,14 @@ package com.lovelyy.app.data
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 import java.time.LocalDate
 
 class QuestionMathTest {
+    @Before
+    fun loadQuestions() { TestQuestions.init() }
+
     private val today = LocalDate.of(2026, 11, 25)
     private fun day(offset: Long, both: Boolean): DayQuestion {
         val a = Answer("a", "A", "x", 0)
@@ -49,6 +53,12 @@ class QuestionMathTest {
         val q = QuestionBank.QUESTIONS
         assertEquals(q.size, q.toSet().size)
         assertTrue(q.all { it.isNotBlank() && it.length <= 300 })
+    }
+
+    @Test
+    fun bankComesFromTheResourceFileInOrder() {
+        assertEquals(TestQuestions.load(), QuestionBank.QUESTIONS)
+        assertEquals("İlk buluşmamızdan en çok neyi hatırlıyorsun?", QuestionBank.QUESTIONS.first())
     }
 
     @Test

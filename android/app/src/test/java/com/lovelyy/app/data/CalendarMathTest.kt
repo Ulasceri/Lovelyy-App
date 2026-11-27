@@ -4,10 +4,14 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 import java.time.LocalDate
 
 class CalendarMathTest {
+    @Before
+    fun loadQuestions() { TestQuestions.init() }
+
     private fun ev(date: LocalDate, yearly: Boolean) = CalEvent("x", "t", date, "🎂", yearly, "u", "U")
 
     private val today = LocalDate.of(2026, 11, 25)

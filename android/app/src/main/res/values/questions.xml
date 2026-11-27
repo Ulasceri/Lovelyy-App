@@ -1,0 +1,372 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Daily questions (Gunun sorusu). Same order and size in every language: the day picks index = epochDay mod size. -->
+<resources>
+    <string-array name="daily_questions">
+        <item>İlk buluşmamızdan en çok neyi hatırlıyorsun?</item>
+        <item>Bende en sevdiğin üç şey ne?</item>
+        <item>Birlikte gitmek istediğin ilk yer neresi?</item>
+        <item>Beni ilk gördüğünde aklından ne geçti?</item>
+        <item>Seni en çok ne güldürür?</item>
+        <item>Hayalindeki sıradan bir pazar günü nasıl geçer?</item>
+        <item>Birlikte öğrenmek istediğin bir şey var mı?</item>
+        <item>Sana kendini en sevilmiş hissettiren şey ne?</item>
+        <item>Çocukluğundan en sevdiğin anın hangisi?</item>
+        <item>Beş yıl sonra bizi nerede görüyorsun?</item>
+        <item>Bana söylemeye çekindiğin küçük bir şey var mı?</item>
+        <item>En sevdiğin ortak anımız hangisi?</item>
+        <item>Bir gün hayatımızı değiştirebilsek ilk neyi değiştirirdin?</item>
+        <item>Benimle ilgili seni en çok şaşırtan şey ne oldu?</item>
+        <item>Zor bir günde benden ne duymak istersin?</item>
+        <item>Birlikte yapmayı en çok sevdiğin şey ne?</item>
+        <item>Kedimiz konuşabilseydi bize ne derdi?</item>
+        <item>Hangi şarkı seni bana hatırlatıyor?</item>
+        <item>Birlikte izlediğimiz en iyi film ya da dizi hangisi?</item>
+        <item>Sence ilişkimizin süper gücü ne?</item>
+        <item>Bugün seni mutlu eden küçük bir şey neydi?</item>
+        <item>Benimle ilgili en sevdiğin alışkanlık hangisi?</item>
+        <item>Birlikte bir restoran açsak adı ne olurdu?</item>
+        <item>Seni sakinleştiren şey ne?</item>
+        <item>Hayatında en çok minnettar olduğun şey ne?</item>
+        <item>Bana bir gün boyunca sürpriz yapacak olsan ne yapardın?</item>
+        <item>Kendinde değiştirmek istediğin bir şey var mı?</item>
+        <item>İlk tartışmamızı hatırlıyor musun? Ne öğrendik?</item>
+        <item>Birlikte yaşlandığımızı düşününce aklına ne geliyor?</item>
+        <item>Sence ben hangi hayvana benziyorum, neden?</item>
+        <item>En sevdiğin yemeği birlikte yapsak hangisi olurdu?</item>
+        <item>Bu hafta benim için yapabileceğim en güzel şey ne?</item>
+        <item>Hiç söylemediğin bir iltifatı şimdi söyler misin?</item>
+        <item>Hangi mevsim bize daha çok yakışıyor?</item>
+        <item>Birlikte gitmek istediğin bir konser ya da etkinlik var mı?</item>
+        <item>En çok hangi anımızı tekrar yaşamak isterdin?</item>
+        <item>Sence birbirimizden ne öğrendik?</item>
+        <item>Mükemmel bir randevu nasıl olurdu?</item>
+        <item>Bugün beni ne zaman düşündün?</item>
+        <item>Bize ait küçük bir gelenek başlatsak ne olurdu?</item>
+        <item>Seni en çok neyin heyecanlandırdığını merak ediyorum, nedir?</item>
+        <item>Birlikte bir rekor kırsak hangi konuda olurdu?</item>
+        <item>Sana yazdığım ya da söylediğim en güzel şey neydi?</item>
+        <item>Bir haftalığına başka bir şehirde yaşasak hangisini seçerdin?</item>
+        <item>Kendini en çok hangi anlarda güçlü hissediyorsun?</item>
+        <item>Birlikte okumak istediğin bir kitap var mı?</item>
+        <item>Sence ben en çok neye gülüyorum?</item>
+        <item>Bu yıl birlikte başarmak istediğin bir şey ne?</item>
+        <item>Bana hangi lakabı takmak isterdin?</item>
+        <item>Şu an yanında olsam ilk ne yapardık?</item>
+        <item>Birlikte yaşadığımız en komik anı hatırlıyor musun?</item>
+        <item>Sabah gözünü açınca aklına ilk ne geliyor?</item>
+        <item>Bir günlüğüne görünmez olsan ne yapardın?</item>
+        <item>Birlikte yeni bir hobi edinsek hangisi olsun isterdin?</item>
+        <item>Bugüne kadar bende seni en çok gururlandıran şey ne oldu?</item>
+        <item>Seni en çok rahatlatan koku hangisi?</item>
+        <item>Çocukken büyüyünce ne olmak istiyordun?</item>
+        <item>Birlikte yaptığımız en güzel yolculuk hangisiydi?</item>
+        <item>Evimizin duvarına büyük bir fotoğraf asacak olsak hangisi olurdu?</item>
+        <item>Bir süper gücün olsa hangisini seçerdin?</item>
+        <item>Bu hafta duyduğun en güzel söz neydi?</item>
+        <item>Hayatında yaptığın en cesur şey ne?</item>
+        <item>Benimle ilk konuştuğumuz günü anlatır mısın?</item>
+        <item>Şu an en çok neyi özlüyorsun?</item>
+        <item>Bir günü hiçbir şey yapmadan birlikte geçirsek nasıl olurdu?</item>
+        <item>En sevdiğin çocukluk yemeği hangisi?</item>
+        <item>Bana kısa bir mektup yazsan ilk cümlen ne olurdu?</item>
+        <item>Sence mutlu bir evin olmazsa olmazı nedir?</item>
+        <item>Hangi anımızı tek bir fotoğraf karesine sığdırırdın?</item>
+        <item>Gelecekte birlikte yaşamak istediğin ev nasıl görünüyor?</item>
+        <item>Bana öğrettiğin en değerli şey ne?</item>
+        <item>Kahvaltıda genelde ne yemeyi seversin?</item>
+        <item>Bir günlüğüne dünyanın herhangi bir yerinde olabilsen neresi olurdu?</item>
+        <item>Sence birlikte en iyi olduğumuz şey ne?</item>
+        <item>Hiç unutamadığın bir koku ya da ses var mı?</item>
+        <item>Bana güvenmeye ilk ne zaman başladığını hatırlıyor musun?</item>
+        <item>Yağmurlu bir günü birlikte nasıl geçirmek isterdin?</item>
+        <item>En sevdiğin tatlı hangisi, bu hafta birlikte yapalım mı?</item>
+        <item>Hayatını bir filme çevirsek adı ne olurdu?</item>
+        <item>Bugün kendin için yaptığın güzel bir şey var mı?</item>
+        <item>Sence bizi biz yapan şey ne?</item>
+        <item>Hangi ortak anımız seni hâlâ gülümsetiyor?</item>
+        <item>Küçükken en çok korktuğun şey neydi?</item>
+        <item>Uzun bir yolculuğun şarkı listesine hangi şarkıyı eklerdin?</item>
+        <item>Bir yıl sonra bugünü nasıl hatırlamak isterdin?</item>
+        <item>Bana şimdiye kadar kimseye anlatmadığın küçük bir şey anlatır mısın?</item>
+        <item>Birbirimizin hangi huyuna zamanla alıştık?</item>
+        <item>Sana göre mükemmel bir akşam yemeği nasıl olur?</item>
+        <item>En son ne zaman içten bir kahkaha attın?</item>
+        <item>Birlikte bir ağaç dikseydik nereye dikmek isterdin?</item>
+        <item>Çocukken en sevdiğin oyun hangisiydi?</item>
+        <item>Hayatımıza hangi küçük şeyi daha sık katmalıyız?</item>
+        <item>Birbirimize en çok hangi konuda destek olduk?</item>
+        <item>Bir sabah uyanıp yeni bir dil konuşabilsen hangisi olurdu?</item>
+        <item>Bizim en tatlı tartışma konumuz ne?</item>
+        <item>Beni en çok hangi kıyafetimle seviyorsun?</item>
+        <item>Gün içinde bana yazmak isteyip yazmadığın bir şey oldu mu?</item>
+        <item>Sana huzur veren bir yer var mı?</item>
+        <item>Evde en sevdiğin köşe neresi?</item>
+        <item>Bir gün ünlü olsak neyle tanınmak isterdik?</item>
+        <item>Birlikte pişirdiğimiz en iyi yemek neydi?</item>
+        <item>Gelecek yaz için aklında nasıl bir plan var?</item>
+        <item>Birbirimize verdiğimiz en güzel hediye hangisiydi?</item>
+        <item>Hangi konuda daha sabırlı olmak isterdin?</item>
+        <item>Sence bizi bir araya getiren şey neydi?</item>
+        <item>En sevdiğin renk hangisi ve neden?</item>
+        <item>Sana en iyi gelen sabah rutini nedir?</item>
+        <item>Bir hafta boyunca sadece atıştırmalık yesek ne seçerdin?</item>
+        <item>Başka bir ülkede yaşamak ister miydin, nerede?</item>
+        <item>Hangi anılarımızı bir kutuya koyup saklardın?</item>
+        <item>Benden küçük bir şey istesen ne isterdin?</item>
+        <item>Birlikte bir macera yaşasak nasıl bir macera olurdu?</item>
+        <item>Beni tek kelimeyle anlatsan hangi kelimeyi seçerdin?</item>
+        <item>Küçük bir kutlamayı hak eden son başarın ne oldu?</item>
+        <item>Bir ay boyunca her gün aynı yemeği yesen hangisi olurdu?</item>
+        <item>Seni en çok ne yoruyor ve sana nasıl yardım edebilirim?</item>
+        <item>Birlikte yürüyüşe çıksak hangi rotayı seçerdik?</item>
+        <item>Anneannenden ya da dedenden aklında kalan bir anı var mı?</item>
+        <item>Sana söylenmiş en güzel sözü hatırlıyor musun?</item>
+        <item>Bu hafta kendine ayıracağın küçük bir zaman var mı?</item>
+        <item>Hayatta hiç pişman olmadığın bir karar hangisi?</item>
+        <item>Bir saat boyunca hiç konuşmadan yan yana otursak ne hissederdin?</item>
+        <item>Bir şarkıyı bizim şarkımız ilan etsek hangisi olurdu?</item>
+        <item>Kendini en çok hangi yerde evinde hissediyorsun?</item>
+        <item>Bende seni en çok şaşırtan huy hangisi?</item>
+        <item>Hep denemek isteyip denemediğin bir şey var mı?</item>
+        <item>Yaşlandığımızda hangi huyumuzun hâlâ aynı kalacağını düşünüyorsun?</item>
+        <item>Bugün gökyüzü nasıldı, fark ettin mi?</item>
+        <item>En sevdiğin mevsim hangisi ve onda ne var?</item>
+        <item>İyi bir arkadaşın ilk özelliği sence nedir?</item>
+        <item>Yeni biriyle tanışırken seni ne heyecanlandırır?</item>
+        <item>Beni en iyi anlatan anı hangisi?</item>
+        <item>Birlikte bir bahçemiz olsa içine ne ekerdik?</item>
+        <item>Çocukluk evinden aklında kalan bir detay var mı?</item>
+        <item>Bir günlüğüne mesleğini değiştirsen ne olurdun?</item>
+        <item>Birbirimize haftada bir yapabileceğimiz küçük bir iyilik fikrin var mı?</item>
+        <item>Hangi filmi her izlediğinde yeniden seviyorsun?</item>
+        <item>Bana en çok hangi konuda güveniyorsun?</item>
+        <item>Birlikte yapabileceğimiz bir günübirlik gezi önerir misin?</item>
+        <item>Sence sevgi en çok neyle büyür?</item>
+        <item>Son hatırladığın rüya neydi?</item>
+        <item>Bir yıl boyunca her ay başka bir ülkeye gitsek ilk hangisi olurdu?</item>
+        <item>Kendine bir söz verecek olsan ne olurdu?</item>
+        <item>Beni gülümsetmenin en kolay yolu ne?</item>
+        <item>Bir akşam birlikte ne yapmak seni en çok mutlu eder?</item>
+        <item>Yeni yıl için dileğin ne?</item>
+        <item>Hayatımızdaki en şanslı tesadüf hangisiydi?</item>
+        <item>Sence ilişkide dürüstlük ne demek?</item>
+        <item>Bugün seni en çok ne düşündürdü?</item>
+        <item>Yarın için küçük bir hedefin var mı?</item>
+        <item>Sana en iyi gelen mola nedir?</item>
+        <item>Birlikte yapmak isteyip henüz yapmadığımız bir şey ne?</item>
+        <item>Hangi sesi duyunca gülümsüyorsun?</item>
+        <item>Kedimize bir arkadaş alsak ona ne ad verirdik?</item>
+        <item>Çok yorucu bir günün akşamında sana en iyi ne gelir?</item>
+        <item>Seni nasıl daha iyi destekleyebilirim?</item>
+        <item>Bir ödül kazansan ne için olurdu?</item>
+        <item>Hangi eski fotoğrafımıza bakınca içinin ısındığını hissediyorsun?</item>
+        <item>Bir hafta tatilimiz olsa dağ mı deniz mi?</item>
+        <item>Hayatındaki en güzel sürpriz neydi?</item>
+        <item>Beni bir yemekle anlatsan hangisi olurdu?</item>
+        <item>Bana bugün söylemek istediğin güzel bir şey var mı?</item>
+        <item>Birlikte gün doğumunu izlesek nerede olmak isterdin?</item>
+        <item>Evde sessiz bir akşamı mı, kalabalık bir akşamı mı seçersin?</item>
+        <item>Küçük bir jest bir günü sence nasıl değiştirir?</item>
+        <item>Birlikte henüz görmediğimiz hangi yeri görmek isterdin?</item>
+        <item>Hayatında seni en çok değiştiren kişi kim?</item>
+        <item>Benimle geçirdiğin en güzel sabah hangisiydi?</item>
+        <item>Çocukluğundan bir yaz tatilini anlatır mısın?</item>
+        <item>Gelecekte çocuklarımıza ya da yeğenlerimize hangi hikâyeyi anlatırdık?</item>
+        <item>Seni en çok motive eden şey nedir?</item>
+        <item>Hangi eşyayı hep yanında taşırdın?</item>
+        <item>Birlikte bir günü baştan tasarlasak sabahtan akşama nasıl olurdu?</item>
+        <item>Bir ilişki için en güzel alışkanlık sence nedir?</item>
+        <item>Kendini ifade etmekte zorlandığın bir an oldu mu?</item>
+        <item>Hangi dizi ya da kitap karakteri sana benziyor?</item>
+        <item>Bir günlüğüne zamanda yolculuk yapabilsen nereye giderdin?</item>
+        <item>Şu anki en büyük hayalin nedir?</item>
+        <item>Birlikte gittiğimiz yerlerden hangisine yeniden dönmek isterdin?</item>
+        <item>Sana kendini özel hissettiren küçük bir davranış hangisi?</item>
+        <item>Bu ay birlikte yapmak istediğin en basit şey ne?</item>
+        <item>En iyi uykuyu nasıl çekersin?</item>
+        <item>Lunaparka gitsek ilk hangi oyuncağa binerdin?</item>
+        <item>Bana en çok hangi anlarda ihtiyaç duyuyorsun?</item>
+        <item>Birlikte hangi şarkıyı yüksek sesle söylemek isterdin?</item>
+        <item>Hayatından bir günü tekrar yaşayabilsen hangisini seçerdin?</item>
+        <item>Küçük bir şeye bile çok sevindiğin bir anı hatırlıyor musun?</item>
+        <item>Sana bir şiir ya da şarkı yazsam konusu ne olurdu?</item>
+        <item>Birlikte kamp yapsak yanımıza neleri alırdık?</item>
+        <item>Hangi eşyamız bize en çok anı biriktirdi?</item>
+        <item>Bu haftanın en güzel anı neydi?</item>
+        <item>Birlikte gün batımını izlemek için nerede olmak isterdin?</item>
+        <item>Çocukken en sevdiğin çizgi film hangisiydi?</item>
+        <item>Hayatta kendini güvende hissettiren üç şey ne?</item>
+        <item>İlişkimizde en güzel dönüm noktası hangisiydi?</item>
+        <item>Evimize bir hayvan daha gelse hangisi olurdu?</item>
+        <item>Her gün tekrarladığın ve seni mutlu eden bir şey var mı?</item>
+        <item>Birlikte sabaha kadar uyanık kalsak ne yapardık?</item>
+        <item>Bir günlüğüne istediğin yemeği sınırsız yiyebilsen hangisi olurdu?</item>
+        <item>Beni gördüğünde ilk ne hissediyorsun?</item>
+        <item>Bu yıl seni en çok gururlandıran an ne oldu?</item>
+        <item>Yıllık bir anı defterimiz olsa ilk sayfasına ne yazardık?</item>
+        <item>Sana göre güzel bir aile akşamı nasıl geçer?</item>
+        <item>Bizim için en önemli üç değer ne olurdu?</item>
+        <item>Birlikte gönüllü bir iş yapsak hangi konuda olmasını isterdin?</item>
+        <item>Hangi koku sana çocukluk evini hatırlatıyor?</item>
+        <item>Bana en son ne zaman teşekkür etmek istedin?</item>
+        <item>Kendinle ilgili en sevdiğin yön ne?</item>
+        <item>Sabah mı akşam mı, hangisinde daha canlı hissediyorsun?</item>
+        <item>Özel bir günü kalabalıkla mı, sadece ikimiz mi kutlamak istersin?</item>
+        <item>Birlikte bir sergi gezsek nasıl bir sergi seçerdin?</item>
+        <item>Bir günü yıllık tatil ilan etsek hangi gün olurdu?</item>
+        <item>Sence aşkın dili nedir?</item>
+        <item>Bugünü tek cümleyle özetlesen ne derdin?</item>
+        <item>Şimdi bir hediye alabilsen ne seçerdin?</item>
+        <item>Çocukken hangi yemekten nefret ederdin, hâlâ yemiyor musun?</item>
+        <item>Birlikte bir sürpriz parti düzenlesek kimin için olurdu?</item>
+        <item>Bir güzel haberi ilk bana vermek ister miydin?</item>
+        <item>Birbirimizi ilk kez güldürdüğümüz anı hatırlıyor musun?</item>
+        <item>Gün içinde en çok sevdiğin saat hangisi?</item>
+        <item>Hayalindeki bilim kurgu dünyasında neyi görmek isterdin?</item>
+        <item>Birlikte üç kelimeyle bugünü anlatsak hangileri olurdu?</item>
+        <item>En sevdiğin sokak lezzeti hangisi?</item>
+        <item>Bana bir şey öğretmek istesen ne öğretirdin?</item>
+        <item>Bir yıl sonra bu zamanlarda ne yapıyor olmak istersin?</item>
+        <item>Günün en zor kısmı genelde ne oluyor?</item>
+        <item>Bana ilk sarıldığın anı hatırlıyor musun?</item>
+        <item>Yeni bir şehirde kaybolsak ilk ne yapardık?</item>
+        <item>Hangi anımız bir filmde olsa en romantik sahne olurdu?</item>
+        <item>Hayatında en çok kime teşekkür etmek istiyorsun?</item>
+        <item>Çocukluğunda seni en çok ne mutlu ederdi?</item>
+        <item>Bu akşam birlikte ne izlemek istersin?</item>
+        <item>Yaşlandığımızda en çok neyi özleyeceğimizi düşünüyorsun?</item>
+        <item>Seni gülümseten bir kelime ya da ifade var mı?</item>
+        <item>Birlikte bir yemek tarifi icat etsek içinde ne olurdu?</item>
+        <item>Hafta sonu için en sevdiğin plan nedir?</item>
+        <item>Hep gitmek isteyip gidemediğin bir yer var mı?</item>
+        <item>Bir sabah çatıda yağmur sesini dinleseydik, ne yapardık?</item>
+        <item>Bir gün telefonları kapatsak ne yapardık?</item>
+        <item>Sence hangi konuda en çok anlaşıyoruz?</item>
+        <item>Eski bir fotoğraf albümümüz olsa ilk sayfasında ne olurdu?</item>
+        <item>Daha önce öğrenmiş olmayı istediğin bir şey var mı?</item>
+        <item>İyi bir günün sana göre tarifi nedir?</item>
+        <item>Hayatımızı kolaylaştıracak ufak bir icat ne olurdu?</item>
+        <item>Bugün birine iyilik yaptın mı?</item>
+        <item>Kendini bir şehirle anlatsan hangisi olurdu?</item>
+        <item>Bir günü sadece yürüyerek geçirsek nereyi gezmek isterdin?</item>
+        <item>Yeni bir şeye başlarken seni en çok ne cesaretlendirir?</item>
+        <item>Hangi hayalini ertelemeyi bırakmak istersin?</item>
+        <item>Çay ya da kahve eşliğinde sohbetimiz genelde nereye gidiyor?</item>
+        <item>Bir günlüğüne kedimiz olsan neyle meşgul olurdun?</item>
+        <item>Hangi güne geri dönüp bir şeyi yeniden yaşamak isterdin?</item>
+        <item>Seni mutlu eden küçük bir alışkanlığın var mı?</item>
+        <item>Gelecekte birlikte kutlamak istediğin bir kilometre taşı ne?</item>
+        <item>Beni hangi konuda en iyi tanıdığını düşünüyorsun?</item>
+        <item>Uzun bir yolculuğa çıksak ilk durağımız neresi olurdu?</item>
+        <item>Seni sürekli gülümseten bir hatıra var mı?</item>
+        <item>Bir çatı katında mı, bahçeli bir evde mi yaşamak isterdin?</item>
+        <item>Bugün hangi küçük şey için minnettarsın?</item>
+        <item>Bir akşam birlikte müzik dinleyerek ne yapmak istersin?</item>
+        <item>Bir şeyi tek başına yapmak mı, birlikte yapmak mı seni daha çok mutlu eder?</item>
+        <item>Birlikte hangi oyunu oynamak isterdin?</item>
+        <item>Beni ilk fark ettiğin anı hatırlıyor musun?</item>
+        <item>En son ne zaman kendini tamamen rahatlamış hissettin?</item>
+        <item>Hayatın sana öğrettiği en güzel ders ne oldu?</item>
+        <item>Sence iyi bir dinleyici nasıl olur?</item>
+        <item>Bu yıl hâlâ yapmak istediğin küçük bir şey var mı?</item>
+        <item>Birlikte hangi markette alışveriş yapmayı seviyoruz?</item>
+        <item>Kendini hangi şarkıyla anlatırsın?</item>
+        <item>Yeni yıla girerken birbirimize hangi dileği dilesek?</item>
+        <item>Seni bir günlüğüne şımartacak olsam ne yapardım?</item>
+        <item>Hangi tatlı alışkanlığımızı hiç kaybetmek istemezsin?</item>
+        <item>Birlikte çıktığımız en eğlenceli akşam neydi?</item>
+        <item>Yaşlandığımızda birbirimize ne söylerdik sence?</item>
+        <item>Bugün sana bir mesaj yazsam ne yazmamı isterdin?</item>
+        <item>Çocukken hayalinde yaşadığın bir yer var mıydı?</item>
+        <item>Bu hafta birlikte ne pişirmek istersin?</item>
+        <item>Hiç beklemediğin bir anda aklıma geldiğin oldu mu?</item>
+        <item>Beni en çok hangi konuda destekledin?</item>
+        <item>Hayatta en çok önem verdiğin şey nedir?</item>
+        <item>Bir anı defterimizin ilk sayfasına hangi günü yazardık?</item>
+        <item>Bende seninle en tuhaf ortak noktamız ne?</item>
+        <item>Küçük bir ödül olarak kendine ne alırdın?</item>
+        <item>Gece yarısı acıksak ne yerdik?</item>
+        <item>Bugün seni en çok ne gülümsetti?</item>
+        <item>İyi bir arkadaşlığın sırrı sence ne?</item>
+        <item>Birlikte bir dil öğrensek ilk hangi kelimeyi öğrenirdik?</item>
+        <item>Hangi mevsimde doğmuş olmak isterdin?</item>
+        <item>Sana göre ev ne demek?</item>
+        <item>Hayatından hangi dönemi yeniden yaşamak isterdin?</item>
+        <item>Bana bir tavsiye vermek istesen ne olurdu?</item>
+        <item>Bir film sahnesine girebilsen hangisi olurdu?</item>
+        <item>Yılbaşında birlikte ne yapmak isterdin?</item>
+        <item>En sevdiğin sabah içeceği nedir?</item>
+        <item>Hafta sonu kaçamağı için nasıl bir yer seçerdin?</item>
+        <item>Bana sadece bizim kullanacağımız bir isim koysan ne olurdu?</item>
+        <item>Kendini en çok ne zaman güvende hissediyorsun?</item>
+        <item>Birbirimiz için yapabileceğimiz küçük bir ritüel ne olabilir?</item>
+        <item>En sevdiğin şehir neresi?</item>
+        <item>Bir yıl önce bugün neler yapıyorduk, hatırlıyor musun?</item>
+        <item>Birlikte yazacağımız bir hikâyenin ilk cümlesi ne olurdu?</item>
+        <item>Seni en iyi anlatan eşya hangisi?</item>
+        <item>Bugün için küçük bir dileğin var mı?</item>
+        <item>Sence hangi film bizi anlatıyor?</item>
+        <item>Bir şeyi baştan başlayabilsek neyi seçerdin?</item>
+        <item>Beni en çok neyle hatırlıyorsun, bir kokuyla mı bir şarkıyla mı?</item>
+        <item>Önümüzdeki on yılda birlikte kaç ülke görmek istersin?</item>
+        <item>Kendini en cesur ne zaman hissediyorsun?</item>
+        <item>Hayatımızı güzelleştiren en basit şey ne?</item>
+        <item>Küçük bir not bırakmak sana nasıl hissettirir?</item>
+        <item>Birlikte bir tatil albümü yapsak ilk fotoğraf hangisi olurdu?</item>
+        <item>Sence bir gülümseme neyi değiştirir?</item>
+        <item>Bu akşam yıldızları izlesek ne konuşurduk?</item>
+        <item>Aynı anda aynı şeyi düşündüğümüz bir an oldu mu hiç?</item>
+        <item>Hangi değerimizi sevdiklerimize aktarmak isterdin?</item>
+        <item>Hayalindeki evde ilk neyi yapardık?</item>
+        <item>Birlikte yeni bir şey denediğimiz son zaman ne zamandı?</item>
+        <item>Bir günlüğüne planı ben yapsam nasıl olmasını isterdin?</item>
+        <item>Bu ayın sana en çok kattığı şey ne oldu?</item>
+        <item>Bir daha asla yapmak istemediğin bir şey var mı?</item>
+        <item>Hangi anımızı her ay yeniden hatırlamak isterdin?</item>
+        <item>Bir ilişkide en önemli üç şey sence ne?</item>
+        <item>Bana sormak isteyip sormadığın bir soru var mı?</item>
+        <item>Bu hafta seni en çok neye sevindirdi?</item>
+        <item>Birlikte en çok güldüğümüz şey ne?</item>
+        <item>Sence küçük kutlamalar neden önemli?</item>
+        <item>Çocukluk arkadaşlarından kimi hâlâ hatırlıyorsun?</item>
+        <item>Telefonsuz bir pazar günü nasıl geçerdi?</item>
+        <item>Seni en çok hangi kitap etkiledi?</item>
+        <item>Birlikte bir festivale gitsek nasıl olurdu?</item>
+        <item>Hayatındaki en güzel mutfak kokusu hangisi?</item>
+        <item>Bir yılda bir şey öğrenmek için zamanın olsa ne öğrenirdin?</item>
+        <item>Gece geç saatte ne konuşmayı seversin?</item>
+        <item>Beraber bir tablo yapsak ne çizerdik?</item>
+        <item>Bu hafta ne zaman birbirimize daha çok zaman ayırabiliriz?</item>
+        <item>Sana en çok hangi sözcük iyi gelir?</item>
+        <item>Hayatındaki en sevdiğin kıyafet hangisi?</item>
+        <item>Bir gün birlikte bir ormanda yürüsek ne konuşurduk?</item>
+        <item>Birbirimize ilk kez ne zaman sevgimizi hissettirdik?</item>
+        <item>Sana göre bir sürpriz ne zaman en güzel olur?</item>
+        <item>Bugüne kadar aldığın en iyi tavsiye neydi?</item>
+        <item>Birlikte bir günü şehir dışında geçirsek ne yapardık?</item>
+        <item>Küçük bir korkunu yenmek için ne yapardın?</item>
+        <item>Hangi anımızı bir şarkıyla anlatırdın?</item>
+        <item>Sence hayatta en güzel şeyler neden küçük şeylerdir?</item>
+        <item>Önümüzdeki ay için birlikte bir hedef koysak ne olurdu?</item>
+        <item>Sana ilk söylediğim sevgi sözünü hatırlıyor musun?</item>
+        <item>Hep birlikte yapmak istediğin bir tatil geleneği var mı?</item>
+        <item>Birbirimize yazacağımız bir zaman kapsülü mektubuna ne yazardın?</item>
+        <item>Sence dünyadaki en güzel ses nedir?</item>
+        <item>Bu hafta kendine nasıl iyi bakabilirsin?</item>
+        <item>Gün boyunca en çok hangi anı yeniden yaşamak isterdin?</item>
+        <item>Birlikte hangi spor ya da hareketi denemek isterdin?</item>
+        <item>Seni en çok hangi mekân huzurlu yapar?</item>
+        <item>Birisi bize bir gün hakkında bir film çekse hangi günü seçerdik?</item>
+        <item>Bana en çok hangi yönümden ilham alıyorsun?</item>
+        <item>Çocukken hayalinde kurduğun gizli bir yer var mıydı?</item>
+        <item>Yeni bir yıl için bir listemiz olsa ilk maddesi ne olurdu?</item>
+        <item>Birlikte yaptığımız en iyi alışveriş neydi?</item>
+        <item>Sence ortak bir hayat kurmak ne demek?</item>
+        <item>Küçük bir ev işini birlikte yapmayı sever misin?</item>
+        <item>Seninle birlikte olduğum zamanlarda zaman hızlı mı akıyor yoksa yavaş mı?</item>
+        <item>Sen olmasan bugün neyi kaçırırdım sence?</item>
+        <item>Bu dönemde hangi şeyi daha çok yapmak istersin?</item>
+        <item>Beni hangi lezzet ya da yiyecekle eşleştirirsin?</item>
+        <item>Bir hafta sonu boyunca sadece film maratonu yapsak ne izlerdik?</item>
+    </string-array>
+</resources>
