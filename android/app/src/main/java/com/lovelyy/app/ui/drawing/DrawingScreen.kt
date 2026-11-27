@@ -58,6 +58,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -104,6 +105,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -126,6 +128,12 @@ class DrawingViewModel(private val app: LovelyyApplication, private val coupleId
     val presence: StateFlow<Map<String, Long>> = app.drawingRepository.observePresence(coupleId)
         .catch { Timber.w(it, "Presence unavailable") }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
+
+    /** How many drawings are saved to Anılar (for the free limit, PlusLimits.Limit.Drawings). */
+    val savedCount: StateFlow<Int> = app.drawingRepository.observeSaved(coupleId)
+        .map { it.size }
+        .catch { Timber.w(it, "Saved drawings unavailable") }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
 
     private var lastTouch = 0L
 
@@ -181,6 +189,10 @@ fun DrawingScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, on
     val strokes by vm.strokes.collectAsStateWithLifecycle()
     val presence by vm.presence.collectAsStateWithLifecycle()
     val saving by vm.saving.collectAsStateWithLifecycle()
+    val savedCount by vm.savedCount.collectAsStateWithLifecycle()
+    // P9: a free couple saves up to 10 drawings. No Plus screen ever opens while drawing, so a blocked save only
+    // explains itself; the gallery (Çizimlerimiz) carries the P9 note and the way to Plus.
+    val saveGate = com.lovelyy.app.ui.plus.rememberLimitGate(com.lovelyy.app.data.PlusLimits.Limit.Drawings, savedCount)
     val partnerName = partner?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.home_partner_fallback)
 
     var colorIndex by remember { mutableIntStateOf(0) }
@@ -308,9 +320,13 @@ fun DrawingScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, on
         }
 
         val savedText = stringResource(R.string.lv_saved)
+        val limitText = pluralStringResource(
+            R.plurals.limit_drawings_toast, com.lovelyy.app.data.PlusLimits.Limit.Drawings.free, com.lovelyy.app.data.PlusLimits.Limit.Drawings.free,
+        )
         MainAction(stringResource(R.string.lv_save), Kit.PHOTO_D, {
             eraser = false
-            vm.save(me) { Toast.makeText(context, savedText, Toast.LENGTH_SHORT).show() }
+            if (saveGate.blocked) Toast.makeText(context, limitText, Toast.LENGTH_LONG).show()
+            else vm.save(me) { Toast.makeText(context, savedText, Toast.LENGTH_SHORT).show() }
         }, enabled = list.isNotEmpty() && !saving)
     }
 }

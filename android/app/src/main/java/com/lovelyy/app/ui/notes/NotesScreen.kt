@@ -178,6 +178,8 @@ fun NotesScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onSe
         )
     }
     var creating by rememberSaveable { mutableStateOf(false) }
+    // P9: over the free limit the notes stay readable, editable and deletable; only a new note needs Plus.
+    val gate = com.lovelyy.app.ui.plus.rememberLimitGate(com.lovelyy.app.data.PlusLimits.Limit.Notes, notes?.size ?: 0)
 
     val shown = notes.orEmpty().filter {
         when (tabSel) {
@@ -200,6 +202,7 @@ fun NotesScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onSe
             CenteredTopBar(stringResource(R.string.n_title), onBack) {
                 RoundSvgButton(SEARCH_D, stringResource(R.string.n_search), onSearch)
             }
+            com.lovelyy.app.ui.plus.PlusLimitBanner(gate)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf(stringResource(R.string.n_all), stringResource(R.string.n_mine), TurkishSuffix.genitive(partnerName)).forEachIndexed { i, label ->
                     val sel = tabSel == i
@@ -234,9 +237,18 @@ fun NotesScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onSe
             }
         }
 
-        // "Not yaz", floating just above the bottom menu.
+        // "Not yaz", floating just above the bottom menu (locked "Yeni not · Plus ile" at the free limit, board P9).
         val shape = RoundedCornerShape(28.dp)
-        Row(
+        if (gate.blocked) {
+            com.lovelyy.app.ui.plus.LockedAddButton(
+                stringResource(R.string.limit_notes_add),
+                onClick = gate::openPlans,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .navigationBarsPadding()
+                    .padding(start = 20.dp, end = 20.dp, bottom = 122.dp),
+            )
+        } else Row(
             Modifier
                 .align(Alignment.BottomCenter)
                 .navigationBarsPadding()

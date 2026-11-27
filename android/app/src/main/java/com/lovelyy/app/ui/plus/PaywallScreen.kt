@@ -68,6 +68,11 @@ object PaywallSource {
     const val HOME_CARD = "home_card"
     const val MANAGEMENT = "management"
     fun lock(feature: PlusFeature) = "lock_${feature.key}"
+    /** P5a "İzin günü kullan" or P5c "Plus ile telafi et" tapped without Plus. */
+    const val STREAK_DAY_OFF = "lock_streak_day_off"
+    const val STREAK_REPAIR = "lock_streak_repair"
+    /** P9: adding to a list that is at its free limit. */
+    fun limit(limit: com.lovelyy.app.data.PlusLimits.Limit) = "lock_${limit.key}"
 }
 
 /**

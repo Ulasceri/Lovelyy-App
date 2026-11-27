@@ -23,6 +23,10 @@ class PlusLimitsTest {
         assertFalse(PlusLimits.canAdd(PlusLimits.Limit.Notes, 63, isPlus = false))
         assertTrue(PlusLimits.atLimit(PlusLimits.Limit.Notes, 63, isPlus = false))
         assertFalse(PlusLimits.atLimit(PlusLimits.Limit.Notes, 12, isPlus = false))
+        // The note on top only once the list is over the limit.
+        assertFalse(PlusLimits.overLimit(PlusLimits.Limit.Notes, 50, isPlus = false))
+        assertTrue(PlusLimits.overLimit(PlusLimits.Limit.Notes, 51, isPlus = false))
+        assertFalse(PlusLimits.overLimit(PlusLimits.Limit.Notes, 63, isPlus = true))
     }
 
     @Test fun plusHasNoLimit() {

@@ -239,6 +239,10 @@ fun WheelScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onHi
     // The wheel the "add option" sheet was opened for (null: closed).
     var addingTo by remember { mutableStateOf<String?>(null) }
     var creating by remember { mutableStateOf(false) }
+    // P9: built-in wheels are always free; a third custom wheel needs Plus (the ones there stay usable).
+    val gate = com.lovelyy.app.ui.plus.rememberLimitGate(
+        com.lovelyy.app.data.PlusLimits.Limit.Wheels, stored.orEmpty().count { !it.builtIn },
+    )
 
     // "Emin misin?" before deleting.
     var askDelete by remember { mutableStateOf<(() -> Unit)?>(null) }
@@ -340,8 +344,9 @@ fun WheelScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onHi
                     }
                 }
             }
-            DashedCircleButton(stringResource(R.string.wh_new)) { creating = true }
+            DashedCircleButton(stringResource(R.string.wh_new)) { gate.tryAdd { creating = true } }
         }
+        com.lovelyy.app.ui.plus.PlusLimitBanner(gate)
 
         // The wheel with its pointer.
         Box(Modifier.fillMaxWidth().padding(top = 0.dp), contentAlignment = Alignment.TopCenter) {

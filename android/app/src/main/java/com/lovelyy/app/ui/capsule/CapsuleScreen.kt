@@ -151,6 +151,9 @@ fun CapsuleScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, on
     // Hero: the partner's nearest sealed letter, else my own nearest.
     val hero = sealed.firstOrNull { it.by != me.uid } ?: sealed.firstOrNull()
     val rest = sealed.filter { it.id != hero?.id } + opened
+    // P9: a free couple keeps one sealed letter at a time. Letters are never hidden; a new one waits for Plus
+    // (checked before the writing sheet opens, never while a letter is being written).
+    val gate = com.lovelyy.app.ui.plus.rememberLimitGate(com.lovelyy.app.data.PlusLimits.Limit.Capsules, sealed.size)
 
     Column(
         Modifier
@@ -211,7 +214,9 @@ fun CapsuleScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, on
             rest.forEach { c -> LetterRow(c, me, partnerName, today) { viewing = c } }
         }
 
-        MainAction(stringResource(R.string.tc_write), Kit.PENCIL_D, { writing = true })
+        com.lovelyy.app.ui.plus.PlusLimitBanner(gate)
+        if (gate.blocked) com.lovelyy.app.ui.plus.LockedAddButton(stringResource(R.string.limit_capsules_add), gate::openPlans)
+        else MainAction(stringResource(R.string.tc_write), Kit.PENCIL_D, { writing = true })
     }
 
     if (writing) {

@@ -35,3 +35,4 @@ val FlameInk = Color(0xFFE07A45)      // streak flame outline
 val CheckInk = Color(0xFF2F7F69)      // "done today" check on the streak card
 val SheetHandle = Color(0xFFE3D5CB)   // bottom sheet drag handle
 val BrownMuted = Color(0xFF5F524C)    // small text on tinted (peach) surfaces
+val PeachDisabled = Color(0xFFF6E3D6) // a disabled peach button, the P9 locked "add" button

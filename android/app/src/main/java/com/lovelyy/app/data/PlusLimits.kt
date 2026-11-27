@@ -33,8 +33,14 @@ object PlusLimits {
     /** Whether one more item may be added. Plus (trial or paid) has no limit. */
     fun canAdd(limit: Limit, count: Int, isPlus: Boolean): Boolean = isPlus || count < limit.free
 
-    /** Show the P9 note: free and at (or over) the limit, so the next add would be blocked. */
+    /** Free and at (or over) the limit: the next add is blocked (the add button shows the P9 lock). */
     fun atLimit(limit: Limit, count: Int, isPlus: Boolean): Boolean = !canAdd(limit, count, isPlus)
+
+    /**
+     * Free and over the limit (typically after Plus ended): the list shows the P9 note on top ("sınırı aşan
+     * listeler"). Exactly at the limit only the add button changes, so small limits don't nag.
+     */
+    fun overLimit(limit: Limit, count: Int, isPlus: Boolean): Boolean = !isPlus && count > limit.free
 
     /** A pen colour at [index] can be used. */
     fun colorAllowed(index: Int, isPlus: Boolean): Boolean = isPlus || index < FREE_DRAWING_COLORS
