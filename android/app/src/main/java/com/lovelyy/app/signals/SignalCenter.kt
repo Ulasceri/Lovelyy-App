@@ -7,6 +7,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.media.AudioAttributes
 import android.os.Build
 import android.os.VibrationEffect
@@ -16,6 +17,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
+import androidx.core.graphics.drawable.toBitmap
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -271,12 +273,21 @@ class SignalCenter(private val app: LovelyyApplication) {
             post(context, "summary:${rest.last().id}".hashCode(), text, open, HEARTBEAT_PATTERN)
         }
 
+        /** The colored app logo for the notification's large icon, drawn once at a small size and kept. */
+        @Volatile private var logo: Bitmap? = null
+
+        private fun largeIcon(context: Context): Bitmap? = logo ?: runCatching {
+            val px = context.resources.getDimensionPixelSize(android.R.dimen.notification_large_icon_width)
+            ContextCompat.getDrawable(context, R.mipmap.ic_launcher)?.toBitmap(px, px)
+        }.onFailure { Timber.w(it, "Notification logo") }.getOrNull()?.also { logo = it }
+
         private fun post(context: Context, id: Int, text: String, open: PendingIntent, vibrate: LongArray) {
             ensureChannel(context)
             if (!canNotify(context)) return
             val n = NotificationCompat.Builder(context, CHANNEL)
-                .setSmallIcon(R.drawable.ic_stat_heart)
-                .setColor(0xFFFFB38A.toInt())
+                .setSmallIcon(R.drawable.ic_stat_logo)
+                .setColor(ContextCompat.getColor(context, R.color.peach))
+                .setLargeIcon(largeIcon(context))
                 .setContentTitle(context.getString(R.string.app_name))
                 .setContentText(text)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
