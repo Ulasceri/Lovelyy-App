@@ -56,7 +56,7 @@ arrive.
 | `hunger`, `thirst`, `energy`, `love` | `{level 0..100, at}`: the level at time `at` |
 | `sleepingSince` | set while asleep; energy refills, the cat wakes up by itself when full |
 | `lastAction`, `recent` | who did what ("Deniz besledi"), last 10 |
-| `streak` | shared care streak: `count`, `best`, `lastCompleteDay`, `careDay`, `careBy` |
+| `streak` | shared care streak: `count`, `best`, `lastCompleteDay`, `careDay`, `careBy`, and the Plus streak protection: `freezeMonth` (`yyyy-MM`), `freezeUsed` (0..2 in that month), `freezeDays` and `repairDays` (protected days, last 6 kept), `brokenCount` / `brokenLast` (the streak that just broke, for the make-up) |
 
 No server code: needs decay with time, so every phone computes the current levels from the
 stored snapshot and the clock (`data/Cat.kt`, `CatRules`). Actions run in a Firestore transaction
@@ -94,8 +94,38 @@ streak card ("N gün bakım serisi", "En uzun seri", each partner's latest care 
 and a missed day (it restarts from day 1 after midnight). `CatViewModel` opens it by itself once per couple on this
 phone, the first time the shown streak is at least 1 (`StreakExplainer.shouldAutoShow`, seen flag
 `streak_explainer_seen_{coupleId}` in the `lovelyy_onboarding` prefs); the Yuva streak chip and the Kedi bakımı
-streak card open it again and also mark it seen. The board's Plus line (days off, make-up within 24h) is shown as
-text only and links nowhere yet.
+streak card open it again and also mark it seen. Its Plus note follows the couple's Plus status (trial, paid,
+free) and is hidden outside Home.
+
+### Streak protection (Lovelyy Plus, boards P5a-c)
+
+Pure rules in `data/StreakProtection.kt` (`StreakProtectionTest`); a protected day (`freezeDays` ∪ `repairDays`)
+bridges the gap between two complete days, so `CareStreak.current` / `afterCare` keep counting across it. The
+streak's "today" is the couple's day at Plus time (`PlusClock`, so the P8 debug clock moves it too).
+
+- **P5a "Seri tehlikede"** (`ui/cat/StreakGuard.kt` → `StreakDangerSection`): after 20:00 in the couple's zone,
+  when the streak is above 0 and today isn't complete yet. Yuva (in the Plus card slot, after the day-12 card, so
+  never on the same day) and Kedi bakımı. "Dürt" sends the existing nudge signal (only while the partner hasn't
+  cared); "İzin günü" opens P5b for Plus, the paywall (`lock_streak_day_off`) otherwise.
+- **P5b "İzin günü"**: Plus only, 2 per calendar month shared by the couple, renewed on the 1st; today becomes a
+  protected day (`StreakProtection.freeze`, `CatRepository.changeStreak` transaction).
+- **P5c "Telafi"**: the day after one missed day, until midnight (`StreakProtection.repairable`). Opens by itself
+  on a home tab once per break per phone (`PlusPrefs.repairOffered`); for a free couple it is a Plus offer
+  (paywall `lock_streak_repair`, reopened after the purchase) and not on a day the trial-end paywall already
+  opened. If both partners already cared today the streak restarted at 1, so the make-up gives `brokenCount + 1`.
+  Two missed days can never be made up.
+
+### Free limits (Lovelyy Plus, board P9)
+
+One place knows the numbers: `data/PlusLimits.kt` (`PlusLimitsTest`); screens use `ui/plus/PlusLimitParts.kt`
+(`rememberLimitGate`, `PlusLimitBanner`, `LockedAddButton`). Limits count what the couple has together: 50 notes,
+10 calendar events (plans and special days; the built-in anniversary doesn't count), 20 dreams, 1 sealed capsule
+letter, 2 custom wheels, 10 saved drawings. **Nothing is ever hidden or deleted**: over a limit (e.g. after Plus
+ended) a list stays readable, editable and deletable; only adding is blocked (lock button → paywall
+`lock_<limit>`), and the mint note shows only when the list is over (not at) the limit. In the live drawing a
+blocked save only shows a message (Plus screens never open there). Basic cat care is never limited.
+Decisions: the 30-day history limit blocks nothing (history screens have no add action and old history stays
+readable), and no pen colour is locked yet (the palette has 5 of the 6 free colours).
 
 ## Widget (`widget/CatWidget.kt`)
 
@@ -293,7 +323,7 @@ purchase shows a friendly error.
 **Debug fake purchase**: debug builds skip Google Play when `-Pplus.fakeBilling=true` is passed, or
 automatically when the products can't be loaded (emulator, no Play listing yet): the purchase is written with a
 `debug-…` token. Plus management (P8) shows a debug box: "+1 gün" moves Plus time forward (`PlusClock`, debug
-only), "Gerçek zaman", "Yenilemeyi kapat" (to try takeover / second purchase) and "Satın alımı sıfırla".
+only), "+3 saat" (to reach the 20:00 streak card), "Gerçek zaman", "Yenilemeyi kapat" (to try takeover / second purchase) and "Satın alımı sıfırla".
 
 ## UI: `ui/plus/`
 
@@ -307,6 +337,8 @@ only), "Gerçek zaman", "Yenilemeyi kapat" (to try takeover / second purchase) a
 | P6a / P6b | `PlusGiftScreen` (route `plus_gift`) / `PlusCelebration` (overlay) | |
 | P8 / P8b | `PlusManageScreen` (route `plus`) | buyer vs. partner view |
 | P10 | `TakeoverSheet` | overlay, only when `canPartnerTakeOver` |
+| P5a / P5b / P5c | `StreakDangerSection` / `DayOffSheet` / `StreakRepairSheet` (`ui/cat/StreakGuard.kt`) | see "Streak protection" above |
+| P9 | `PlusLimitBanner`, `LockedAddButton` (`ui/plus/PlusLimitParts.kt`) | notes, plans, dreams, capsule, wheel, drawings; see "Free limits" above |
 
 `LocalPlus` (`PlusAccess`: map, time, `isPlus`, `openLock`, `openPlans`) is provided by `HomeScreen` for every
 screen under it: later Plus features (free-tier limits, streak protection, decorations) plug in there.

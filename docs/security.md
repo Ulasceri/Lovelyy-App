@@ -39,6 +39,11 @@ the app down for everyone. So the defence is in layers:
   (`validPlus`). `trialStart` is set once within a day of server time and never changes; only the signed-in
   member written as `buyerUid` can change what was bought (`until`, `source`, `product`, `autoRenew`, token,
   gift note); the partner can only become the new buyer (takeover). See "Lovelyy Plus: accepted risk" below.
+- `cat/main.streak` (`validStreak`): exact keys and types; `freezeUsed` 0..2. A new day off needs Plus
+  (`plusActive()`: trial or paid period in server time, 3 days of renewal grace), a `freezeMonth` within a day of
+  the server month and `freezeUsed` going up by exactly one (or 1 in a new month); a new make-up day needs Plus.
+  Ordinary care writes must keep these fields, so basic care is never locked. The free list limits (P9) are
+  client-side only (no counting in rules), like the rest of the client-written entitlement.
 - Realtime Database: deny all (`database.rules.json`).
 
 **When you add a shared collection or a field, update the rules and the tests in the same PR**, or the
