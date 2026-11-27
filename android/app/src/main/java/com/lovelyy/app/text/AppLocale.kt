@@ -42,6 +42,9 @@ object AppLocale {
 
     fun isTurkish(): Boolean = current().language == "tr"
 
+    /** Skeleton to pattern; Android's DateFormat at runtime, swappable in JVM unit tests (no Android there). */
+    internal var patternFor: (Locale, String) -> String = { locale, skeleton -> DateFormat.getBestDateTimePattern(locale, skeleton) }
+
     private val cache = ConcurrentHashMap<Pair<Locale, String>, DateTimeFormatter>()
 
     /**
@@ -53,7 +56,7 @@ object AppLocale {
     fun formatter(skeleton: String): DateTimeFormatter {
         val locale = current()
         return cache.getOrPut(locale to skeleton) {
-            runCatching { DateTimeFormatter.ofPattern(DateFormat.getBestDateTimePattern(locale, skeleton), locale) }
+            runCatching { DateTimeFormatter.ofPattern(patternFor(locale, skeleton), locale) }
                 .getOrElse { DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale) }
         }
     }
