@@ -13,10 +13,14 @@ class TurkishSuffixTest {
     fun turkishUi() = Locale.setDefault(Locale.forLanguageTag("tr-TR"))
 
     @After
-    fun restore() = Locale.setDefault(original)
+    fun restore() {
+        Locale.setDefault(original)
+        AppLocale.supportedLanguages = setOf("tr")
+    }
 
     @Test
     fun otherLanguagesLeaveNamesUnchanged() {
+        AppLocale.supportedLanguages = setOf("tr", "en") // pretend an English translation exists
         Locale.setDefault(Locale.ENGLISH)
         assertEquals("Elif", TurkishSuffix.dative("Elif"))
         assertEquals("Elif", TurkishSuffix.locative("Elif"))

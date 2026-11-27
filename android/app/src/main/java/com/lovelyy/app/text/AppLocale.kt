@@ -9,14 +9,30 @@ import java.util.concurrent.ConcurrentHashMap
 /**
  * The one place that knows which locale the UI formats dates, numbers and case in.
  *
- * It follows the process default, which Android points at the per-app language (API 33+) or the
- * system language, so nothing here caches a locale: always call [current] at the point of use.
- * Turkish is the only shipped language today; a new language needs no change in this file.
+ * Dates must be in the same language as the UI strings, and the UI strings only exist in the languages in
+ * [supportedLanguages] (keep in sync with res/xml/locales_config.xml and the res/values-xx folders). So [current]
+ * is the process default (which Android points at the per-app language on API 33+, or the system language) only
+ * when the app has a translation for it; otherwise it is Turkish, the language the resources fall back to.
+ * Nothing here caches a locale: always call [current] at the point of use.
+ * A new language needs only its entry in [supportedLanguages] (plus the resources).
  */
 object AppLocale {
-    fun current(): Locale = Locale.getDefault()
+    private val FALLBACK: Locale = Locale.forLanguageTag("tr-TR")
+
+    /** Languages that have app strings. Internal so tests can simulate a translated language. */
+    @Volatile
+    internal var supportedLanguages: Set<String> = setOf("tr")
+
+    fun current(): Locale {
+        val device = Locale.getDefault()
+        return if (device.language in supportedLanguages) device else FALLBACK
+    }
 
     fun isTurkish(): Boolean = current().language == "tr"
+
+    /** Skeleton -> pattern. Internal so plain JVM tests (where android.text.format is a stub) can replace it. */
+    @Volatile
+    internal var patternFor: (Locale, String) -> String = { l, sk -> DateFormat.getBestDateTimePattern(l, sk) }
 
     private val cache = ConcurrentHashMap<Pair<Locale, String>, DateTimeFormatter>()
 
@@ -29,7 +45,7 @@ object AppLocale {
     fun formatter(skeleton: String): DateTimeFormatter {
         val locale = current()
         return cache.getOrPut(locale to skeleton) {
-            runCatching { DateTimeFormatter.ofPattern(DateFormat.getBestDateTimePattern(locale, skeleton), locale) }
+            runCatching { DateTimeFormatter.ofPattern(patternFor(locale, skeleton), locale) }
                 .getOrElse { DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale) }
         }
     }

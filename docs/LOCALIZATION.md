@@ -16,7 +16,7 @@ enums) found only a handful of literal UI strings; the rest of the work was maki
 |---|---|
 | Plurals | 48 count strings (days, minutes, hours, km, notes, drawings, letters, streaks, "N more", ...) became `<plurals>` with `one`/`other` (same Turkish text). Compose uses `pluralStringResource`, widgets/notifications use `resources.getQuantityString`. Ordinals ("%1$d. gün") stay plain strings. |
 | Literals moved | Weekday header of the calendar (`cal_weekdays_short` string-array), letter quote marks (`ol_quote`), the cat need-bar `contentDescription` (reuses `cc_percent`). |
-| Dates / time | New `text/AppLocale.kt`: `AppLocale.current()` (never cached) and `AppLocale.formatter(skeleton)`, built on `DateFormat.getBestDateTimePattern`. All hardcoded `Locale("tr")` / `"d MMMM yyyy"` patterns were replaced, the per-file `TR` constants removed, top-level formatters became getters so a language change is picked up. Month/weekday names and word order now follow the locale. |
+| Dates / time | New `text/AppLocale.kt`: `AppLocale.current()` (never cached; the device/per-app locale only if it is in `AppLocale.supportedLanguages`, else Turkish, so dates always match the UI strings) and `AppLocale.formatter(skeleton)`, built on `DateFormat.getBestDateTimePattern`. All hardcoded `Locale("tr")` / `"d MMMM yyyy"` patterns were replaced, the per-file `TR` constants removed, top-level formatters became getters so a language change is picked up. Month/weekday names and word order now follow the locale. |
 | Case / numbers | `uppercase/lowercase/titlecase` and `NumberFormat` use `AppLocale.current()` (matters for Turkish dotted/dotless i vs other languages). Geocoder (city names) uses the current locale. |
 | Turkish grammar | `TurkishSuffix` ("Elif'e", "Ulaş'ın", "Perşembe'den") only applies when the UI language is Turkish; any other language gets the plain name, so a translation just writes `%1$s`. Unit test added for this. |
 | Per-app language | `res/xml/locales_config.xml` (only `tr` for now) referenced from the manifest via `android:localeConfig`. |
@@ -24,6 +24,7 @@ enums) found only a handful of literal UI strings; the rest of the work was maki
 
 ## Adding a language (checklist)
 
+0. Add the language code to `AppLocale.supportedLanguages` (otherwise dates stay Turkish).
 1. Create `android/app/src/main/res/values-xx/strings.xml` (e.g. `values-en`) with every key of `values/strings.xml`,
    including each `<plurals>` (use all quantities the language needs, e.g. `few`/`many` for Polish or Russian) and the
    `cal_weekdays_short` array (Monday first).
