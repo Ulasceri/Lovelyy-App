@@ -224,7 +224,9 @@ private fun recentMemories(
             year++
         }
     }
-    return list.sortedByDescending { it.at }.take(5)
+    val now = System.currentTimeMillis()
+    // A partner clock running ahead must not pin an item to the top with a future date.
+    return list.map { it.copy(at = com.lovelyy.app.data.DisplayTime.clamp(it.at, now)) }.sortedByDescending { it.at }.take(5)
 }
 
 private fun LocalDate.toEpochMillis(): Long = atStartOfDay(com.lovelyy.app.data.CoupleClock.zone()).toInstant().toEpochMilli() + 12 * 3_600_000L
