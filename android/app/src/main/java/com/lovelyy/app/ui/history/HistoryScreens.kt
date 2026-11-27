@@ -88,8 +88,8 @@ fun MoodHistoryScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit
                                     verticalArrangement = Arrangement.Center,
                                 ) {
                                     Text(
-                                        if (day.dayOfMonth == 1 || day == first) day.format(DAY_MONTH).take(6) else day.dayOfMonth.toString(),
-                                        fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 10.sp, color = Muted, maxLines = 1,
+                                        gridDayLabel(day, first) { it.format(DAY_MONTH_SHORT) },
+                                        fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 10.sp, color = Muted, maxLines = 1, softWrap = false,
                                     )
                                     Row(horizontalArrangement = Arrangement.spacedBy(1.dp)) {
                                         SmallFace(mine)

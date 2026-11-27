@@ -47,6 +47,7 @@ internal val Highlight = Color(0xFFFFE2A8)
 private val DAY_TITLE: DateTimeFormatter get() = AppLocale.formatter("dMMMMEEEE")
 internal val DAY_MONTH: DateTimeFormatter get() = AppLocale.formatter("dMMMM")
 internal val DAY_MONTH_YEAR: DateTimeFormatter get() = AppLocale.formatter("dMMMMy")
+internal val DAY_MONTH_SHORT: DateTimeFormatter get() = AppLocale.formatter("dMMM")
 internal val TIME: DateTimeFormatter get() = AppLocale.formatter("jm")
 
 internal fun Long.localDate(): LocalDate = Instant.ofEpochMilli(this).atZone(ZoneId.systemDefault()).toLocalDate()
@@ -153,3 +154,10 @@ internal fun InnerColumn(spacing: Int = 8, scroll: androidx.compose.foundation.S
         content = content,
     )
 }
+
+/**
+ * Label for one cell of the 30-day mood grid: the plain day number, or "day + abbreviated month"
+ * ("1 Eki") on the first cell and on the 1st of a month. Never cuts a word, so it works in any language.
+ */
+internal fun gridDayLabel(day: LocalDate, first: LocalDate, dayMonthShort: (LocalDate) -> String): String =
+    if (day.dayOfMonth == 1 || day == first) dayMonthShort(day) else day.dayOfMonth.toString()
