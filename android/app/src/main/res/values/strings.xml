@@ -700,6 +700,7 @@
     </plurals>
     <string name="wh_less">Daha az göster</string>
     <string name="wh_add">Ekle</string>
+    <string name="wh_full">Çark doldu. En fazla %1$d seçenek olabilir.</string>
     <string name="wh_remove">%1$s çıkar</string>
     <string name="wh_add_title">Seçenek ekle</string>
     <string name="wh_add_hint">Yeni seçenek</string>
@@ -1436,6 +1437,7 @@
     </plurals>
     <string name="items_place">Yerleştir</string>
     <string name="items_place_plus">Plus ile yerleştir</string>
+    <string name="items_plus_hint">Plus modelleri önizleyebilirsin. Yerleştirmek için Plus gerekir.</string>
     <string name="items_tile_free">%1$s, ücretsiz</string>
     <string name="items_tile_plus">%1$s, Plus</string>
     <string name="items_preview_label">%1$s ve seçili eşyalar</string>

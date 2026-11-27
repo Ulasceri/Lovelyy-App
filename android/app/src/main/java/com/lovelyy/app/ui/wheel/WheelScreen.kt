@@ -409,6 +409,11 @@ fun WheelScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onHi
                     }
                 }
                 if (items.size < WheelMath.MAX_ITEMS) DashedPill(stringResource(R.string.wh_add)) { addingTo = wheel.id }
+                else Text(
+                    stringResource(R.string.wh_full, WheelMath.MAX_ITEMS.toInt()),
+                    fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = BrownSoft,
+                    modifier = Modifier.padding(top = 6.dp),
+                )
             }
             // Edited built-in → back to default; custom → delete.
             if (wheel.builtIn && saved.containsKey(wheel.id)) {
