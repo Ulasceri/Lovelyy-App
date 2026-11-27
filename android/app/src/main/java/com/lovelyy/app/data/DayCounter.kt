@@ -22,8 +22,6 @@ data class Milestone(val day: Long, val years: Int?) {
 
 /** Pure math for the day counter (unit-tested in DayCounterTest). */
 object DayCounter {
-    private const val DAY = 86_400_000L
-
     /** Start of the given day in the couple's shared time zone. The couple picks a date, not a time. */
     fun startMillis(date: LocalDate, zone: ZoneId = CoupleClock.zone()): Long =
         date.atStartOfDay(zone).toInstant().toEpochMilli()
@@ -32,19 +30,25 @@ object DayCounter {
     fun dateOf(millis: Long, zone: ZoneId = CoupleClock.zone()): LocalDate =
         Instant.ofEpochMilli(millis).atZone(zone).toLocalDate()
 
-    fun together(startMillis: Long, now: Long): Together {
-        val total = (now - startMillis).coerceAtLeast(0)
-        var rest = total
-        val days = rest / DAY; rest %= DAY
-        val hours = (rest / 3_600_000L).toInt(); rest %= 3_600_000L
-        val minutes = (rest / 60_000L).toInt(); rest %= 60_000L
-        val seconds = (rest / 1000L).toInt()
-        val millis = (rest % 1000L).toInt()
-        return Together(days, hours, minutes, seconds, millis, total)
+    /**
+     * Calendar days from the start date to today in [zone] (DST-safe: the day rolls over at local midnight),
+     * and hours/minutes/seconds as the local wall clock time of day. [totalMillis] is the raw elapsed time.
+     */
+    fun together(startMillis: Long, now: Long, zone: ZoneId = CoupleClock.zone()): Together {
+        if (now <= startMillis) return Together(0, 0, 0, 0, 0, 0)
+        val today = dateOf(now, zone)
+        val days = ChronoUnit.DAYS.between(dateOf(startMillis, zone), today).coerceAtLeast(0)
+        val time = Instant.ofEpochMilli(now).atZone(zone).toLocalTime()
+        val hours = time.hour
+        val minutes = time.minute
+        val seconds = time.second
+        val millis = time.nano / 1_000_000
+        return Together(days, hours, minutes, seconds, millis, now - startMillis)
     }
 
     /** "Birlikte 412. gününüz": the first day together is day 1. */
-    fun dayNumber(startMillis: Long, now: Long): Long = together(startMillis, now).days + 1
+    fun dayNumber(startMillis: Long, now: Long, zone: ZoneId = CoupleClock.zone()): Long =
+        together(startMillis, now, zone).days + 1
 
     /** Celebrated days: round hundreds, every 500/1000 later, and every anniversary. */
     fun milestones(upTo: Long, start: LocalDate? = null): List<Milestone> {

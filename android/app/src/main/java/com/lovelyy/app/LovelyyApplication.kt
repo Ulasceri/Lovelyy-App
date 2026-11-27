@@ -26,6 +26,8 @@ class LovelyyApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        // Dates and name endings follow the language of the strings Android shows (docs/LOCALIZATION.md).
+        com.lovelyy.app.text.AppLocale.init(this)
         // Logging, analytics, crash reports, performance. See docs/analytics.md.
         Telemetry.init(this)
         // App Check before any Firestore call, so every request carries a token (docs/security.md).

@@ -24,6 +24,12 @@ class TurkishSuffixTest {
     }
 
     @Test
+    fun matchingDeviceLocaleKeepsItsRegion() {
+        Locale.setDefault(Locale.forLanguageTag("tr-CY"))
+        assertEquals(Locale.forLanguageTag("tr-CY"), AppLocale.current())
+    }
+
+    @Test
     fun dative() {
         assertEquals("Elif'e", TurkishSuffix.dative("Elif"))
         assertEquals("Ulaş'a", TurkishSuffix.dative("Ulaş"))

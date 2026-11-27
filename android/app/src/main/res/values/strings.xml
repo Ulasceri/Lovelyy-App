@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Lovelyy</string>
+    <!-- Translators: the language code of this strings file (e.g. "en" in values-en). Dates and name endings follow it. -->
+    <string name="app_language">tr</string>
 
     <!-- Login -->
     <string name="login_google">Google ile devam et</string>

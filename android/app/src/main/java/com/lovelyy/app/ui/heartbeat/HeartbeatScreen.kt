@@ -437,7 +437,7 @@ private fun Initial(name: String, color: Color) {
 /** "az önce", "5 dakika önce", "2 saat önce"... */
 @Composable
 fun timeAgo(at: Long): String {
-    val minutes = ((System.currentTimeMillis() - at) / 60_000).coerceAtLeast(0)
+    val minutes = com.lovelyy.app.data.DisplayTime.minutesAgo(at, System.currentTimeMillis())
     return when {
         minutes < 1 -> stringResource(R.string.time_ago_now)
         minutes < 60 -> pluralStringResource(R.plurals.time_ago_minutes, minutes.toInt(), minutes.toInt())

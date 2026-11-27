@@ -117,7 +117,7 @@ private const val NUDGE_COOLDOWN_MS = 8_000L
 /** "az önce", "5 dk önce"... */
 @Composable
 fun relativeTime(at: Long): String {
-    val minutes = ((System.currentTimeMillis() - at) / 60_000).coerceAtLeast(0)
+    val minutes = com.lovelyy.app.data.DisplayTime.minutesAgo(at, System.currentTimeMillis())
     return when {
         minutes < 1 -> stringResource(R.string.time_now)
         minutes < 60 -> pluralStringResource(R.plurals.time_minutes, minutes.toInt(), minutes)
