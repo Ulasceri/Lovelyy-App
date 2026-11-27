@@ -90,4 +90,19 @@ class SignalFreshnessTest {
         assertEquals(2, few.size)
         assertTrue(none.isEmpty())
     }
+
+    @Test
+    fun cursorFollowsNewestServerTimeOfSignalsForMe() {
+        val d0 = SignalFreshness.decide(emptyList(), me, null, now)
+        assertEquals(null, d0.state.cursor)
+        // My own signal (possibly a local estimate) never moves the cursor.
+        val mineSent = sig("s", createdAt = now + 10 * min, to = partner)
+        val d1 = SignalFreshness.decide(listOf(mineSent, sig("a", now + min)), me, d0.state, now + min)
+        assertEquals(now + min, d1.state.cursor)
+        // An empty "newer than cursor" result keeps it.
+        assertEquals(now + min, SignalFreshness.decide(emptyList(), me, d1.state, now + 2 * min).state.cursor)
+        val d2 = SignalFreshness.decide(listOf(sig("b", now + 3 * min)), me, d1.state, now + 3 * min)
+        assertEquals(listOf("b"), ids(d2.fresh))
+        assertEquals(now + 3 * min, d2.state.cursor)
+    }
 }

@@ -44,6 +44,15 @@ object DrawingMath {
     /** Oldest first (ties by id) — the order strokes are painted in. */
     fun inDrawingOrder(strokes: List<Stroke>): List<Stroke> = strokes.sortedWith(compareBy<Stroke> { it.at }.thenBy { it.id })
 
+    /**
+     * A cheap fingerprint of the canvas: stroke count + newest stroke id. Adding, undoing or clearing always
+     * changes it, so a background job can skip re-reading every stroke while it stays the same.
+     */
+    fun stamp(count: Long, newestId: String?): String = "$count:${newestId.orEmpty()}"
+
+    /** [stamp] of a canvas loaded in full (drawing order, oldest first). */
+    fun stampOf(ordered: List<Stroke>): String = stamp(ordered.size.toLong(), ordered.lastOrNull()?.id)
+
     /** Id of the saved drawing for an ordered canvas: same canvas => same id, so a double save is a no-op. */
     fun savedId(ordered: List<Stroke>): String = "d_" + ordered.first().id
 
@@ -122,6 +131,16 @@ class DrawingRepository(private val db: FirebaseFirestore) {
             strokes(coupleId).orderBy("at", Query.Direction.DESCENDING).limit(MAX_STROKES.toLong()).get().await()
                 .documents.mapNotNull { d -> d.data?.toStroke(d.id) },
         )
+
+    /**
+     * [DrawingMath.stamp] of the canvas for two reads (the newest stroke + a count aggregation, which costs one
+     * read per 1000 strokes) instead of up to [MAX_STROKES].
+     */
+    suspend fun stamp(coupleId: String): String {
+        val newest = strokes(coupleId).orderBy("at", Query.Direction.DESCENDING).limit(1).get().await().documents.firstOrNull()?.id
+        val count = strokes(coupleId).count().get(com.google.firebase.firestore.AggregateSource.SERVER).await().count
+        return DrawingMath.stamp(count, newest)
+    }
 
     /** uid → last time they drew. */
     fun observePresence(coupleId: String): Flow<Map<String, Long>> = callbackFlow {

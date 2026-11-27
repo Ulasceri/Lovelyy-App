@@ -34,7 +34,7 @@ import timber.log.Timber
  *
  * Needs decay with time, so the widget can compute the mood from the last known cat on its
  * own (no network): the app saves the cat here whenever it changes, and a background job
- * refreshes it from Firestore every 30 minutes so the partner's care shows up too.
+ * refreshes it from Firestore every hour so the partner's care shows up too.
  */
 object CatWidget {
     private const val PREFS = "cat_widget"
@@ -174,7 +174,8 @@ object CatWidget {
     }
 
     fun schedule(context: Context) {
-        val request = PeriodicWorkRequestBuilder<CatWidgetWorker>(30, TimeUnit.MINUTES)
+        // Hourly: the app refreshes the widgets itself while it is open, this only catches up on the partner.
+        val request = PeriodicWorkRequestBuilder<CatWidgetWorker>(60, TimeUnit.MINUTES)
             .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
             .build()
         WorkManager.getInstance(context).enqueueUniquePeriodicWork(WORK, ExistingPeriodicWorkPolicy.KEEP, request)
@@ -219,7 +220,16 @@ class CatWidgetWorker(context: Context, params: WorkerParameters) : CoroutineWor
             app.catRepository.get(coupleId)?.let { CatWidget.save(app, coupleId, it) } ?: CatWidget.updateAll(app)
             DaysWidget.updateAll(app)
             if (DrawingWidget.hasWidgets(app)) {
-                runCatching { DrawingWidget.save(app, app.drawingRepository.current(coupleId), null) }
+                runCatching {
+                    // Two reads to see whether the canvas changed; all strokes (up to 600) only when it did.
+                    val stamp = app.drawingRepository.stamp(coupleId)
+                    if (stamp == DrawingWidget.stamp(app)) {
+                        DrawingWidget.clearLive(app)
+                    } else {
+                        val strokes = app.drawingRepository.current(coupleId)
+                        DrawingWidget.save(app, strokes, null, stamp.takeIf { strokes.size < com.lovelyy.app.data.DrawingRepository.MAX_STROKES })
+                    }
+                }.onFailure { Timber.w(it, "Drawing widget refresh failed") }
             }
             Result.success()
         } catch (e: Exception) {

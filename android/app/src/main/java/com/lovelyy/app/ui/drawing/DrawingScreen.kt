@@ -208,7 +208,10 @@ fun DrawingScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, on
 
     // Keep the home-screen widget in step with the canvas.
     LaunchedEffect(strokes, widgetOn, partnerLive) {
-        strokes?.let { DrawingWidget.save(context, it, if (partnerLive) partnerName else null) }
+        strokes?.let {
+            val stamp = DrawingMath.stampOf(it).takeIf { _ -> it.size < com.lovelyy.app.data.DrawingRepository.MAX_STROKES }
+            DrawingWidget.save(context, it, if (partnerLive) partnerName else null, stamp)
+        }
     }
 
     Column(
