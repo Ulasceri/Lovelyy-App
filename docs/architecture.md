@@ -171,14 +171,16 @@ readable), and no pen colour is locked yet (the palette has 5 of the 6 free colo
 ## Widget (`widget/CatWidget.kt`)
 
 RemoteViews widget with one picture per mood. The app saves the cat whenever it changes; the
-widget computes the mood itself (time-based), and WorkManager refreshes from Firestore every 30 min.
+widget computes the mood itself (time-based), and WorkManager refreshes from Firestore every hour. The drawing
+widget first reads a canvas stamp (newest stroke + count aggregation, 2 reads) and re-reads the strokes only when it
+changed (`DrawingMath.stamp`).
 
 Four widgets (all RemoteViews, `widget/CatWidget.kt` + `widget/MoreWidgets.kt`): small cat, wide cat
 (needs bars + streak + couple day), day counter with a heart, and live drawing. Widgets can't read
 Firestore while the app is closed, so `WidgetData` keeps the couple (ids, names, start date) in
 SharedPreferences; sign-out clears it. The heart is a `HeartReceiver` broadcast that sends a "Sevgi"
 heartbeat with the signed-in user. The drawing widget shows a 420 px PNG rendered by the app (or by the
-30-min worker) into app storage. In-app showcase: `ui/widgets/WidgetsScreen.kt` (Biz → Ana ekran widget'ları).
+hourly worker) into app storage. In-app showcase: `ui/widgets/WidgetsScreen.kt` (Biz → Ana ekran widget'ları).
 Taps open their screen: widgets and notifications pass a `DeepLink` route (`MainActivity.kt`) that Home pushes. `MainActivity` is `singleTask`, so a tap while the app is open reaches `onNewIntent` and still opens the screen.
 Cat accessories were removed on 2026-11-26 (Ulaş): drawn over the video they stayed still while the cat moved.
 If they come back they will be designed first and baked into the video clips (tools/cat-animation). The care streak
@@ -262,17 +264,29 @@ Every shared collection has its own write rule (exact fields, size limits, autho
 see [security.md](security.md). A new shared collection needs a new match block in `firestore.rules`
 and tests, otherwise the app's writes are denied.
 
+## Read budget (Firestore cost and the Spark quota)
+
+Every document a query returns is a billed read (an empty query costs one), and Spark allows 50k reads a day for the
+whole project. So: background jobs ask only for what changed (signal cursor, canvas stamp); Anılar listens to small
+preview windows (5 notes/letters/drawings, 10 dreams, the sealed letters) and shows the canvas from the local cache
+unless its stamp changed; history lists load a page at a time (`ui/components/Paging.kt`: `rememberPaged` +
+`LoadMoreButton`); totals come from count aggregations (one read per 1000 docs). Lists whose counts drive the screen
+(question history streak, dreams progress, plans/letters limits) still load their capped window. A stroke no longer
+writes presence; "drawing now" is written at most every 20 s.
+
 ## Partner notifications on the free Spark plan
 
 Real push (FCM) needs a trusted sender (a Cloud Function), and functions need the Blaze plan.
 So `signals/SignalCenter.kt` does the best possible without a server:
 
 - While the app process is alive (open or recently backgrounded) a Firestore listener sees a new
-  signal within about a second and posts a local notification. The listener starts with the
-  process (`LovelyyApplication.onCreate`) and re-subscribes after transient errors.
+  signal within about a second and posts a local notification. The listener starts when the app
+  comes on screen (`SignalCenter.onAppVisible`, not in processes WorkManager starts), watches the
+  newest 10 signals and re-subscribes after transient errors.
 - When the app goes to the background, a few one-time `SignalWorker` checks run ~1, 3, 7 and 15
   minutes later; after that (and when the app is closed) the periodic `SignalWorker` checks every
-  ~15 minutes, Android's minimum, and posts what was missed.
+  ~15 minutes, Android's minimum, and posts what was missed. Each check asks only for signals newer
+  than the last one handled (`SignalFreshness.State.cursor`), so a check with nothing new is one read.
 - "Is this new?" never uses the sender's clock (`at` is only for display): `SignalFreshness`
   remembers the ids of signals already seen and compares the server `createdAt` with a floor set
   on the first check (first-run grace: only the last 10 minutes notify after install or sign-in).

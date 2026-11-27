@@ -19,7 +19,8 @@ Android uygulaması Kotlin + Jetpack Compose + Material 3 ile yazılır, arka u�
 | Planlar (takvim + özel günler), hayaller listesi, karar çarkı | Hazır |
 | Anılar: canlı çizim, zaman kapsülü | Hazır |
 | Biz: profil, ayarlar, mesafe (şehir düzeyinde konum paylaşımı) | Hazır |
-| 4 ana ekran widget'ı (küçük kedi, geniş kedi, gün sayacı + kalp, canlı çizim) | Hazır |
+| 4 ana ekran widget'ı (küçük kedi, geniş kedi, gün sayacı + kalp, canlı çizim) | Hazır (saatte bir yenilenir; çizim yalnızca değiştiyse okunur) |
+| Okuma tasarrufu: arka plan kontrolleri yalnızca yeni veriyi sorar, Anılar önizleme okur, geçmiş listeleri sayfa sayfa yüklenir ("Daha eskilerini göster") | Hazır, bkz. [docs/architecture.md](docs/architecture.md) "Read budget" |
 | Analytics, Crashlytics, Performance, Timber katmanı | Hazır, bkz. [docs/analytics.md](docs/analytics.md) |
 | Güvenlik: koleksiyon bazlı Firestore kuralları, sinyal sınırı (saatte 15 / günde 60, Console'daki `config/limits`'ten değişir), App Check (Play Integrity), sunucu saati (telefonun saati ileri/geri alınsa da kedi, seri ve "bugün" değişmez; kurallar geleceğe yazılmış kedi kaydını reddeder) | Hazır; kurallar yayınlanmalı, App Check konsolda kaydedilmeli, bkz. [docs/security.md](docs/security.md) ve [todo.md](todo.md) |
 | Geçmiş ekranları (ruh hali, önceki sorular, kalp atışı, çark), arama | Hazır |
