@@ -57,6 +57,7 @@
     <string name="cat_name_title">Kedinize bir isim verin</string>
     <string name="cat_name_body">İsmi ikiniz de göreceksiniz, istediğiniz zaman değiştirebilirsiniz.</string>
     <string name="cat_name_hint">Örn. Mırmır</string>
+    <string name="cat_offline">İnternet yok, %1$s için sonra bakalım</string>
     <string name="cat_error">Bağlantı sorunu oldu, tekrar dener misin?</string>
     <string name="action_save">Kaydet</string>
     <string name="action_cancel">Vazgeç</string>

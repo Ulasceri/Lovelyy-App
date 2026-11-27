@@ -196,6 +196,7 @@ fun CatSection(me: UserProfile, couple: Couple?, partner: UserProfile?, modifier
                 }
                 is CatEvent.Refused -> banner = refusalTexts(e.reason)
                 CatEvent.Failed -> banner = context.getString(R.string.cat_error)
+                CatEvent.Offline -> banner = context.getString(R.string.cat_offline, displayCatName(ui?.doc?.name))
                 CatEvent.FirstStreak -> explainer = StreakExplainerSource.Auto
             }
         }
