@@ -2,6 +2,7 @@ package com.lovelyy.app.ui.cat
 
 import android.os.Build
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.ui.graphics.Brush
@@ -55,6 +56,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -79,6 +81,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
@@ -540,20 +543,26 @@ internal fun CatSpeech(bubble: String?, banner: String?) {
     ) {
         AnimatedContent(
             targetState = banner?.let { Speech(it, isBanner = true) } ?: bubble?.let { Speech(it, isBanner = false) },
-            transitionSpec = { fadeIn() togetherWith fadeOut() },
+            // No clipping: a long banner may grow up over the bottom of the video (see below).
+            transitionSpec = { (fadeIn() togetherWith fadeOut()) using SizeTransform(clip = false) },
             contentAlignment = Alignment.TopCenter,
             label = "speech",
         ) { speech ->
             when {
                 speech == null -> Spacer(Modifier.fillMaxWidth())
                 speech.isBanner -> Box(Modifier.fillMaxWidth().height(SPEECH_HEIGHT), contentAlignment = Alignment.Center) {
+                    // The strip is two lines high. A long message (refuse_tired with a 20-letter name, a narrow
+                    // screen, a longer translation) first steps its size down to 11sp; if it still does not fit
+                    // (a big system font) the pill grows upward over the bottom of the video instead of cutting
+                    // the text, so the cards below never move.
+                    var size by remember(speech.text) { mutableIntStateOf(13) }
                     Text(
                         speech.text,
-                        fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 13.sp, lineHeight = 15.sp, color = Brown,
+                        fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = size.sp, lineHeight = (size + 2).sp, color = Brown,
                         textAlign = TextAlign.Center,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
+                        onTextLayout = { if (it.lineCount > 2 && size > 11) size-- },
                         modifier = Modifier
+                            .wrapContentHeight(Alignment.Bottom, unbounded = true)
                             .clip(RoundedCornerShape(50))
                             .background(CreamCard.copy(alpha = 0.92f))
                             .padding(horizontal = 14.dp, vertical = 2.dp),
