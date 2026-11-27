@@ -38,4 +38,22 @@ class QuestionMathTest {
         assertFalse(QuestionMath.isLocked(setOf("b"), "a"))
         assertTrue(QuestionMath.isLocked(setOf("a", "b"), "a"))
     }
+
+    @Test
+    fun bankCoversAYear() {
+        assertTrue(QuestionBank.QUESTIONS.size >= 365)
+    }
+
+    @Test
+    fun bankQuestionsAreUniqueAndFitTheLimit() {
+        val q = QuestionBank.QUESTIONS
+        assertEquals(q.size, q.toSet().size)
+        assertTrue(q.all { it.isNotBlank() && it.length <= 300 })
+    }
+
+    @Test
+    fun noQuestionRepeatsWithinAYear() {
+        val year = (0L until 365L).map { QuestionBank.forDay(today.plusDays(it)) }
+        assertEquals(365, year.toSet().size)
+    }
 }

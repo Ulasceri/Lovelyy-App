@@ -37,12 +37,12 @@ enums) found only a handful of literal UI strings; the rest of the work was maki
    etc. need a fallback font family or a different font for that locale (`ui/theme/Type.kt`).
 5. Right-to-left languages: `supportsRtl="true"` is set, but screens use fixed-direction drawings (SVG paths, arrows,
    the wheel) and some `Alignment.Start/End` choices have not been checked in RTL. Review visually first.
-6. Translate the 60 daily questions once they are resourced (see "Remaining" 1).
+6. Translate the 366 daily questions once they are resourced (see "Remaining" 1).
 7. Set the Play Store listing and `app_name` per language if wanted.
 
 ## Remaining (not fixed, on purpose)
 
-1. **Daily question bank** (`data/Questions.kt`, 60 Turkish questions) is hardcoded in Kotlin and the chosen text is
+1. **Daily question bank** (`data/Questions.kt`, 366 Turkish questions) is hardcoded in Kotlin and the chosen text is
    written into Firestore (`couples/{id}/questions/{day}.question`) by `QuestionRepository`. Moving it to a
    `string-array` needs the repository to get a `Context` or to store only the index and resolve the text at display
    time (keep the order and size identical in every language, the index is `epochDay mod size`). Touches Firestore data
