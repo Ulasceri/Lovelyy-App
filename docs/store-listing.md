@@ -1,6 +1,6 @@
 # Google Play mağaza metinleri (Türkçe)
 
-Durum: taslak, Ulaş'ın onayını bekliyor. Görseller: `assets/store/` (onaydan sonra eklenecek).
+Durum: Ulaş onayladı (27 Kasım 2026). Görseller: `assets/store/tr/`, kaynakları `tools/store-assets/`.
 Kurallar: gerçek isim yok ("Sen" / "Sevgilin"), Plus dürüstçe anlatılır, fiyat yazılmaz (Play gösterir),
 anlık bildirim sözü verilmez.
 
