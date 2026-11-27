@@ -50,6 +50,7 @@ fun LovelyyRoot() {
                     coupleId = s.coupleId,
                     onNotificationAnswer = vm::notificationPrimerAnswered,
                     onLocationAnswer = vm::locationPrimerAnswered,
+                    onStartTrial = { vm.startTrial(s.coupleId) },
                     onDone = { vm.finishPairedFlow(s.me.uid) },
                 )
                 is AppState.Home -> HomeScreen(s.me, s.couple, s.partner)

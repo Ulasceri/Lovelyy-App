@@ -117,6 +117,8 @@ fun ProfileScreen(
     onInbox: () -> Unit,
     onAccount: () -> Unit,
     onUnpair: () -> Unit,
+    plusStatus: com.lovelyy.app.data.PlusStatus = com.lovelyy.app.data.PlusStatus.None,
+    onPlus: () -> Unit = {},
 ) {
     val coupleId = me.coupleId ?: return
     val app = lovelyyApp()
@@ -204,6 +206,9 @@ fun ProfileScreen(
             }
             RoundSvgButton(PENCIL_D, stringResource(R.string.pf_edit), { editingName = true })
         }
+
+        // Lovelyy Plus (P2a): trial days left or the plan; opens Plus management.
+        if (plusStatus != com.lovelyy.app.data.PlusStatus.None) com.lovelyy.app.ui.plus.BizPlusCard(plusStatus, onClick = onPlus)
 
         // Shortcuts.
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

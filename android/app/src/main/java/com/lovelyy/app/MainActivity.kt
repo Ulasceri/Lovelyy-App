@@ -25,6 +25,9 @@ object DeepLink {
     const val NOTES = "notes"
     const val WHEEL = "wheel"
     const val PLANS = "tab:plans"
+    /** Plus-only widgets tapped without Plus: Home opens the Plus lock sheet (P4) for that widget. */
+    const val PLUS_LOCK_WIDE = "plus_lock:wide_widget"
+    const val PLUS_LOCK_HEART = "plus_lock:heart_widget"
 
     /** Opens the app on [route] (or just the app when null). */
     fun intent(context: Context, route: String?, requestCode: Int = route?.hashCode() ?: 0): PendingIntent = PendingIntent.getActivity(

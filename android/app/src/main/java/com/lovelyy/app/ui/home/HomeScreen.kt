@@ -151,6 +151,33 @@ import com.lovelyy.app.ui.theme.PeachSoft
 import com.lovelyy.app.ui.theme.PeachTint
 import com.lovelyy.app.ui.theme.Quicksand
 import kotlinx.coroutines.delay
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.ui.res.pluralStringResource
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.lovelyy.app.data.CoupleClock
+import com.lovelyy.app.data.PlusClock
+import com.lovelyy.app.data.PlusPrefs
+import com.lovelyy.app.data.PlusRules
+import com.lovelyy.app.data.displayCatName
+import com.lovelyy.app.text.TurkishSuffix
+import com.lovelyy.app.ui.cat.CatViewModel
+import com.lovelyy.app.ui.plus.HomePlusCard
+import com.lovelyy.app.ui.plus.LocalPlus
+import com.lovelyy.app.ui.plus.LockPreviewData
+import com.lovelyy.app.ui.plus.PaywallScreen
+import com.lovelyy.app.ui.plus.PaywallSource
+import com.lovelyy.app.ui.plus.PlusAccess
+import com.lovelyy.app.ui.plus.PlusCelebration
+import com.lovelyy.app.ui.plus.PlusEffect
+import com.lovelyy.app.ui.plus.PlusFeature
+import com.lovelyy.app.ui.plus.PlusGiftScreen
+import com.lovelyy.app.ui.plus.PlusLockSheet
+import com.lovelyy.app.ui.plus.PlusManageScreen
+import com.lovelyy.app.ui.plus.PlusViewModel
+import com.lovelyy.app.ui.plus.TakeoverSheet
+import com.lovelyy.app.ui.plus.plusPrices
+import com.lovelyy.app.ui.plus.shortDate
 import kotlinx.coroutines.flow.catch
 
 /** Bottom-nav tabs. The center heart is not a tab: it opens the heartbeat screen. */
@@ -180,6 +207,8 @@ private object Routes {
     const val INBOX = "inbox"
     const val ACCOUNT = "account"
     const val UNPAIR = "unpair"
+    const val PLUS = "plus"
+    const val PLUS_GIFT = "plus_gift"
 }
 
 /** Everything after pairing: the home tabs and the inner screens. */
@@ -205,13 +234,28 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
     }
     BackHandler(enabled = stack.isNotEmpty()) { pop() }
 
+    // Lovelyy Plus overlays (P3 paywall, P4 lock, P6b celebration, P10 takeover): drawn above the tabs and the menu.
+    var lockFeature by rememberSaveable { mutableStateOf<String?>(null) }
+    var paywallSource by rememberSaveable { mutableStateOf<String?>(null) }
+    var takeoverOpen by rememberSaveable { mutableStateOf(false) }
+    var celebrating by rememberSaveable { mutableStateOf(false) }
+
     // Widget and notification taps open their screen (DeepLink routes match Routes).
     val pendingRoute by app.pendingRoute.collectAsState()
     LaunchedEffect(pendingRoute) {
         val r = pendingRoute ?: return@LaunchedEffect
         app.pendingRoute.value = null
         stack.clear()
-        if (r == PLANS_TAB) tab = Tab.Planlar else push(r)
+        when {
+            // A Plus-only widget was tapped without Plus: show its lock (P4) over Home.
+            r.startsWith("plus_lock:") -> {
+                val f = PlusFeature.of(r.substringAfter(':'))
+                if (f != null && !PlusRules.isPlus(couple?.plus, PlusClock.now(context)) && !WidgetData.plusActive(context)) lockFeature = f.key
+                else if (f == PlusFeature.WideWidget) push(Routes.CAT)
+            }
+            r == PLANS_TAB -> tab = Tab.Planlar
+            else -> push(r)
+        }
     }
     BackHandler(enabled = stack.isEmpty() && tab != Tab.Yuva) { tab = Tab.Yuva }
 
@@ -242,6 +286,8 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
                 Routes.INBOX -> InnerScreens.INBOX
                 Routes.ACCOUNT -> InnerScreens.ACCOUNT
                 Routes.UNPAIR -> InnerScreens.UNPAIR
+                Routes.PLUS -> InnerScreens.PLUS_MANAGEMENT
+                Routes.PLUS_GIFT -> InnerScreens.PLUS_GIFT
                 else -> when (tab) {
                     Tab.Anilar -> InnerScreens.MEMORIES
                     Tab.Planlar -> InnerScreens.PLANS
@@ -250,6 +296,113 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
                 }
             },
         )
+    }
+
+    // ---------- Lovelyy Plus ----------
+    val plusVm: PlusViewModel = viewModel(key = "plus-$coupleId") { PlusViewModel(app, coupleId, me.uid) }
+    val plus = couple?.plus
+    val partnerName = partner?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.home_partner_fallback)
+    val catVm: CatViewModel = viewModel(key = "cat-$coupleId") { CatViewModel(app, coupleId, me.uid) }
+    val catUi by catVm.ui.collectAsStateWithLifecycle()
+    val catName = displayCatName(catUi?.doc?.name)
+    val clockTick by plusVm.clockTick.collectAsStateWithLifecycle()
+    var plusNow by remember { mutableLongStateOf(PlusClock.now(context)) }
+    LaunchedEffect(clockTick) {
+        while (true) {
+            plusNow = PlusClock.now(context)
+            delay(60_000)
+        }
+    }
+    val today = remember(plusNow) { CoupleClock.today(plusNow).toString() }
+    val streak = catUi?.doc?.streak?.current(CoupleClock.today(plusNow)) ?: 0
+    LaunchedEffect(plus) {
+        plusVm.update(plus)
+        WidgetData.savePlus(context, PlusRules.activeUntil(plus))
+    }
+    // Couples paired before Plus (or whose P1 write failed) get their trial here, from the live couple only.
+    LaunchedEffect(coupleId, plus == null, couple?.createdAt != null) {
+        if (couple != null && plus == null && couple.createdAt != null && couple.endedAt == null) plusVm.ensureTrial()
+    }
+    LaunchedEffect(coupleId, plus != null) { if (plus != null) plusVm.syncOnce() }
+    val plusAccess = PlusAccess(plus, me.uid, plusNow, openLock = { lockFeature = it.key }, openPlans = { paywallSource = it })
+    val plusDoneText = stringResource(R.string.plus_done)
+    val giftDoneText = stringResource(R.string.plus_gift_done)
+    LaunchedEffect(plusVm) {
+        plusVm.effects.collect { e ->
+            when (e) {
+                is PlusEffect.Message -> Toast.makeText(context, context.getString(e.text), Toast.LENGTH_LONG).show()
+                is PlusEffect.Purchased -> {
+                    paywallSource = null
+                    takeoverOpen = false
+                    if (stack.lastOrNull() == Routes.PLUS_GIFT) pop()
+                    Toast.makeText(context, if (e.plan == com.lovelyy.app.data.PlusPlan.Gift) giftDoneText else plusDoneText, Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
+    // Plus screens that open by themselves only do so on a home tab: never over the heartbeat, the live drawing
+    // or a letter being written (those are inner screens), and at most once a day (PlusRules).
+    LaunchedEffect(top, plus, plusNow) {
+        if (top != null || paywallSource != null || celebrating) return@LaunchedEffect
+        if (PlusRules.shouldCelebrate(plus, me.uid, plusNow, PlusPrefs.celebrationSeen(context, coupleId))) {
+            PlusRules.celebrationKey(plus)?.let { PlusPrefs.markCelebrated(context, coupleId, it) }
+            celebrating = true
+        } else {
+            val memory = PlusPrefs.paywallMemory(context, coupleId)
+            if (PlusRules.shouldShowTrialEndPaywall(plus, plusNow, today, memory)) {
+                PlusPrefs.savePaywallMemory(context, coupleId, memory.copy(lastShownDay = today))
+                paywallSource = PaywallSource.TRIAL_END
+            }
+        }
+    }
+    LaunchedEffect(paywallSource != null, lockFeature, celebrating, takeoverOpen) {
+        when {
+            paywallSource != null -> Telemetry.onScreen(InnerScreens.PLUS_PAYWALL)
+            lockFeature != null -> Telemetry.onScreen(InnerScreens.PLUS_LOCK)
+            celebrating -> Telemetry.onScreen(InnerScreens.PLUS_CELEBRATION)
+            takeoverOpen -> Telemetry.onScreen(InnerScreens.PLUS_TAKEOVER)
+        }
+    }
+    fun closePaywall() {
+        if (paywallSource == PaywallSource.TRIAL_END) {
+            val memory = PlusPrefs.paywallMemory(context, coupleId)
+            PlusPrefs.savePaywallMemory(context, coupleId, PlusRules.afterDismiss(memory, PlusClock.now(context)))
+        }
+        paywallSource = null
+    }
+    // Home cards: day 12/13 of the trial (P2b) and the takeover hint (P10), each closable for the day.
+    var cardTick by remember { mutableIntStateOf(0) }
+    val day12Closed = remember(cardTick, today) { PlusPrefs.cardDismissedOn(context, coupleId, "day12") == today }
+    val takeoverClosed = remember(cardTick, today) { PlusPrefs.cardDismissedOn(context, coupleId, "takeover") == today }
+    val plusCard: @Composable () -> Unit = {
+        when {
+            plus != null && PlusRules.canPartnerTakeOver(plus, me.uid, plusNow) && !takeoverClosed -> {
+                val until = plus.until ?: plusNow
+                val over = plusNow >= until
+                HomePlusCard(
+                    title = stringResource(if (over) R.string.plus_takeover_title_over else R.string.plus_takeover_title_soon),
+                    body = if (over) stringResource(R.string.plus_takeover_body_over, TurkishSuffix.genitive(partnerName))
+                    else stringResource(R.string.plus_takeover_body, TurkishSuffix.genitive(partnerName), TurkishSuffix.locative(shortDate(until))),
+                    action = stringResource(R.string.plus_takeover_card_cta),
+                    onAction = { takeoverOpen = true },
+                    onClose = { PlusPrefs.dismissCard(context, coupleId, "takeover", today); cardTick++ },
+                    modifier = Modifier.padding(top = 16.dp),
+                )
+            }
+            PlusRules.showDay12Card(plus, plusNow, day12Closed) -> {
+                val left = PlusRules.daysLeftInTrial(plus, plusNow)
+                HomePlusCard(
+                    title = pluralStringResource(R.plurals.plus_day12_title, left, left),
+                    body = stringResource(R.string.plus_day12_body, TurkishSuffix.genitive(catName)),
+                    action = stringResource(R.string.plus_card_see_plans),
+                    onAction = { paywallSource = PaywallSource.HOME_CARD },
+                    onClose = { PlusPrefs.dismissCard(context, coupleId, "day12", today); cardTick++ },
+                    footnote = stringResource(R.string.plus_one_sub),
+                    modifier = Modifier.padding(top = 16.dp),
+                )
+            }
+            else -> Unit
+        }
     }
 
     // Features behind the home cards are designed and approved one by one; until then a tap says "Yakında".
@@ -295,6 +448,7 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
     // Signed out or offline: keep the last moods instead of crashing on PERMISSION_DENIED.
     val moods by remember(coupleId) { app.moodRepository.observe(coupleId).catch { } }.collectAsStateWithLifecycle(emptyMap())
 
+    CompositionLocalProvider(LocalPlus provides plusAccess) {
     Box(Modifier.fillMaxSize().background(Cream)) {
         AnimatedContent(
             targetState = top,
@@ -311,7 +465,7 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
                 when (route?.substringBefore(':')) {
                     null -> AnimatedContent(tab, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "tab") { t ->
                         when (t) {
-                            Tab.Yuva -> YuvaTab(me, couple, partner, moods, soon, open = ::push, openPlans = { tab = Tab.Planlar })
+                            Tab.Yuva -> YuvaTab(me, couple, partner, moods, soon, open = ::push, openPlans = { tab = Tab.Planlar }, plusCard = plusCard)
                             Tab.Anilar -> MemoriesScreen(
                                 me, couple, partner,
                                 onDrawing = { push(Routes.DRAWING) },
@@ -330,6 +484,8 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
                                 onInbox = { push(Routes.INBOX) },
                                 onAccount = { push(Routes.ACCOUNT) },
                                 onUnpair = { push(Routes.UNPAIR) },
+                                plusStatus = PlusRules.status(plus, me.uid, plusNow),
+                                onPlus = { push(Routes.PLUS) },
                             )
                         }
                     }
@@ -360,6 +516,11 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
                     Routes.INBOX -> InboxScreen(me, partner, onBack = ::pop, onOpen = { r -> if (r == PLANS_TAB) { stack.clear(); tab = Tab.Planlar } else push(r) })
                     Routes.ACCOUNT -> AccountScreen(me, couple, partner, onBack = ::pop)
                     Routes.UNPAIR -> UnpairScreen(me, partner, onBack = ::pop)
+                    Routes.PLUS -> PlusManageScreen(
+                        plusVm, me.uid, me.displayName, partnerName, catName, plus, plusNow,
+                        onBack = ::pop, onGift = { push(Routes.PLUS_GIFT) }, onTakeover = { takeoverOpen = true },
+                    )
+                    Routes.PLUS_GIFT -> PlusGiftScreen(plusVm, partnerName, onBack = ::pop)
                 }
             }
         }
@@ -370,7 +531,8 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
                 null -> tab
                 Routes.COUNTER, Routes.CAT, Routes.INBOX -> Tab.Yuva
                 Routes.MOOD, Routes.QUESTION, Routes.DISTANCE, Routes.WIDGETS,
-                Routes.MOOD_HISTORY, Routes.QUESTION_HISTORY, Routes.ACCOUNT, Routes.UNPAIR -> Tab.Biz
+                Routes.MOOD_HISTORY, Routes.QUESTION_HISTORY, Routes.ACCOUNT, Routes.UNPAIR,
+                Routes.PLUS, Routes.PLUS_GIFT -> Tab.Biz
                 Routes.NOTES, Routes.CAPSULE, Routes.DRAWING, Routes.DRAWINGS, Routes.LETTERS -> Tab.Anilar
                 Routes.DREAMS, Routes.WHEEL, Routes.WHEEL_HISTORY -> Tab.Planlar
                 Routes.SEARCH -> if (top?.substringAfter(':') == "dreams") Tab.Planlar else Tab.Anilar
@@ -383,6 +545,43 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
                 onHeart = { push(Routes.HEARTBEAT) },
             )
         }
+
+        // ---------- Plus overlays (above the menu) ----------
+        paywallSource?.let { source ->
+            BackHandler { closePaywall() }
+            PaywallScreen(plusVm, plus, streak, source, onClose = ::closePaywall)
+        }
+        if (celebrating && plus != null) {
+            BackHandler { celebrating = false }
+            PlusCelebration(
+                plus, partnerName, catName,
+                onHeart = { celebrating = false; push(Routes.HEARTBEAT) },
+                onClose = { celebrating = false },
+            )
+        }
+        PlusFeature.of(lockFeature)?.let { feature ->
+            val catalog by plusVm.catalog.collectAsStateWithLifecycle()
+            val startMillis = couple?.startDate?.toDate()?.time
+            val days = startMillis?.let { DayCounter.together(it, System.currentTimeMillis()).days.toInt() }
+            val us = stringResource(R.string.home_us, me.displayName, partnerName)
+            val line = when {
+                feature == PlusFeature.HeartWidget && days != null -> pluralStringResource(R.plurals.widget_days, days, days)
+                feature == PlusFeature.HeartWidget -> stringResource(R.string.home_set_date)
+                days != null -> stringResource(R.string.widget_couple_day, us, days)
+                else -> us
+            }
+            PlusLockSheet(
+                feature,
+                LockPreviewData(catName, streak, catUi?.levels, line, me.displayName, partnerName),
+                plusPrices(catalog),
+                onPlans = { lockFeature = null; paywallSource = PaywallSource.lock(feature) },
+                onDismiss = { lockFeature = null },
+            )
+        }
+        if (takeoverOpen && plus != null && PlusRules.canPartnerTakeOver(plus, me.uid, plusNow)) {
+            TakeoverSheet(plusVm, plus, partnerName, plusNow, onDismiss = { takeoverOpen = false })
+        }
+    }
     }
 }
 
@@ -467,6 +666,7 @@ private fun YuvaTab(
     soon: () -> Unit,
     open: (String) -> Unit,
     openPlans: () -> Unit,
+    plusCard: @Composable () -> Unit = {},
 ) {
     val app = lovelyyApp()
     val partnerName = partner?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.home_partner_fallback)
@@ -483,6 +683,9 @@ private fun YuvaTab(
         Header(me, partnerName, startMillis, onDays = { open(Routes.COUNTER) }, onBell = { open(Routes.INBOX) })
 
         CatSection(me, couple, partner, Modifier.padding(top = 16.dp))
+
+        // Lovelyy Plus: the day-12/13 card or the takeover hint, under the care buttons (never over the cat).
+        plusCard()
 
         TogetherCard(startMillis, Modifier.padding(top = 18.dp)) { open(Routes.COUNTER) }
 

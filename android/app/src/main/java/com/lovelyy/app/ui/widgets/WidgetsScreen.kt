@@ -112,6 +112,9 @@ fun WidgetsScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
     val liveAt = partner?.uid?.let { presence[it] }
     val partnerLive = liveAt != null && System.currentTimeMillis() - liveAt < DrawingMath.ACTIVE_MS
     val failText = stringResource(R.string.wg_pin_failed)
+    // Wide cat and the one-tap heart are Plus: marked with a Plus pill; without Plus a tap opens the lock (P4).
+    val plus = com.lovelyy.app.ui.plus.LocalPlus.current
+    val hasPlus = plus?.isPlus ?: true
     fun pin(provider: Class<out AppWidgetProvider>) {
         if (!requestPin(context, provider)) Toast.makeText(context, failText, Toast.LENGTH_SHORT).show()
     }
@@ -179,8 +182,10 @@ fun WidgetsScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
         }
 
         // Kedi · geniş
-        Labeled(stringResource(R.string.wg_cat_wide)) {
-            WidgetBox(Modifier.height(168.dp), onClick = { pin(CatWideWidgetProvider::class.java) }) {
+        Labeled(stringResource(R.string.wg_cat_wide), plusOnly = true) {
+            WidgetBox(Modifier.height(168.dp), onClick = {
+                if (hasPlus) pin(CatWideWidgetProvider::class.java) else plus?.openLock?.invoke(com.lovelyy.app.ui.plus.PlusFeature.WideWidget)
+            }) {
                 Row(Modifier.fillMaxSize()) {
                     Box(Modifier.width(150.dp).fillMaxHeight().background(CatBg)) { CatPicture(levels?.sleeping == true, Modifier.fillMaxSize()) }
                     Column(
@@ -209,7 +214,8 @@ fun WidgetsScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
         }
 
         // Gün sayacı + tek dokunuşla kalp
-        Labeled(stringResource(R.string.wg_days)) {
+        // The day counter itself is free; its one-tap heart is Plus (without Plus the widget's heart opens P4).
+        Labeled(stringResource(R.string.wg_days), plusOnly = true) {
             WidgetBox(Modifier.height(84.dp), onClick = { pin(DaysWidgetProvider::class.java) }) {
                 Row(Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
                     Box(Modifier.width(74.dp)) {
@@ -250,10 +256,13 @@ fun WidgetsScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
 }
 
 @Composable
-private fun Labeled(label: String, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+private fun Labeled(label: String, modifier: Modifier = Modifier, plusOnly: Boolean = false, content: @Composable () -> Unit) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         content()
-        Text(label, fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Brown, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically) {
+            Text(label, fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Brown, textAlign = TextAlign.Center)
+            if (plusOnly) com.lovelyy.app.ui.plus.PlusPill(stringResource(R.string.plus_pill), fontSize = 11)
+        }
     }
 }
 
