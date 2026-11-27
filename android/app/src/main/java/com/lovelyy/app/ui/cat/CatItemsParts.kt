@@ -56,12 +56,12 @@ private val PLACES = listOf(
 
 /**
  * Mırmır's items over the bottom of the cat video (P7b on Home, the P7a preview). Positions scale with the width
- * and hang from the bottom edge, so a taller or shorter video keeps them on the floor. [hidden]: the slot whose
- * item is inside the clip playing right now (its picture would be doubled). [pop]: the item that was just placed
+ * and hang from the bottom edge, so a taller or shorter video keeps them on the floor. [hidden]: the slots whose
+ * items are inside, or covered by, the clip playing right now. [pop]: the item that was just placed
  * lands with a small bounce.
  */
 @Composable
-fun CatItemsLayer(items: CatItems, modifier: Modifier = Modifier, hidden: CareSlot? = null, pop: CatItem? = null) {
+fun CatItemsLayer(items: CatItems, modifier: Modifier = Modifier, hidden: Set<CareSlot> = emptySet(), pop: CatItem? = null) {
     BoxWithConstraints(modifier) {
         val k = maxWidth / BOARD_W
         val h = maxHeight
@@ -71,7 +71,7 @@ fun CatItemsLayer(items: CatItems, modifier: Modifier = Modifier, hidden: CareSl
             val item = items[p.slot]
             key(p.slot) {
                 AnimatedVisibility(
-                    visible = hidden != p.slot,
+                    visible = p.slot !in hidden,
                     enter = if (pop == item) scaleIn(spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessLow), initialScale = 0.6f) + fadeIn()
                     else fadeIn(),
                     exit = fadeOut(),

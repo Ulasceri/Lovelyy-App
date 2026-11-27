@@ -142,11 +142,16 @@ class CatAnimator(private val context: Context, private val scope: CoroutineScop
         interrupt(first)
     }
 
-    /** The couple placed another bed: the next sleep clips use it. */
+    /**
+     * The couple placed another bed: the next sleep clips use it. A cat asleep in the old bed cross-fades into the
+     * new one right away, so the reaction bubble never praises a bed that is not on screen.
+     */
     fun setBed(newBed: Bed) {
         if (newBed == bed) return
+        val old = bed
         bed = newBed
-        if (front.clip != null) prepareNext()
+        val f = front.clip ?: return
+        if (f == old.sleeping) interrupt(newBed.sleeping) else prepareNext()
     }
 
     /** While a finger strokes the cat, the "petted" clip keeps playing. */
