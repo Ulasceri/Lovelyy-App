@@ -469,3 +469,58 @@ test("unknown shared collections cannot be written", async () => {
   await assertFails(setDoc(sub("alice", "junk", "x"), { a: 1 }));
   await assertFails(setDoc(sub("alice", "notes", "n1", "deeper", "x"), { a: 1 }));
 });
+
+// ---------- Lovelyy Plus (PlusRepository / PlusRules.afterPurchase) ----------
+const plusTrial = (trialStart = Date.now()) => ({
+  trialStart, until: null, source: "trial", product: null, buyerUid: null, autoRenew: null, orderToken: null, giftNote: null,
+});
+const plusSub = (trialStart, buyerUid, extra = {}) => ({
+  trialStart, until: Date.now() + 30 * DAY, source: "sub", product: "lovelyy_plus:monthly", buyerUid,
+  autoRenew: true, orderToken: "token-1", giftNote: null, ...extra,
+});
+const couple = (uid) => doc(db(uid), "couples", CODE);
+
+test("plus: trial starts once near server time and never moves", async () => {
+  await pairAB();
+  await assertFails(updateDoc(couple("alice"), { plus: plusTrial(Date.now() - 3 * DAY) }));
+  await assertFails(updateDoc(couple("alice"), { plus: { ...plusTrial(), source: "sub", until: Date.now() + DAY } }));
+  const start = Date.now();
+  await assertSucceeds(updateDoc(couple("alice"), { plus: plusTrial(start) }));
+  await assertFails(updateDoc(couple("bob"), { plus: plusTrial(start + 1000) }));
+  // Rewriting the same map (the other phone's lazy start) is fine.
+  await assertSucceeds(updateDoc(couple("bob"), { plus: plusTrial(start) }));
+  // Strangers cannot touch it.
+  await signUp("eve", "Eve");
+  await assertFails(updateDoc(couple("eve"), { plus: plusTrial(start) }));
+});
+
+test("plus: only the buyer records a purchase; shape and sizes are checked", async () => {
+  await pairAB();
+  const start = Date.now();
+  await assertSucceeds(updateDoc(couple("alice"), { plus: plusTrial(start) }));
+  await assertFails(updateDoc(couple("alice"), { plus: plusSub(start, "bob") }));            // can't buy for the partner
+  await assertFails(updateDoc(couple("alice"), { plus: plusSub(start, "eve") }));            // buyer must be a member
+  await assertFails(updateDoc(couple("alice"), { plus: plusSub(start, "alice", { source: "lifetime" }) }));
+  await assertFails(updateDoc(couple("alice"), { plus: plusSub(start, "alice", { until: "soon" }) }));
+  await assertFails(updateDoc(couple("alice"), { plus: plusSub(start, "alice", { extra: 1 }) }));
+  await assertFails(updateDoc(couple("alice"), { plus: plusSub(start, "alice", { giftNote: "x".repeat(141) }) }));
+  await assertSucceeds(updateDoc(couple("alice"), { plus: plusSub(start, "alice") }));
+  // The partner cannot change the buyer's subscription...
+  await assertFails(updateDoc(couple("bob"), { plus: plusSub(start, "alice", { autoRenew: false }) }));
+  // ...but the buyer can (cancelled in Google Play), and the partner can take over as the new buyer.
+  await assertSucceeds(updateDoc(couple("alice"), { plus: plusSub(start, "alice", { autoRenew: false }) }));
+  await assertSucceeds(updateDoc(couple("bob"), { plus: plusSub(start, "bob", { orderToken: "token-2" }) }));
+  // A gift with a short note.
+  await assertSucceeds(updateDoc(couple("alice"), {
+    plus: plusSub(start, "alice", { source: "gift", product: "lovelyy_plus_gift_year", autoRenew: false, giftNote: "İyi ki varsın" }),
+  }));
+  // Plus can't be written together with other couple fields, and the start date rule still works.
+  await assertFails(updateDoc(couple("alice"), { plus: plusSub(start, "alice"), startDate: Timestamp.now() }));
+  await assertSucceeds(updateDoc(couple("bob"), { startDate: Timestamp.now() }));
+});
+
+test("plus: an ended couple takes no plus writes", async () => {
+  await pairAB();
+  await assertSucceeds(endAsAlice());
+  await assertFails(updateDoc(couple("bob"), { plus: plusTrial() }));
+});

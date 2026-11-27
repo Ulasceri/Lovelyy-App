@@ -11,10 +11,18 @@ import java.util.concurrent.ConcurrentHashMap
  *
  * It follows the process default, which Android points at the per-app language (API 33+) or the
  * system language, so nothing here caches a locale: always call [current] at the point of use.
- * Turkish is the only shipped language today; a new language needs no change in this file.
+ * Turkish is the only shipped language today; a new language is added to [SHIPPED].
  */
 object AppLocale {
-    fun current(): Locale = Locale.getDefault()
+    /**
+     * Languages the app ships strings for. On any other device language Android falls back to the Turkish
+     * `values/` strings, so dates and name suffixes must fall back to Turkish too; otherwise an English phone
+     * shows "December 11 kadar" and "Bora Plus hediye et". Add a language here when its `values-xx` lands.
+     */
+    private val SHIPPED = setOf("tr")
+    private val FALLBACK: Locale = Locale.forLanguageTag("tr-TR")
+
+    fun current(): Locale = Locale.getDefault().let { if (it.language in SHIPPED) it else FALLBACK }
 
     fun isTurkish(): Boolean = current().language == "tr"
 

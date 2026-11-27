@@ -5,7 +5,8 @@ rules_version = '2';
 // Data model
 //   users/{uid}            profile: displayName, photoUrl, coupleId, pairCode, createdAt
 //   pairCodes/{CODE}       a partner's one-time pairing code: ownerUid, createdAt
-//   couples/{coupleId}     the shared space: members [ownerUid, joinerUid], createdAt, startDate
+//   couples/{coupleId}     the shared space: members [ownerUid, joinerUid], createdAt, startDate,
+//                          plus (Lovelyy Plus map, see validPlus)
 //   couples/{id}/**        every shared feature (cat, notes, mood...) lives here; only the two
 //                          members read it, and each collection has its own write rule below
 //                          (exact fields, size limits, author = signed-in user). A new shared
@@ -294,13 +295,40 @@ service cloud.firestore {
 
       function isEnded() { return resource.data.get('endedAt', null) != null; }
 
+      // Lovelyy Plus (data/Plus.kt, PlusRepository): one map for both partners. Written by the members'
+      // phones (no server on the Spark plan), so this only checks shape and the few rules that matter:
+      // the trial start is set once near the server time and never moves; only the buyer (the signed-in
+      // member written as buyerUid) can change what was bought. Client-written entitlement is an accepted
+      // launch risk, see docs/security.md.
+      function validPlus(p, old) {
+        return p is map
+          && p.keys().hasOnly(['trialStart', 'until', 'source', 'product', 'buyerUid', 'autoRenew', 'orderToken', 'giftNote'])
+          && p.get('trialStart', null) is int
+          && ((old == null && math.abs(p.trialStart - request.time.toMillis()) <= 86400000)
+              || (old != null && p.trialStart == old.get('trialStart', null)))
+          && p.get('source', 'trial') in ['trial', 'sub', 'gift']
+          && optInt(p.get('until', null))
+          && optStr(p.get('product', null), 64)
+          && (p.get('buyerUid', null) == null || p.buyerUid in resource.data.members)
+          && (p.get('autoRenew', null) == null || p.autoRenew is bool)
+          && optStr(p.get('orderToken', null), 512)
+          && optStr(p.get('giftNote', null), 140)
+          && ((old == null && p.get('source', 'trial') == 'trial' && p.get('until', null) == null)
+              || (old != null && p.diff(old).affectedKeys().size() == 0)
+              || p.get('buyerUid', null) == me());
+      }
+
       allow get, list: if isMember();
       allow create: if signedIn() && validNewCouple();
       // Day counter start date (an ended couple has endedAt, so it never passes hasOnly).
       allow update: if isMember()
-        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['members', 'createdAt'])
-        && request.resource.data.keys().hasOnly(['members', 'createdAt', 'startDate'])
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['members', 'createdAt', 'plus'])
+        && request.resource.data.keys().hasOnly(['members', 'createdAt', 'startDate', 'plus'])
         && (request.resource.data.get('startDate', null) == null || request.resource.data.startDate is timestamp);
+      // Lovelyy Plus: trial start, purchases, restore, takeover (not on an ended couple).
+      allow update: if isMember() && !isEnded()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['plus'])
+        && validPlus(request.resource.data.plus, resource.data.get('plus', null));
       // Ending the couple: once, by a member, stamped with the server time and their own uid.
       allow update: if isMember() && !isEnded()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['endedAt', 'endedBy', 'endedByName'])

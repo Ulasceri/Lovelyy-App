@@ -47,4 +47,12 @@ object InnerScreens {
     const val INBOX = "inbox"
     const val ACCOUNT = "account"
     const val UNPAIR = "unpair"
+    /** Lovelyy Plus. P1 is a step of the post-pairing flow; P4, P6b and P10 are overlays on Home. */
+    const val PLUS_TRIAL_GIFT = "plus_trial_gift"
+    const val PLUS_MANAGEMENT = "plus_management"
+    const val PLUS_PAYWALL = "plus_paywall"
+    const val PLUS_GIFT = "plus_gift"
+    const val PLUS_LOCK = "plus_lock"
+    const val PLUS_CELEBRATION = "plus_celebration"
+    const val PLUS_TAKEOVER = "plus_takeover"
 }

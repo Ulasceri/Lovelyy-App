@@ -30,6 +30,7 @@ android {
         // Telemetry (analytics, crash reports, performance) default when the user hasn't chosen.
         // Release: on. Debug: off, so test runs don't pollute the data. See docs/analytics.md.
         buildConfigField("boolean", "TELEMETRY_DEFAULT_ENABLED", "true")
+        buildConfigField("boolean", "PLUS_FAKE_BILLING", "false")
     }
 
     // App-specific debug key, committed to the repo, so every machine has the same
@@ -50,6 +51,11 @@ android {
             // (or at runtime, see docs/analytics.md).
             val debugTelemetry = (project.findProperty("telemetry.debug") as String?)?.toBoolean() ?: false
             buildConfigField("boolean", "TELEMETRY_DEFAULT_ENABLED", debugTelemetry.toString())
+            // Lovelyy Plus without Google Play: ./gradlew assembleDebug -Pplus.fakeBilling=true always fakes the
+            // purchase; without the flag a debug build fakes it only when the Play products can't be loaded
+            // (emulator, no Play listing yet). Never in release. See docs/architecture.md "Lovelyy Plus".
+            val fakeBilling = (project.findProperty("plus.fakeBilling") as String?)?.toBoolean() ?: false
+            buildConfigField("boolean", "PLUS_FAKE_BILLING", fakeBilling.toString())
         }
         release {
             isMinifyEnabled = false
@@ -109,6 +115,9 @@ dependencies {
     // The cat: video clips (assets/cat) and the home-screen widget's background refresh.
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.work.runtime)
+
+    // Lovelyy Plus purchases.
+    implementation(libs.android.billing.ktx)
 
     testImplementation(libs.junit)
 }

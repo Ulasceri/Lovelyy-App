@@ -35,6 +35,10 @@ the app down for everyone. So the defence is in layers:
   - signals, capsules, strokes, saved drawings and wheel history are write-once (no edits);
   - a collection without a match block cannot be written at all, and after unpairing nothing new
     can be written, only deleted.
+- `couples/{id}.plus` (Lovelyy Plus): members only, not on an ended couple, exact fields and types
+  (`validPlus`). `trialStart` is set once within a day of server time and never changes; only the signed-in
+  member written as `buyerUid` can change what was bought (`until`, `source`, `product`, `autoRenew`, token,
+  gift note); the partner can only become the new buyer (takeover). See "Lovelyy Plus: accepted risk" below.
 - Realtime Database: deny all (`database.rules.json`).
 
 **When you add a shared collection or a field, update the rules and the tests in the same PR**, or the
@@ -110,6 +114,20 @@ Console steps (in this order; **do not enforce before step 5**, or the app stops
 - Before the Play release: turn on R8 (`isMinifyEnabled = true` + keep rules) and test the release build;
   sign with Play App Signing; never commit the upload keystore.
 
+## Lovelyy Plus: accepted launch risk (client-written entitlement)
+
+On the Spark plan there is no server to verify Google Play purchases, so the buyer's phone writes the couple's
+`plus` map itself after Play reports the purchase (`PlusViewModel`, `PlusRules.afterPurchase`). The rules only
+check its shape (above). Someone who scripts Firestore with their own account (App Check makes this harder but
+not impossible) can give their own couple Plus without paying. Accepted for launch (Ulaş's plan): it only
+unlocks cosmetic / convenience features for that one couple, no other user's data is reachable, and the Play
+purchase token is stored (`orderToken`) so purchases can be verified later.
+
+Parked until Blaze: a Cloud Function that verifies `orderToken` with the Google Play Developer API (and listens
+to Real-time Developer Notifications for renewals, cancellations and refunds), writes `plus` itself, and the
+rules then make `plus` read-only for clients. Until then a refund in Play does not remove Plus (the buyer's phone
+only notices that the subscription stopped renewing and sets `autoRenew=false`; the period then runs out).
+
 ## Possible on Spark later (data model changes, no server)
 
 These were thought to need Cloud Functions, but rules can do them if the data is split into separate docs:
@@ -126,5 +144,6 @@ Both need app changes (repositories + history screens) and a migration of existi
 
 - FCM push from the server (background heartbeat currently arrives in 2-4 minutes via WorkManager).
 - Real per-user write quotas across all collections (counting writes in a trusted function).
+- Server-side verification of Lovelyy Plus purchases (Play Developer API + RTDN), see above.
 - Server-side cleanup jobs (e.g. deleting leftover data of deleted accounts, old signals).
 - Abuse reporting / moderation hooks, if ever needed.

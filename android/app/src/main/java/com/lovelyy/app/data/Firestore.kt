@@ -58,6 +58,7 @@ internal fun DocumentSnapshot.toCouple(): Couple? =
         endedAt = getTimestamp("endedAt"),
         endedBy = getString("endedBy"),
         endedByName = getString("endedByName"),
+        plus = PlusInfo.fromMap(get("plus") as? Map<*, *>),
     )
 
 /** The shared item being edited was deleted (usually by the partner) before the edit reached the server. */

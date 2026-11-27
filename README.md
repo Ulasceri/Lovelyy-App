@@ -25,6 +25,7 @@ Android uygulaması Kotlin + Jetpack Compose + Material 3 ile yazılır, arka u�
 | Geçmiş ekranları (ruh hali, önceki sorular, kalp atışı, çark), arama | Hazır |
 | Çizimlerimiz (kayıtlı çizimler, silme), açılmış mektuplar, bildirimler | Hazır |
 | Hesap (giriş yöntemi, şifre sıfırlama, çıkış, hesap silme) ve eşleşmeyi kaldırma; Biz sekmesinde "Kullanım verisi" anahtarı (analitik/hata/performans kapatılabilir) | Hazır; hesap silince profil, eşleşme kodu, ortak veriler ve telefondaki yerel veriler silinir; eşleşme kaldırılınca ortak veriler iki taraftan da kalıcı silinir (yeni Firestore kuralları yayınlanmalı) |
+| Lovelyy Plus (ikiniz için tek abonelik): eşleşince 14 gün deneme hediyesi, Biz sekmesinde Plus kartı, 12./13. gün kartı, deneme sonu planlar (yıllık + ilk yıl teklifi 48 saat, aylık), Plus kilidi, hediye (1 yıl, tek ödeme), partnere "Plus açıldı", Plus yönetimi, bitişte partnerin devralması; geniş kedi widget'ı ve widget'tan tek dokunuşla kalp Plus'a özel | Çekirdek hazır (Google Play Billing). Play Console'da ürünler tanımlanmalı, bkz. aşağıdaki "Lovelyy Plus'ı denemek" ve [docs/architecture.md](docs/architecture.md). Ücretsiz sürüm sınırları, seri koruması ve kedinin eşyaları sonraki adımlar |
 | Henüz tasarlanıp kodlanmamış ekranlar | Arayüzde **"Yakında"** olarak görünür |
 
 ## Localization
@@ -43,6 +44,7 @@ Ertelenen işler: [todo.md](todo.md).
 - Jetpack Compose (BOM 2025.06) + Material 3, Quicksand yazı tipi
 - Firebase: Authentication, Firestore, Analytics, Crashlytics, Performance Monitoring
 - Credential Manager + Google ile giriş, Media3 ExoPlayer (kedi videoları), WorkManager (widget yenileme), Timber
+- Google Play Billing 7 (`billing-ktx`): Lovelyy Plus aboneliği ve hediye
 - Sürümlerin tamamı: [`android/gradle/libs.versions.toml`](android/gradle/libs.versions.toml)
 
 ## Klasör yapısı (monorepo)
@@ -66,6 +68,7 @@ Android paket düzeni (`android/app/src/main/java/com/lovelyy/app/`):
 | `analytics/` | Tipli analytics olayları ve ekran görüntüleme takibi |
 | `telemetry/` | Crashlytics, Performance, Timber ağacı, onay anahtarı |
 | `signals/`, `widget/` | Sinyal metinleri ve ana ekran widget'ı |
+| `billing/`, `ui/plus/` | Lovelyy Plus: Google Play satın alma (`BillingRepository`) ve Plus ekranları; kurallar `data/Plus.kt` |
 
 Kedi videoları: `android/app/src/main/assets/cat/*.mp4`. Debug'a özel kodlar: `android/app/src/debug/`.
 Testler: `android/app/src/test/`.
@@ -87,6 +90,18 @@ Testler: `android/app/src/test/`.
 - Birim testlerinde bellek hatası olursa: `./gradlew testDebugUnitTest -Dorg.gradle.jvmargs=-Xmx2048m`
 - Telemetri (analytics/Crashlytics/Performance) debug'da varsayılan olarak kapalıdır; açmak için
   `./gradlew assembleDebug -Ptelemetry.debug=true` ya da [docs/analytics.md](docs/analytics.md).
+
+### Lovelyy Plus'ı denemek
+
+- **Emülatörde, Google Play olmadan:** debug derlemesinde Play ürünleri yüklenemezse satın alma kendiliğinden
+  "sahte" yapılır (Play penceresi açılmaz, Firestore'a `debug-…` belirteciyle yazılır). Ürünler yüklense bile
+  sahte satın almayı zorlamak için: `./gradlew assembleDebug -Pplus.fakeBilling=true`. Release derlemesinde asla olmaz.
+- Biz → Plus kartı → Plus yönetimi ekranının altındaki **Debug** kutusu (yalnızca debug): "+1 gün" Plus saatini
+  ileri alır (12. gün kartı, deneme sonu planlar ve 48 saatlik sayaç denenir), "Gerçek zaman" geri alır,
+  "Yenilemeyi kapat" devralmayı ve ikinci satın alma kilidini denemek için, "Satın alımı sıfırla" denemeye döner.
+- **Gerçek satın alma (Play Console):** abonelik `lovelyy_plus` (temel planlar `yearly` ve `monthly`, `yearly`
+  üzerinde `first-year` teklifi), uygulama içi ürün `lovelyy_plus_gift_year`; lisans test hesapları ve dahili
+  test kanalı gerekir. Ayrıntılar: [docs/architecture.md](docs/architecture.md) "Lovelyy Plus".
 
 ---
 
