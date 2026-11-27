@@ -16,16 +16,29 @@ if (file("google-services.json").exists()) {
     logger.warn("⚠️  app/google-services.json not found: building without Firebase. See README.md.")
 }
 
+// Release (upload) key for Google Play. Never committed: the passwords live in android/keystore.properties
+// (gitignored) or in environment variables, the .jks file outside the repo. See docs/play-console.md step 1.
+// Google Play re-signs the app with its own app-signing key; this key only proves the upload is ours.
+val keystoreProps = java.util.Properties().apply {
+    val f = rootProject.file("keystore.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
+}
+fun signingValue(key: String, env: String): String? =
+    keystoreProps.getProperty(key)?.takeIf { it.isNotBlank() } ?: System.getenv(env)?.takeIf { it.isNotBlank() }
+val uploadStoreFile = signingValue("storeFile", "LOVELYY_UPLOAD_STORE_FILE")
+val hasUploadKey = uploadStoreFile != null && file(uploadStoreFile).exists()
+
 android {
     namespace = "com.lovelyy.app"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.lovelyy.app"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
+        // Raise versionCode by one for every upload to Google Play (Play refuses a code it has seen).
         versionCode = 1
-        versionName = "0.1.0"
+        versionName = "1.0.0"
 
         // Telemetry (analytics, crash reports, performance) default when the user hasn't chosen.
         // Release: on. Debug: off, so test runs don't pollute the data. See docs/analytics.md.
@@ -41,6 +54,14 @@ android {
             storePassword = "android"
             keyAlias = "androiddebugkey"
             keyPassword = "android"
+        }
+        if (hasUploadKey) {
+            create("release") {
+                storeFile = file(uploadStoreFile!!)
+                storePassword = signingValue("storePassword", "LOVELYY_UPLOAD_STORE_PASSWORD")
+                keyAlias = signingValue("keyAlias", "LOVELYY_UPLOAD_KEY_ALIAS") ?: "upload"
+                keyPassword = signingValue("keyPassword", "LOVELYY_UPLOAD_KEY_PASSWORD")
+            }
         }
     }
 
@@ -58,6 +79,12 @@ android {
             buildConfigField("boolean", "PLUS_FAKE_BILLING", fakeBilling.toString())
         }
         release {
+            // Without the upload key the release build still compiles, just unsigned (Play won't accept it).
+            if (hasUploadKey) {
+                signingConfig = signingConfigs.getByName("release")
+            } else {
+                logger.warn("⚠️  No upload key (android/keystore.properties): the release build is unsigned. See docs/play-console.md.")
+            }
             // R8: shrinks and obfuscates code and drops unused resources. Libraries bring their own keep rules;
             // the app's few extra ones are in proguard-rules.pro. Crashlytics uploads the mapping file on build.
             isMinifyEnabled = true

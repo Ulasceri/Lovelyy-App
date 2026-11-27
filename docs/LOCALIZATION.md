@@ -66,7 +66,7 @@ enums) found only a handful of literal UI strings; the rest of the work was maki
   Compile risks to check: `pluralStringResource` imports and Int/Long counts (`.toInt()` was added everywhere),
   places where `pluralStringResource` sits inside a non-composable lambda, unused or leftover imports after removing
   `TR` and `java.util.Locale`/`DateTimeFormatter` imports, `AppLocale` import in every touched file,
-  `android:localeConfig` needs compileSdk 33+ (it is 35).
+  `android:localeConfig` needs compileSdk 33+ (it is 36).
 - Behaviour risk to eyeball in Turkish: skeleton-based dates should give the same text as before (e.g. "9 Ekim 2025",
   "23 Kasım Pazartesi", "Ekim 2025", time "14:20"); the month chip no longer truncates to 3 letters (Turkish months
   are already 3 letters in the abbreviated form).

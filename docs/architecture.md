@@ -345,7 +345,12 @@ subscription still runs gets it written into their next couple by the sync below
 - `subscriptionEnd`: Play doesn't give the app the expiry, so the buyer's phone computes whole periods from the
   purchase time; `sync` rewrites it (and `autoRenew=false` when the subscription is gone) once per app run.
 
-## Billing: `billing/BillingRepository.kt` (Play Billing 7, `billing-ktx`)
+## Billing: `billing/BillingRepository.kt` (Play Billing 8, `billing-ktx`)
+
+Play requires Billing Library 8+ for new apps and updates since 31 Aug 2026. The product query uses the callback
+`queryProductDetailsAsync` (its v8 result type is `QueryProductDetailsResult`), and the client has
+`enableAutoServiceReconnection()`. Billing 8 no longer returns consumed one-time products or expired subscriptions
+from `queryPurchasesAsync`, which is what restore/sync expect anyway. Console setup: [play-console.md](play-console.md) section 6.
 
 Product ids (`PlusProducts`, must match Play Console exactly):
 

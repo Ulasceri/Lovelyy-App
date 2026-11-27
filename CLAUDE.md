@@ -98,7 +98,7 @@ cd tools/cat-animation && python generate.py keys.json raw/ [clip] && ./encode.s
 ```
 
 Without `android/app/google-services.json` the app still builds and shows the "Firebase kurulumu
-gerekiyor" screen. Stack: AGP 8.10.1, Kotlin 2.1.21, compileSdk/targetSdk 35, minSdk 26, Java 17,
+gerekiyor" screen. Stack: AGP 8.10.1, Kotlin 2.1.21, compileSdk/targetSdk 36, minSdk 26, Java 17,
 Compose BOM 2025.06.00, Firebase BoM 33.15.0 (versions in `android/gradle/libs.versions.toml`).
 
 ### Environment notes
@@ -139,4 +139,5 @@ Compose BOM 2025.06.00, Firebase BoM 33.15.0 (versions in `android/gradle/libs.v
 [README.md](README.md) (setup, Turkish) · [DESIGN.md](DESIGN.md) (UI tokens/components) ·
 [docs/architecture.md](docs/architecture.md) · [docs/security.md](docs/security.md) · [docs/analytics.md](docs/analytics.md) ·
 [docs/design-principles.md](docs/design-principles.md) · [docs/product.md](docs/product.md) ·
+[docs/play-console.md](docs/play-console.md) (release signing, Play forms, Plus product ids) ·
 [tools/README.md](tools/README.md)

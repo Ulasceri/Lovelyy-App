@@ -29,3 +29,6 @@ firebase/.firebase/
 
 # Node
 node_modules/
+
+# Release upload key passwords (docs/play-console.md). Never commit.
+android/keystore.properties

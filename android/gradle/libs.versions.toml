@@ -16,7 +16,7 @@ coroutinesPlayServices = "1.10.2"
 splashscreen = "1.0.1"
 media3 = "1.6.1"
 work = "2.10.1"
-billing = "7.1.1"
+billing = "8.0.0"
 junit = "4.13.2"
 
 [libraries]
