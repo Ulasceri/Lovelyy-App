@@ -187,6 +187,9 @@ fun PlansScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBucke
     var monthKey by rememberSaveable { mutableStateOf(YearMonth.from(today).toString()) }
     val month = YearMonth.parse(monthKey)
     var editing by remember { mutableStateOf<Editing?>(null) }
+    // P9: a new plan or special day over the free limit opens the plans; existing ones stay editable.
+    val gate = com.lovelyy.app.ui.plus.rememberLimitGate(com.lovelyy.app.data.PlusLimits.Limit.Events, stored?.size ?: 0)
+    fun startNew(date: LocalDate) = gate.tryAdd { editing = Editing(null, date) }
 
     // "Emin misin?" before deleting.
     var askDelete by remember { mutableStateOf<(() -> Unit)?>(null) }
@@ -219,14 +222,15 @@ fun PlansScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBucke
                 Text(stringResource(R.string.p_title), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = Brown)
                 Text(stringResource(R.string.p_subtitle), fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = BrownSoft)
             }
-            RoundSvgButton(PLUS_D, stringResource(R.string.p_add), { editing = Editing(null, today) })
+            RoundSvgButton(PLUS_D, stringResource(R.string.p_add), { startNew(today) })
         }
+        com.lovelyy.app.ui.plus.PlusLimitBanner(gate)
 
         // Countdowns (same height, even when one title is shorter)
         Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             val colors = listOf(PeachSoft, MintCell, ButterCell)
             if (special.isEmpty()) {
-                Countdown(null, stringResource(R.string.p_no_special), "", PeachSoft, Modifier.weight(1f).fillMaxHeight()) { editing = Editing(null, today) }
+                Countdown(null, stringResource(R.string.p_no_special), "", PeachSoft, Modifier.weight(1f).fillMaxHeight()) { startNew(today) }
             }
             special.forEachIndexed { i, (e, left) ->
                 val next = CalendarMath.nextOccurrence(e, today) ?: e.date
@@ -259,7 +263,7 @@ fun PlansScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBucke
             val cells = List(offset) { null } + (1..month.lengthOfMonth()).map { month.atDay(it) }
             cells.chunked(7).forEach { week ->
                 Row(Modifier.padding(vertical = 1.dp)) {
-                    week.forEach { day -> DayCell(day, today, day != null && all.any { CalendarMath.occursOn(it, day) }, Modifier.weight(1f)) { d -> editing = Editing(null, d) } }
+                    week.forEach { day -> DayCell(day, today, day != null && all.any { CalendarMath.occursOn(it, day) }, Modifier.weight(1f)) { d -> startNew(d) } }
                     repeat(7 - week.size) { Box(Modifier.weight(1f)) }
                 }
             }

@@ -198,6 +198,10 @@ fun CatSection(me: UserProfile, couple: Couple?, partner: UserProfile?, modifier
                 CatEvent.Failed -> banner = context.getString(R.string.cat_error)
                 CatEvent.Offline -> banner = context.getString(R.string.cat_offline, displayCatName(ui?.doc?.name))
                 CatEvent.FirstStreak -> explainer = StreakExplainerSource.Auto
+                is CatEvent.DayOffTaken -> banner = context.resources.getQuantityString(R.plurals.streak_off_done, e.days, e.days)
+                is CatEvent.StreakMadeUp -> banner = context.resources.getQuantityString(R.plurals.streak_repair_done, e.days, e.days)
+                CatEvent.NudgeSent -> banner = context.getString(R.string.nudge_sent, partnerName)
+                CatEvent.NudgeLimited -> banner = context.getString(R.string.signal_limit)
             }
         }
     }
@@ -220,7 +224,7 @@ fun CatSection(me: UserProfile, couple: Couple?, partner: UserProfile?, modifier
         vm.act(me, members, type, strokes)
     }
 
-    val today = com.lovelyy.app.ui.coupleToday()
+    val today = streakToday()
     val streak = ui?.doc?.streak?.current(today) ?: 0
     Column(modifier) {
         val heroShape = RoundedCornerShape(28.dp)
@@ -770,7 +774,7 @@ private fun StatusLine(
     partnerName: String,
     modifier: Modifier = Modifier,
 ) {
-    val today = com.lovelyy.app.ui.coupleToday()
+    val today = streakToday()
     val parts = buildList {
         val meDone = streak.caredToday(me.uid, today)
         val partnerDone = partnerUid != null && streak.caredToday(partnerUid, today)

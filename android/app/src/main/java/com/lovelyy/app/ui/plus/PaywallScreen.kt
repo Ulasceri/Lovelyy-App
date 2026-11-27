@@ -7,7 +7,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -68,6 +67,11 @@ object PaywallSource {
     const val HOME_CARD = "home_card"
     const val MANAGEMENT = "management"
     fun lock(feature: PlusFeature) = "lock_${feature.key}"
+    /** P5a "İzin günü kullan" or P5c "Plus ile telafi et" tapped without Plus. */
+    const val STREAK_DAY_OFF = "lock_streak_day_off"
+    const val STREAK_REPAIR = "lock_streak_repair"
+    /** P9: adding to a list that is at its free limit. */
+    fun limit(limit: com.lovelyy.app.data.PlusLimits.Limit) = "lock_${limit.key}"
 }
 
 /**
@@ -177,7 +181,6 @@ fun PaywallScreen(
 }
 
 /** "Satın alımları geri yükle · Kullanım şartları · Gizlilik" (44dp touch targets). */
-@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun LegalLinks(onRestore: () -> Unit) {
     val context = LocalContext.current
@@ -187,16 +190,14 @@ fun LegalLinks(onRestore: () -> Unit) {
         runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
             .onFailure { Toast.makeText(context, url, Toast.LENGTH_SHORT).show() }
     }
-    FlowRow(
-        Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
-        verticalArrangement = Arrangement.Center,
-    ) {
+    // Restore on its own line, terms and privacy together below: no wrap can leave a lone "·".
+    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
         LinkText(stringResource(R.string.plus_restore), onRestore)
-        Dot()
-        LinkText(stringResource(R.string.plus_terms)) { open(terms) }
-        Dot()
-        LinkText(stringResource(R.string.plus_privacy)) { open(privacy) }
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+            LinkText(stringResource(R.string.plus_terms)) { open(terms) }
+            Dot()
+            LinkText(stringResource(R.string.plus_privacy)) { open(privacy) }
+        }
     }
 }
 

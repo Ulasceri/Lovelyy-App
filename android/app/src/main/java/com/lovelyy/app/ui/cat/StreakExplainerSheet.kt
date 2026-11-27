@@ -79,8 +79,9 @@ internal fun StreakFlame(size: Dp, modifier: Modifier = Modifier) {
  * is missed. Opens by itself once when the couple's streak first reaches 1 (see [CatViewModel]) and again from the
  * Yuva streak chip and the Kedi bakımı streak card.
  *
- * [showPlusNote]: the board's last line about Plus (days off, make-up within 24 h). It is information only and
- * links nowhere until those features exist.
+ * [showPlusNote]: the board's last line about Plus (days off, make-up within 24 h). It is information only (the
+ * streak itself is free) and its words follow the couple's Plus: "Denemenizde açık" in the trial, "Plus'ınızda açık"
+ * when paid, "Plus'ta" when free. Hidden outside Home, where there is no Plus state.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -91,8 +92,15 @@ internal fun StreakExplainerSheet(
     streak: Int,
     bothCaredToday: Boolean,
     onDismiss: () -> Unit,
-    showPlusNote: Boolean = false,
+    showPlusNote: Boolean = true,
 ) {
+    val plus = com.lovelyy.app.ui.plus.LocalPlus.current
+    val plusNote = when {
+        !showPlusNote || plus == null -> null
+        com.lovelyy.app.data.PlusRules.inTrial(plus.info, plus.now) -> R.string.streak_sheet_plus_body
+        plus.isPlus -> R.string.streak_sheet_plus_body_paid
+        else -> R.string.streak_sheet_plus_body_free
+    }
     val sheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
     val catTo = TurkishSuffix.dative(catName)
@@ -161,8 +169,8 @@ internal fun StreakExplainerSheet(
                 )
             }
 
-            if (showPlusNote) {
-                // Information only: no tap target until Plus days off / make-up exist.
+            if (plusNote != null) {
+                // Information only: the days off and make-up live on the P5 card and sheets.
                 Row(
                     Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(PeachSoft).padding(horizontal = 16.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -180,7 +188,7 @@ internal fun StreakExplainerSheet(
                         )
                     }
                     Text(
-                        stringResource(R.string.streak_sheet_plus_body),
+                        stringResource(plusNote),
                         fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, lineHeight = 18.sp, color = BrownMuted,
                         modifier = Modifier.weight(1f),
                     )

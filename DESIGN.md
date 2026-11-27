@@ -33,6 +33,7 @@ Source: `ui/theme/Color.kt`. Theme mapping: `ui/theme/Theme.kt` (`lightColorSche
 | PeachSoft | `#FFE6D6` | `PeachSoft` | Tinted surface, selected nav pill, `primaryContainer`, `surfaceVariant` |
 | PeachTint | `#FFF1E8` | `PeachTint` | Code boxes, icon circles, filled OTP box, inactive secondary button background |
 | PeachCard | `#FFE9DB` | `PeachCard` | "Birlikte" (Together) card |
+| PeachDisabled | `#F6E3D6` | `PeachDisabled` | Locked main action (P9 "Yeni not · Plus ile" button) |
 | Mint | `#9ED9C8` | `Mint` | Secondary: calm/fresh accent, "waiting" dot, `secondary` |
 | MintSoft | `#DDF2EC` | `MintSoft` | Mint surface, `secondaryContainer` |
 | MintTint | `#E4F5F0` | `MintTint` | Mint card background (lightest) |

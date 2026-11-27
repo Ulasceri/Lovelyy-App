@@ -47,6 +47,7 @@ class CatRepository(private val db: FirebaseFirestore) {
         type: CatActionType,
         strokes: Int = 0,
         newName: String? = null,
+        dayNow: Long = System.currentTimeMillis(),
     ): CatDoc? {
         val ref = catRef(coupleId)
         return db.runTransaction { tx ->
@@ -60,10 +61,28 @@ class CatRepository(private val db: FirebaseFirestore) {
                 lastAction = action,
                 recent = (listOf(action) + doc.recent).take(MAX_RECENT),
                 streak = if (type == CatActionType.Name) doc.streak
-                else doc.streak.afterCare(me.uid, members, CoupleClock.today(now)),
+                else doc.streak.afterCare(me.uid, members, CoupleClock.today(dayNow)),
             )
             tx.set(ref, result.toMap())
             result
+        }.await()
+    }
+
+    /**
+     * Lovelyy Plus streak protection (P5b "izin günü", P5c "telafi"): changes only the streak map, in a
+     * transaction on the latest cat so both partners never use the same day off twice. [change] is
+     * StreakProtection.freeze or .repair; it returns null when the action is no longer possible (then nothing is
+     * written and null is returned). firestore.rules check the count and that the couple has Plus.
+     */
+    suspend fun changeStreak(coupleId: String, change: (CareStreak) -> CareStreak?): CareStreak? {
+        val ref = catRef(coupleId)
+        return db.runTransaction { tx ->
+            val snap = tx.get(ref)
+            if (!snap.exists()) return@runTransaction null
+            val doc = snap.toCatDoc()
+            val next = change(doc.streak) ?: return@runTransaction null
+            tx.update(ref, "streak", next.toMap())
+            next
         }.await()
     }
 
@@ -90,13 +109,22 @@ internal fun CatDoc.toMap(): Map<String, Any?> = mapOf(
     "sleepingSince" to sleepingSince?.ts(),
     "lastAction" to lastAction?.toMap(),
     "recent" to recent.map { it.toMap() },
-    "streak" to mapOf(
-        "count" to streak.count,
-        "best" to streak.best,
-        "lastCompleteDay" to streak.lastCompleteDay,
-        "careDay" to streak.careDay,
-        "careBy" to streak.careBy,
-    ),
+    "streak" to streak.toMap(),
+)
+
+/** Field names match firestore.rules `validStreak`. */
+internal fun CareStreak.toMap(): Map<String, Any?> = mapOf(
+    "count" to count,
+    "best" to best,
+    "lastCompleteDay" to lastCompleteDay,
+    "careDay" to careDay,
+    "careBy" to careBy,
+    "freezeMonth" to freezeMonth,
+    "freezeUsed" to freezeUsed,
+    "freezeDays" to freezeDays,
+    "repairDays" to repairDays,
+    "brokenCount" to brokenCount,
+    "brokenLast" to brokenLast,
 )
 
 private fun Any?.millis(): Long? = when (this) {
@@ -139,6 +167,12 @@ internal fun DocumentSnapshot.toCatDoc(): CatDoc {
             lastCompleteDay = s?.get("lastCompleteDay") as? String,
             careDay = s?.get("careDay") as? String,
             careBy = (s?.get("careBy") as? List<String>).orEmpty(),
+            freezeMonth = s?.get("freezeMonth") as? String,
+            freezeUsed = (s?.get("freezeUsed") as? Number)?.toInt() ?: 0,
+            freezeDays = (s?.get("freezeDays") as? List<String>).orEmpty(),
+            repairDays = (s?.get("repairDays") as? List<String>).orEmpty(),
+            brokenCount = (s?.get("brokenCount") as? Number)?.toInt() ?: 0,
+            brokenLast = s?.get("brokenLast") as? String,
         ),
     )
 }

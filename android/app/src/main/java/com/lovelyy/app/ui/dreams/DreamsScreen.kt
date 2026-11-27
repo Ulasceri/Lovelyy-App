@@ -191,6 +191,9 @@ fun DreamsScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onS
         CenteredTopBar(stringResource(R.string.dr_title), onBack) {
             RoundSvgButton(Kit.SEARCH_D, stringResource(R.string.dr_search), onSearch)
         }
+        // P9: over the free limit every dream stays readable, editable and deletable; only a new one needs Plus.
+        val gate = com.lovelyy.app.ui.plus.rememberLimitGate(com.lovelyy.app.data.PlusLimits.Limit.Dreams, dreams?.size ?: 0)
+        com.lovelyy.app.ui.plus.PlusLimitBanner(gate)
 
         // Progress: how many came true.
         val shape = RoundedCornerShape(28.dp)
@@ -220,7 +223,8 @@ fun DreamsScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onS
                 onOpen = { editing = Editing(it) })
         }
 
-        MainAction(stringResource(R.string.dr_add), Kit.PLUS_D, { editing = Editing(null) })
+        if (gate.blocked) com.lovelyy.app.ui.plus.LockedAddButton(stringResource(R.string.limit_dreams_add), gate::openPlans)
+        else MainAction(stringResource(R.string.dr_add), Kit.PLUS_D, { editing = Editing(null) })
     }
 
     // The partner changed the dream while it was open here: ask before overwriting their version.

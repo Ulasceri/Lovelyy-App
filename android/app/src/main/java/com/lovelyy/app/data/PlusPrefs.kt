@@ -43,6 +43,16 @@ object PlusPrefs {
 
     fun markTakeoverShown(context: Context, coupleId: String, key: String) = prefs(context).edit { putString("takeover.$coupleId", key) }
 
+    /** The P5c "Seriniz bitti" sheet already opened by itself for this break ([StreakProtection.breakKey]). */
+    fun repairOffered(context: Context, coupleId: String): String? = prefs(context).getString("repair.$coupleId", null)
+
+    fun markRepairOffered(context: Context, coupleId: String, key: String) = prefs(context).edit { putString("repair.$coupleId", key) }
+
+    /** Couple day the "Seri tehlikede" card was last shown (analytics once a day). */
+    fun dangerShownOn(context: Context, coupleId: String): String? = prefs(context).getString("danger.$coupleId", null)
+
+    fun markDangerShown(context: Context, coupleId: String, day: String) = prefs(context).edit { putString("danger.$coupleId", day) }
+
     /** Debug builds only: shifts Plus time forward to test the trial end on an emulator (see PlusClock). */
     fun debugOffset(context: Context): Long = if (BuildConfig.DEBUG) prefs(context).getLong("debug.offset", 0L) else 0L
 

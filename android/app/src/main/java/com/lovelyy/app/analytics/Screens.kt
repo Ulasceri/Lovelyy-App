@@ -55,4 +55,7 @@ object InnerScreens {
     const val PLUS_LOCK = "plus_lock"
     const val PLUS_CELEBRATION = "plus_celebration"
     const val PLUS_TAKEOVER = "plus_takeover"
+    /** Streak protection sheets (P5b day off, P5c make-up), overlays on Home and Kedi bakımı. */
+    const val STREAK_DAY_OFF = "streak_day_off"
+    const val STREAK_REPAIR = "streak_repair"
 }

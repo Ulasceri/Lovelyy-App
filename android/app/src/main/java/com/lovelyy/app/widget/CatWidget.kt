@@ -51,6 +51,9 @@ object CatWidget {
             putLong("sleepingSince", doc.sleepingSince ?: 0L)
             putInt("streak.count", doc.streak.count)
             putString("streak.last", doc.streak.lastCompleteDay)
+            // Days off and made-up days keep the streak alive (StreakProtection), so the widget needs them too.
+            putString("streak.freeze", doc.streak.freezeDays.joinToString(","))
+            putString("streak.repair", doc.streak.repairDays.joinToString(","))
         }
         updateAll(context)
     }
@@ -71,7 +74,12 @@ object CatWidget {
             energy = need("energy"),
             love = need("love"),
             sleepingSince = p.getLong("sleepingSince", 0L).takeIf { it > 0 },
-            streak = CareStreak(count = p.getInt("streak.count", 0), lastCompleteDay = p.getString("streak.last", null)),
+            streak = CareStreak(
+                count = p.getInt("streak.count", 0),
+                lastCompleteDay = p.getString("streak.last", null),
+                freezeDays = p.getString("streak.freeze", null).orEmpty().split(',').filter { it.isNotBlank() },
+                repairDays = p.getString("streak.repair", null).orEmpty().split(',').filter { it.isNotBlank() },
+            ),
         )
     }
 

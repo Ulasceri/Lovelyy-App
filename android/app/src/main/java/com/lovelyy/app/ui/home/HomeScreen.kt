@@ -157,6 +157,9 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lovelyy.app.data.CoupleClock
 import com.lovelyy.app.data.PlusClock
+import com.lovelyy.app.data.StreakProtection
+import com.lovelyy.app.ui.cat.StreakDangerSection
+import com.lovelyy.app.ui.cat.StreakRepairSheet
 import com.lovelyy.app.data.PlusPrefs
 import com.lovelyy.app.data.PlusRules
 import com.lovelyy.app.data.displayCatName
@@ -239,6 +242,9 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
     var paywallSource by rememberSaveable { mutableStateOf<String?>(null) }
     var takeoverOpen by rememberSaveable { mutableStateOf(false) }
     var celebrating by rememberSaveable { mutableStateOf(false) }
+    // P5c "Seriniz bitti": the break key (StreakProtection.breakKey) the sheet is open for, null when closed.
+    var repairKey by rememberSaveable { mutableStateOf<String?>(null) }
+    var repairAfterPurchase by rememberSaveable { mutableStateOf(false) }
 
     // Widget and notification taps open their screen (DeepLink routes match Routes).
     val pendingRoute by app.pendingRoute.collectAsState()
@@ -315,6 +321,11 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
     }
     val today = remember(plusNow) { CoupleClock.today(plusNow).toString() }
     val streak = catUi?.doc?.streak?.current(CoupleClock.today(plusNow)) ?: 0
+    // Streak protection (P5a card, P5c sheet) in the couple's zone at Plus time (P8 debug clock in debug builds).
+    val brokenStreak = catUi?.doc?.streak?.let { StreakProtection.repairable(it, CoupleClock.today(plusNow)) }
+    val streakDanger = catUi?.doc?.streak?.let {
+        StreakProtection.showDangerCard(it, CoupleClock.today(plusNow), java.time.Instant.ofEpochMilli(plusNow).atZone(CoupleClock.zone()).hour)
+    } == true
     LaunchedEffect(plus) {
         plusVm.update(plus)
         WidgetData.savePlus(context, PlusRules.activeUntil(plus))
@@ -334,6 +345,11 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
                 is PlusEffect.Purchased -> {
                     paywallSource = null
                     takeoverOpen = false
+                    // Bought from "Plus ile telafi et": back to the make-up sheet, now with "Dünü telafi et".
+                    if (repairAfterPurchase) {
+                        repairAfterPurchase = false
+                        repairKey = PlusPrefs.repairOffered(context, coupleId)
+                    }
                     if (stack.lastOrNull() == Routes.PLUS_GIFT) pop()
                     Toast.makeText(context, if (e.plan == com.lovelyy.app.data.PlusPlan.Gift) giftDoneText else plusDoneText, Toast.LENGTH_LONG).show()
                 }
@@ -342,8 +358,8 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
     }
     // Plus screens that open by themselves only do so on a home tab: never over the heartbeat, the live drawing
     // or a letter being written (those are inner screens), and at most once a day (PlusRules).
-    LaunchedEffect(top, plus, plusNow) {
-        if (top != null || paywallSource != null || celebrating) return@LaunchedEffect
+    LaunchedEffect(top, plus, plusNow, brokenStreak?.missedDay) {
+        if (top != null || paywallSource != null || celebrating || repairKey != null) return@LaunchedEffect
         if (PlusRules.shouldCelebrate(plus, me.uid, plusNow, PlusPrefs.celebrationSeen(context, coupleId))) {
             PlusRules.celebrationKey(plus)?.let { PlusPrefs.markCelebrated(context, coupleId, it) }
             celebrating = true
@@ -352,15 +368,26 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
             if (PlusRules.shouldShowTrialEndPaywall(plus, plusNow, today, memory)) {
                 PlusPrefs.savePaywallMemory(context, coupleId, memory.copy(lastShownDay = today))
                 paywallSource = PaywallSource.TRIAL_END
+            } else if (brokenStreak != null) {
+                // P5c: once per break, on the first open within the 24 hours. For a free couple it is a Plus offer,
+                // so not on a day the trial-end paywall already opened by itself.
+                val key = StreakProtection.breakKey(brokenStreak)
+                val hasPlus = PlusRules.isPlus(plus, plusNow)
+                if (PlusPrefs.repairOffered(context, coupleId) != key && (hasPlus || memory.lastShownDay != today)) {
+                    PlusPrefs.markRepairOffered(context, coupleId, key)
+                    repairKey = key
+                    catVm.streakRepairShown(hasPlus)
+                }
             }
         }
     }
-    LaunchedEffect(paywallSource != null, lockFeature, celebrating, takeoverOpen) {
+    LaunchedEffect(paywallSource != null, lockFeature, celebrating, takeoverOpen, repairKey != null) {
         when {
             paywallSource != null -> Telemetry.onScreen(InnerScreens.PLUS_PAYWALL)
             lockFeature != null -> Telemetry.onScreen(InnerScreens.PLUS_LOCK)
             celebrating -> Telemetry.onScreen(InnerScreens.PLUS_CELEBRATION)
             takeoverOpen -> Telemetry.onScreen(InnerScreens.PLUS_TAKEOVER)
+            repairKey != null -> Telemetry.onScreen(InnerScreens.STREAK_REPAIR)
         }
     }
     fun closePaywall() {
@@ -370,12 +397,26 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
         }
         paywallSource = null
     }
-    // Home cards: day 12/13 of the trial (P2b) and the takeover hint (P10), each closable for the day.
+    // Home cards: day 12/13 of the trial (P2b), the streak in danger (P5a) and the takeover hint (P10); one at a time.
     var cardTick by remember { mutableIntStateOf(0) }
     val day12Closed = remember(cardTick, today) { PlusPrefs.cardDismissedOn(context, coupleId, "day12") == today }
     val takeoverClosed = remember(cardTick, today) { PlusPrefs.cardDismissedOn(context, coupleId, "takeover") == today }
     val plusCard: @Composable () -> Unit = {
         when {
+            PlusRules.showDay12Card(plus, plusNow, day12Closed) -> {
+                val left = PlusRules.daysLeftInTrial(plus, plusNow)
+                HomePlusCard(
+                    title = pluralStringResource(R.plurals.plus_day12_title, left, left),
+                    body = stringResource(R.string.plus_day12_body, TurkishSuffix.genitive(catName)),
+                    action = stringResource(R.string.plus_card_see_plans),
+                    onAction = { paywallSource = PaywallSource.HOME_CARD },
+                    onClose = { PlusPrefs.dismissCard(context, coupleId, "day12", today); cardTick++ },
+                    footnote = stringResource(R.string.plus_one_sub),
+                    modifier = Modifier.padding(top = 16.dp),
+                )
+            }
+            // P5a: the streak is in danger tonight. Never beside the day-12 card (the day's one Plus surface).
+            streakDanger -> StreakDangerSection(catVm, me, partner, catName, Modifier.padding(top = 16.dp))
             plus != null && PlusRules.canPartnerTakeOver(plus, me.uid, plusNow) && !takeoverClosed -> {
                 val until = plus.until ?: plusNow
                 val over = plusNow >= until
@@ -386,18 +427,6 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
                     action = stringResource(R.string.plus_takeover_card_cta),
                     onAction = { takeoverOpen = true },
                     onClose = { PlusPrefs.dismissCard(context, coupleId, "takeover", today); cardTick++ },
-                    modifier = Modifier.padding(top = 16.dp),
-                )
-            }
-            PlusRules.showDay12Card(plus, plusNow, day12Closed) -> {
-                val left = PlusRules.daysLeftInTrial(plus, plusNow)
-                HomePlusCard(
-                    title = pluralStringResource(R.plurals.plus_day12_title, left, left),
-                    body = stringResource(R.string.plus_day12_body, TurkishSuffix.genitive(catName)),
-                    action = stringResource(R.string.plus_card_see_plans),
-                    onAction = { paywallSource = PaywallSource.HOME_CARD },
-                    onClose = { PlusPrefs.dismissCard(context, coupleId, "day12", today); cardTick++ },
-                    footnote = stringResource(R.string.plus_one_sub),
                     modifier = Modifier.padding(top = 16.dp),
                 )
             }
@@ -577,6 +606,17 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
                 plusPrices(catalog).let { if (PlusRules.firstYearOfferActive(plus, plusNow)) it.copy(yearly = it.firstYear) else it },
                 onPlans = { lockFeature = null; paywallSource = PaywallSource.lock(feature) },
                 onDismiss = { lockFeature = null },
+            )
+        }
+        val broken = brokenStreak
+        if (repairKey != null && broken != null && StreakProtection.breakKey(broken) == repairKey) {
+            val hasPlus = PlusRules.isPlus(plus, plusNow)
+            StreakRepairSheet(
+                broken, catName, StreakProtection.millisToMidnight(plusNow, CoupleClock.zone()), hasPlus,
+                onMakeUp = { repairKey = null; catVm.makeUpStreak(hasPlus) },
+                onPlus = { repairKey = null; repairAfterPurchase = true; paywallSource = PaywallSource.STREAK_REPAIR },
+                onRestart = { repairKey = null; catVm.streakRepairDeclined() },
+                onDismiss = { repairKey = null },
             )
         }
         if (takeoverOpen && plus != null && PlusRules.canPartnerTakeOver(plus, me.uid, plusNow)) {

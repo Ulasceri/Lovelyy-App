@@ -89,6 +89,8 @@ fun DrawingsScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, o
 
     InnerColumn(spacing = 12) {
         CenteredTopBar(stringResource(R.string.dg_title), onBack)
+        // P9: every saved drawing stays here; only saving more needs Plus.
+        com.lovelyy.app.ui.plus.PlusLimitBanner(com.lovelyy.app.ui.plus.rememberLimitGate(com.lovelyy.app.data.PlusLimits.Limit.Drawings, list.size))
         if (drawings != null) {
             Text(
                 buildAnnotatedString {

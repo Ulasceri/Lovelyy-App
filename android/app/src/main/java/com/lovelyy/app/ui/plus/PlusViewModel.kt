@@ -253,6 +253,14 @@ class PlusViewModel(
         _clockTick.value++
     }
 
+    /** Moves Plus time 3 hours forward (to reach the 20:00 "Seri tehlikede" card without waiting). */
+    fun debugShiftHours(hours: Int) {
+        if (!BuildConfig.DEBUG) return
+        val now = com.lovelyy.app.data.PlusPrefs.debugOffset(app)
+        com.lovelyy.app.data.PlusPrefs.setDebugOffset(app, now + hours * 3_600_000L)
+        _clockTick.value++
+    }
+
     /** Turns off auto-renew of my (fake) subscription, so the takeover and second-purchase rules can be tried. */
     fun debugStopRenewing() = debugWrite { it.copy(autoRenew = false) }
 

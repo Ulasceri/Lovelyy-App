@@ -686,6 +686,7 @@
     <string name="wh_gezi">Nereye gitsek?</string>
     <string name="wh_izle">Ne izlesek?</string>
     <string name="wh_new">Yeni çark oluştur</string>
+    <string name="wh_new_locked">Yeni çark: Plus ile</string>
     <string name="wh_spinning">Çark dönüyor</string>
     <string name="wh_result">Çarkın kararı</string>
     <string name="wh_spin">Çarkı çevir</string>
@@ -1276,4 +1277,137 @@
     <string name="plus_debug_stop_renew" translatable="false">Yenilemeyi kapat</string>
     <string name="plus_debug_reset" translatable="false">Satın alımı sıfırla</string>
     <string name="plus_debug_fake" translatable="false">Sahte satın alma: %1$s</string>
+    <!-- Lovelyy Plus: streak protection (boards P5a, P5b, P5c) -->
+    <string name="streak_danger_title">Seriniz bu gece bitebilir</string>
+    <plurals name="streak_danger_body_partner_waiting">
+        <item quantity="one">%1$d günlük seri için bugün ikinizin de %2$s bakması gerek. Sen baktın, %3$s bekleniyor. %4$s kaldı.</item>
+        <item quantity="other">%1$d günlük seri için bugün ikinizin de %2$s bakması gerek. Sen baktın, %3$s bekleniyor. %4$s kaldı.</item>
+    </plurals>
+    <plurals name="streak_danger_body_me_waiting">
+        <item quantity="one">%1$d günlük seri için bugün ikinizin de %2$s bakması gerek. %3$s baktı, sıra sende. %4$s kaldı.</item>
+        <item quantity="other">%1$d günlük seri için bugün ikinizin de %2$s bakması gerek. %3$s baktı, sıra sende. %4$s kaldı.</item>
+    </plurals>
+    <plurals name="streak_danger_body_both_waiting">
+        <item quantity="one">%1$d günlük seri için bugün ikinizin de %2$s bakması gerek. İkiniz de henüz bakmadınız. %4$s kaldı.</item>
+        <item quantity="other">%1$d günlük seri için bugün ikinizin de %2$s bakması gerek. İkiniz de henüz bakmadınız. %4$s kaldı.</item>
+    </plurals>
+    <!-- %1$s: the partner's name with the accusative ending ("Bora'yı") -->
+    <string name="streak_danger_nudge">%1$s dürt</string>
+    <string name="streak_danger_day_off">İzin günü kullan</string>
+    <!-- Time left until midnight: hours and minutes, or minutes only -->
+    <string name="streak_time_hm">%1$d sa %2$d dk</string>
+    <string name="streak_time_m">%1$d dk</string>
+    <string name="streak_time_left_label">kaldı</string>
+    <string name="streak_off_pill">Seri koruması</string>
+    <string name="streak_off_title">Bugünü izin günü say</string>
+    <plurals name="streak_off_body">
+        <item quantity="one">İzin gününde ikiniz de %2$s bakamasanız bile %1$d günlük seriniz bozulmaz, yarın %3$d. günden devam eder. Bakım düğmeleri yine açık.</item>
+        <item quantity="other">İzin gününde ikiniz de %2$s bakamasanız bile %1$d günlük seriniz bozulmaz, yarın %3$d. günden devam eder. Bakım düğmeleri yine açık.</item>
+    </plurals>
+    <!-- %1$s: month name ("Kasım"), %2$d: days off per month -->
+    <string name="streak_off_left_all">%1$s: %2$d izin gününüz duruyor</string>
+    <string name="streak_off_left_one">%1$s: %2$d izin gününden biri duruyor</string>
+    <string name="streak_off_left_none">%1$s: izin günleriniz bitti</string>
+    <string name="streak_off_used_none">Her ayın 1\'inde yenilenir, ikinizde ortak.</string>
+    <!-- %1$s: the day it was used, with the locative ending ("8 Kasım\'da") -->
+    <string name="streak_off_used_one">Biri %1$s kullanıldı. Her ayın 1\'inde yenilenir, ikinizde ortak.</string>
+    <!-- %1$s, %2$s: the days used; %3$s: the renewal day with the locative ending ("1 Aralık\'ta") -->
+    <string name="streak_off_used_two">%1$s ve %2$s kullanıldı. %3$s yenilenir.</string>
+    <string name="streak_off_repair_hint">Yine de bir gün kaçarsa 24 saat içinde telafi edebilirsiniz.</string>
+    <string name="streak_off_use">İzin günü kullan</string>
+    <string name="streak_off_cancel">Vazgeç</string>
+    <string name="streak_off_available">İzin günü duruyor</string>
+    <string name="streak_off_used">İzin günü kullanıldı</string>
+    <plurals name="streak_off_done">
+        <item quantity="one">Bugün izin günü. %1$d günlük seriniz yarın devam eder.</item>
+        <item quantity="other">Bugün izin günü. %1$d günlük seriniz yarın devam eder.</item>
+    </plurals>
+    <plurals name="streak_repair_title">
+        <item quantity="one">%1$d günlük seriniz dün bitti</item>
+        <item quantity="other">%1$d günlük seriniz dün bitti</item>
+    </plurals>
+    <plurals name="streak_repair_body">
+        <item quantity="one">Dün %2$s ikiniz birden bakamadınız, olur böyle şeyler. Dünü telafi ederseniz %1$d günlük seriniz kaldığı yerden devam eder; etmezseniz bugün 1. gün olur.</item>
+        <item quantity="other">Dün %2$s ikiniz birden bakamadınız, olur böyle şeyler. Dünü telafi ederseniz %1$d günlük seriniz kaldığı yerden devam eder; etmezseniz bugün 1. gün olur.</item>
+    </plurals>
+    <plurals name="streak_repair_card_title">
+        <item quantity="one">Dünü telafi et, %1$d gün geri gelsin</item>
+        <item quantity="other">Dünü telafi et, %1$d gün geri gelsin</item>
+    </plurals>
+    <string name="streak_repair_card_sub">Telafi hakkı 24 saat açık kalır</string>
+    <string name="streak_repair_plus_note">Kaçan günü telafi ve ayda 2 izin günü Plus\'ta. İkiniz için tek abonelik.</string>
+    <string name="streak_repair_plus_cta">Plus ile telafi et</string>
+    <string name="streak_repair_cta">Dünü telafi et</string>
+    <string name="streak_repair_restart">Seriye 1. günden başla</string>
+    <plurals name="streak_repair_done">
+        <item quantity="one">%1$d günlük seri geri geldi</item>
+        <item quantity="other">%1$d günlük seri geri geldi</item>
+    </plurals>
+    <string name="streak_sheet_plus_body_paid">Ayda 2 izin günü ve kaçan günü 24 saat içinde telafi. Plus\'ınızda açık.</string>
+    <string name="streak_sheet_plus_body_free">Ayda 2 izin günü ve kaçan günü 24 saat içinde telafi Plus\'ta.</string>
+
+    <!-- Lovelyy Plus: free limits, read-only lists (board P9). %1$d: how many there are, %2$d: the free limit -->
+    <string name="limit_see_plus">Plus\'a bak</string>
+    <string name="limit_notes_title">Notların duruyor; yeni not için Plus</string>
+    <plurals name="limit_notes_body">
+        <item quantity="one">%1$d notun hepsini okuyabilir, düzenleyebilir, silebilirsiniz. Ücretsizde sınır %2$d not.</item>
+        <item quantity="other">%1$d notun hepsini okuyabilir, düzenleyebilir, silebilirsiniz. Ücretsizde sınır %2$d not.</item>
+    </plurals>
+    <plurals name="limit_notes_count">
+        <item quantity="one">%1$d / %2$d not</item>
+        <item quantity="other">%1$d / %2$d not</item>
+    </plurals>
+    <string name="limit_notes_add">Yeni not · Plus ile</string>
+    <string name="limit_events_title">Takviminiz duruyor; yeni gün için Plus</string>
+    <plurals name="limit_events_body">
+        <item quantity="one">Takvimdeki %1$d günün hepsini okuyabilir, düzenleyebilir, silebilirsiniz. Ücretsizde sınır %2$d gün.</item>
+        <item quantity="other">Takvimdeki %1$d günün hepsini okuyabilir, düzenleyebilir, silebilirsiniz. Ücretsizde sınır %2$d gün.</item>
+    </plurals>
+    <plurals name="limit_events_count">
+        <item quantity="one">%1$d / %2$d gün</item>
+        <item quantity="other">%1$d / %2$d gün</item>
+    </plurals>
+    <string name="limit_dreams_title">Hayallerin duruyor; yeni hayal için Plus</string>
+    <plurals name="limit_dreams_body">
+        <item quantity="one">%1$d hayalin hepsini okuyabilir, düzenleyebilir, silebilirsiniz. Ücretsizde sınır %2$d hayal.</item>
+        <item quantity="other">%1$d hayalin hepsini okuyabilir, düzenleyebilir, silebilirsiniz. Ücretsizde sınır %2$d hayal.</item>
+    </plurals>
+    <plurals name="limit_dreams_count">
+        <item quantity="one">%1$d / %2$d hayal</item>
+        <item quantity="other">%1$d / %2$d hayal</item>
+    </plurals>
+    <string name="limit_dreams_add">Yeni hayal · Plus ile</string>
+    <string name="limit_capsules_title">Mektuplarınız yolda; yeni mektup için Plus</string>
+    <plurals name="limit_capsules_body">
+        <item quantity="one">Mühürlü %1$d mektubunuz açılış gününü bekliyor. Ücretsizde aynı anda %2$d mühürlü mektup olur.</item>
+        <item quantity="other">Mühürlü %1$d mektubunuz açılış gününü bekliyor. Ücretsizde aynı anda %2$d mühürlü mektup olur.</item>
+    </plurals>
+    <plurals name="limit_capsules_count">
+        <item quantity="one">%1$d / %2$d mektup</item>
+        <item quantity="other">%1$d / %2$d mektup</item>
+    </plurals>
+    <string name="limit_capsules_add">Yeni mektup · Plus ile</string>
+    <string name="limit_wheels_title">Çarklarınız duruyor; yeni çark için Plus</string>
+    <plurals name="limit_wheels_body">
+        <item quantity="one">%1$d özel çarkın hepsini çevirebilir, düzenleyebilir, silebilirsiniz. Ücretsizde sınır %2$d özel çark.</item>
+        <item quantity="other">%1$d özel çarkın hepsini çevirebilir, düzenleyebilir, silebilirsiniz. Ücretsizde sınır %2$d özel çark.</item>
+    </plurals>
+    <plurals name="limit_wheels_count">
+        <item quantity="one">%1$d / %2$d çark</item>
+        <item quantity="other">%1$d / %2$d çark</item>
+    </plurals>
+    <string name="limit_drawings_title">Çizimleriniz duruyor; yeni kayıt için Plus</string>
+    <plurals name="limit_drawings_body">
+        <item quantity="one">%1$d çizimin hepsine bakabilir, silebilirsiniz. Ücretsizde %2$d çizim kaydedilir.</item>
+        <item quantity="other">%1$d çizimin hepsine bakabilir, silebilirsiniz. Ücretsizde %2$d çizim kaydedilir.</item>
+    </plurals>
+    <plurals name="limit_drawings_count">
+        <item quantity="one">%1$d / %2$d çizim</item>
+        <item quantity="other">%1$d / %2$d çizim</item>
+    </plurals>
+    <plurals name="limit_drawings_toast">
+        <item quantity="one">Ücretsizde %1$d çizim kaydedilir. Eski bir çizimi Anılar\'dan silebilir ya da Plus ile sınırsız kaydedebilirsiniz.</item>
+        <item quantity="other">Ücretsizde %1$d çizim kaydedilir. Eski bir çizimi Anılar\'dan silebilir ya da Plus ile sınırsız kaydedebilirsiniz.</item>
+    </plurals>
+    <string name="plus_debug_hours" translatable="false">+3 saat</string>
 </resources>
