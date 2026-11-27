@@ -103,4 +103,23 @@ class CareStreakClockTest {
         assertEquals(1, again.count)
         assertEquals(1, again.best)
     }
+
+    @Test fun aCareDayDaysAheadFromAWrongClockIsReplacedByToday() {
+        // Stored by a phone set 3 days ahead (before server time): the rules only accept today, so it must not stick.
+        val wrong = CareStreak(count = 3, best = 3, lastCompleteDay = "2026-11-26", careDay = "2026-11-30", careBy = listOf("deniz"))
+        val s = wrong.afterCare("ece", members, d27)
+        assertEquals("2026-11-27", s.careDay)
+        assertEquals(listOf("ece"), s.careBy)
+        val done = s.afterCare("deniz", members, d27)
+        assertEquals(4, done.count)
+        assertEquals("2026-11-27", done.lastCompleteDay)
+    }
+
+    @Test fun aCompleteDayDaysAheadCountsAsYesterdaySoTheCoupleCanGoOn() {
+        val wrong = CareStreak(count = 6, best = 6, lastCompleteDay = "2026-12-01", careDay = "2026-12-01", careBy = members)
+        val s = wrong.afterCare("deniz", members, d27).afterCare("ece", members, d27)
+        assertEquals(7, s.count)
+        assertEquals("2026-11-27", s.lastCompleteDay)
+        assertEquals("2026-11-27", s.careDay)
+    }
 }

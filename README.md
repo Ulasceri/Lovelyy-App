@@ -21,7 +21,7 @@ Android uygulaması Kotlin + Jetpack Compose + Material 3 ile yazılır, arka u�
 | Biz: profil, ayarlar, mesafe (şehir düzeyinde konum paylaşımı) | Hazır |
 | 4 ana ekran widget'ı (küçük kedi, geniş kedi, gün sayacı + kalp, canlı çizim) | Hazır |
 | Analytics, Crashlytics, Performance, Timber katmanı | Hazır, bkz. [docs/analytics.md](docs/analytics.md) |
-| Güvenlik: koleksiyon bazlı Firestore kuralları, sinyal sınırı (saatte 15 / günde 60, Console'daki `config/limits`'ten değişir), App Check (Play Integrity) | Hazır; kurallar yayınlanmalı, App Check konsolda kaydedilmeli, bkz. [docs/security.md](docs/security.md) ve [todo.md](todo.md) |
+| Güvenlik: koleksiyon bazlı Firestore kuralları, sinyal sınırı (saatte 15 / günde 60, Console'daki `config/limits`'ten değişir), App Check (Play Integrity), sunucu saati (telefonun saati ileri/geri alınsa da kedi, seri ve "bugün" değişmez; kurallar geleceğe yazılmış kedi kaydını reddeder) | Hazır; kurallar yayınlanmalı, App Check konsolda kaydedilmeli, bkz. [docs/security.md](docs/security.md) ve [todo.md](todo.md) |
 | Geçmiş ekranları (ruh hali, önceki sorular, kalp atışı, çark), arama | Hazır |
 | Çizimlerimiz (kayıtlı çizimler, silme), açılmış mektuplar, bildirimler | Hazır |
 | Hesap (giriş yöntemi, şifre sıfırlama, çıkış, hesap silme) ve eşleşmeyi kaldırma; Biz sekmesinde "Kullanım verisi" anahtarı (analitik/hata/performans kapatılabilir) | Hazır; hesap silince profil, eşleşme kodu, ortak veriler ve telefondaki yerel veriler silinir; eşleşme kaldırılınca ortak veriler iki taraftan da kalıcı silinir (yeni Firestore kuralları yayınlanmalı) |
@@ -98,7 +98,8 @@ Testler: `android/app/src/test/`.
   sahte satın almayı zorlamak için: `./gradlew assembleDebug -Pplus.fakeBilling=true`. Release derlemesinde asla olmaz.
 - Biz → Plus kartı → Plus yönetimi ekranının altındaki **Debug** kutusu (yalnızca debug): "+1 gün" Plus saatini
   ileri alır (12. gün kartı, deneme sonu planlar ve 48 saatlik sayaç denenir), "+3 saat" saat 20:00'deki
-  "Seri tehlikede" kartına ulaşmak için, "Gerçek zaman" geri alır,
+  "Seri tehlikede" kartına ulaşmak için, "Gerçek zaman" geri alır (kediye bakım +1 güne kadar çalışır; daha
+  ileri bir günde kurallar seri gününü reddeder, çünkü kurallar sunucu saatine bakar),
   "Yenilemeyi kapat" devralmayı ve ikinci satın alma kilidini denemek için, "Satın alımı sıfırla" denemeye döner.
 - **Gerçek satın alma (Play Console):** abonelik `lovelyy_plus` (temel planlar `yearly` ve `monthly`, `yearly`
   üzerinde `first-year` teklifi), uygulama içi ürün `lovelyy_plus_gift_year`; lisans test hesapları ve dahili

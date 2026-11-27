@@ -92,6 +92,6 @@ fun lovelyyApp(): LovelyyApplication = LocalContext.current.applicationContext a
 @Composable
 fun coupleToday(): java.time.LocalDate {
     val zone by com.lovelyy.app.data.CoupleClock.zone.collectAsStateWithLifecycle()
-    return com.lovelyy.app.data.CoupleDay.today(zone, System.currentTimeMillis())
+    return com.lovelyy.app.data.CoupleDay.today(zone, com.lovelyy.app.data.TrustedClock.now())
 }
 

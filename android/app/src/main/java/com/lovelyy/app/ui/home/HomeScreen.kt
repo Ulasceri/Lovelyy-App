@@ -445,6 +445,8 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
     // Partner signals: listen while the app process lives. People who paired before the onboarding existed
     // are asked once for the notification permission here; new couples answer it on the primer instead.
     LaunchedEffect(coupleId, me.uid) { app.signalCenter.start(coupleId, me.uid) }
+    // Server time (TrustedClock): learned once per app start, so a phone's wrong clock can't move the cat or "today".
+    LaunchedEffect(coupleId, me.uid) { app.clockSync.ensure(coupleId, me.uid) }
     // The couple's shared time zone: both phones count "today" (streaks, daily question, capsules) in it.
     LaunchedEffect(coupleId, me.uid) {
         com.lovelyy.app.data.CoupleClock.select(coupleId)

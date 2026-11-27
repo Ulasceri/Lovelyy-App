@@ -46,7 +46,7 @@ fun displayCatName(stored: String?): String = stored?.trim()?.takeIf { it.isNotE
 /** A need's level (0..100) at the time [at] (epoch millis). */
 data class Need(val level: Double, val at: Long) {
     companion object {
-        fun fresh(now: Long = System.currentTimeMillis()) = Need(START_LEVEL, now)
+        fun fresh(now: Long = TrustedClock.now()) = Need(START_LEVEL, now)
         const val START_LEVEL = 80.0
     }
 }
@@ -60,20 +60,20 @@ enum class CatActionType { Feed, Water, Play, Pet, Sleep, Wake, Name }
  * took care of the cat. Lovelyy Plus can protect it (see [StreakProtection]): an "izin günü" (day off) or a
  * "telafi" (make-up) day bridges a missed day, so the streak neither grows nor breaks on it.
  *
- * Days come from each phone's clock ([CoupleClock.today], the couple's shared zone), and there is no server
- * time on the Spark plan, so a phone whose clock is a day off must not destroy the stored progress. The rule:
- * - The stored days only move forward: a care stamped with a day EARLIER than [careDay] (this phone is behind,
- *   or the other phone was ahead) is merged into [careDay] (its uid is added to [careBy], nothing is replaced),
- *   and [lastCompleteDay] never moves backwards, so [count] is never reset by a late phone.
- * - When such a merge completes the day, the streak continues if the last complete day was the day before
- *   [careDay] OR the day before this phone's own day (the gap was the clock skew, not a missed day).
- * - A care stamped with a LATER day starts that day (it cannot be told apart from a real new day); if it was a
- *   wrong clock, the partner's care on the real day merges into it by the rule above and the streak still grows.
- *   That day then counts as done in advance (the next real day adds nothing, the one after continues).
+ * Days come from [CoupleClock.today]: server time ([TrustedClock]) in the couple's shared zone, so a phone's own
+ * clock (moved forward to cheat, back by mistake, or in another zone while travelling) does not change them, and
+ * firestore.rules reject a [careDay]/[lastCompleteDay] that is not "today" at the server's time. Before server
+ * time, phones counted with their own clocks; the rules below stay as a safety net for a phone that could not
+ * sync yet and for days a wrong clock already stored:
+ * - The stored days only move forward: a care stamped with a day EARLIER than [careDay] is merged into [careDay]
+ *   (its uid is added to [careBy], nothing is replaced), and [lastCompleteDay] never moves backwards, so [count]
+ *   is never reset by a late phone. When such a merge completes the day, the streak continues if the last
+ *   complete day was the day before [careDay] OR the day before this phone's own day.
+ * - A stored day more than one day ahead of today came from a wrong clock: [careDay] is then replaced by today,
+ *   and such a [lastCompleteDay] counts as yesterday (the streak goes on). Otherwise the couple could not finish a
+ *   day until real time caught up, because the rules only accept today.
  * - [current] treats a [lastCompleteDay] later than the local day as alive, and [caredToday] treats a [careDay]
  *   later than the local day as today, matching the merge.
- * What stays unfixable without a server: a phone ahead replaces an unfinished day's [careBy] (the partner's earlier
- * care that day is dropped until the partner cares again), and a phone set days ahead can complete days early.
  */
 data class CareStreak(
     val count: Int = 0,
@@ -114,13 +114,14 @@ data class CareStreak(
 
     /** The streak after [uid] cared on [today] (this phone's couple day). [members] are both partners. */
     fun afterCare(uid: String, members: List<String>, today: LocalDate): CareStreak {
-        val stored = careDay.day()
-        // Never move careDay backwards: a care from an earlier day joins the stored day.
+        // Never move careDay backwards: a care from an earlier day joins the stored day. A day further ahead than
+        // tomorrow was stored by a wrong clock and is dropped.
+        val stored = careDay.day()?.takeIf { !it.isAfter(today.plusDays(1)) }
         val day = if (stored != null && stored.isAfter(today)) stored else today
         val dayStr = day.toString()
         val by = if (careDay == dayStr) (careBy + uid).distinct() else listOf(uid)
         val bothCared = members.size == 2 && by.containsAll(members)
-        val last = lastCompleteDay.day()
+        val last = lastCompleteDay.day()?.let { if (it.isAfter(today.plusDays(1))) today.minusDays(1) else it }
         if (!bothCared || (last != null && !last.isBefore(day))) return copy(careDay = dayStr, careBy = by)
         val continues = last != null &&
             (last == day.minusDays(1) || last == today.minusDays(1) || StreakProtection.alive(last, day, protectedDays))
@@ -211,7 +212,7 @@ object CatRules {
         }
     }
 
-    fun levels(doc: CatDoc, now: Long = System.currentTimeMillis()): CatLevels {
+    fun levels(doc: CatDoc, now: Long = TrustedClock.now()): CatLevels {
         val (energy, sleeping) = energyNow(doc, now)
         return CatLevels(
             hunger = decayed(doc.hunger, HUNGER_HOURS, now),

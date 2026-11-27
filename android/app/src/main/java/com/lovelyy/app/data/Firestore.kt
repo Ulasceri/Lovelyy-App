@@ -33,6 +33,8 @@ object Paths {
     const val SETTINGS_DOC = "main"
     /** couples/{id}/limits/{uid}: my signal rate limit windows (see SignalLimits and firestore.rules). */
     const val LIMITS = "limits"
+    /** couples/{id}/clock/{uid}: the server time, written and read back by ClockSync (see TrustedClock). */
+    const val CLOCK = "clock"
     /** config/{doc}: app-wide settings edited in the Firebase console (read-only for the app). */
     const val CONFIG = "config"
     /** config/limits: signalsPerHour, signalsPerDay, minGapSeconds (see SignalLimits). */
