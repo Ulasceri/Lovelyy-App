@@ -497,6 +497,7 @@
     <string name="n_theirs">%1$s</string>
     <string name="n_pinned">Sabit</string>
     <string name="n_write">Not yaz</string>
+    <string name="n_load_more">Daha eski notları göster</string>
     <string name="n_empty">Henüz not yok. İlk notu sen yaz.</string>
     <string name="n_today">Bugün %1$s</string>
     <string name="n_yesterday">Dün %1$s</string>
@@ -788,6 +789,7 @@
         <item quantity="one">%1$d not</item>
         <item quantity="other">%1$d not</item>
     </plurals>
+    <string name="mm_notes_count_plus">%1$d+ not</string>
     <string name="mm_notes_new">Yeni: “%1$s”</string>
     <string name="mm_notes_none">Henüz not yok</string>
     <plurals name="mm_capsule_count">

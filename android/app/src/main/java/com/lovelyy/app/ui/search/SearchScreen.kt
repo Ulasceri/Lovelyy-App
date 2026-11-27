@@ -81,11 +81,16 @@ fun SearchScreen(
 ) {
     val coupleId = me.coupleId ?: return
     val app = lovelyyApp()
-    val notes by remember(coupleId) { app.noteRepository.observe(coupleId).catch { emit(emptyList()) } }.collectAsStateWithLifecycle(emptyList())
+    // Notes: nothing is read until the first query; then ALL notes are listened to (not just the newest page).
+    var query by rememberSaveable { mutableStateOf("") }
+    var searchedOnce by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(query) { if (query.isNotBlank()) searchedOnce = true }
+    val notes by remember(coupleId, searchedOnce) {
+        if (searchedOnce) app.noteRepository.observeAll(coupleId).catch { emit(emptyList()) } else kotlinx.coroutines.flow.flowOf<List<Note>>(emptyList())
+    }.collectAsStateWithLifecycle(emptyList())
     val dreams by remember(coupleId) { app.dreamRepository.observe(coupleId).catch { emit(emptyList()) } }.collectAsStateWithLifecycle(emptyList())
     val capsules by remember(coupleId) { app.capsuleRepository.observe(coupleId).catch { emit(emptyList()) } }.collectAsStateWithLifecycle(emptyList())
     val partnerName = partner?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.home_partner_fallback)
-    var query by rememberSaveable { mutableStateOf("") }
     var scope by rememberSaveable { mutableStateOf(start) }
     val focus = remember { FocusRequester() }
     LaunchedEffect(Unit) { runCatching { focus.requestFocus() } }

@@ -61,6 +61,7 @@ import com.lovelyy.app.analytics.AnalyticsEvent
 import com.lovelyy.app.data.ItemGoneException
 import com.lovelyy.app.data.Note
 import com.lovelyy.app.data.NoteConflictException
+import com.lovelyy.app.data.ListLimits
 import com.lovelyy.app.data.NoteRepository
 import com.lovelyy.app.data.SignalKind
 import com.lovelyy.app.data.UserProfile
@@ -84,6 +85,7 @@ import com.lovelyy.app.ui.theme.Quicksand
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -103,9 +105,19 @@ private const val FLAG_D = "M6 21V4M6 5h11l-2 4 2 4H6"
 private const val PENCIL_D = "M4 20l4-1 11-11-3-3L5 16z"
 
 class NotesViewModel(private val app: LovelyyApplication, private val coupleId: String) : ViewModel() {
-    val notes: StateFlow<List<Note>?> = app.noteRepository.observe(coupleId)
+    /** How many of the newest notes are loaded; "load more" raises it by a page. */
+    private val limit = kotlinx.coroutines.flow.MutableStateFlow(ListLimits.NOTES_PAGE)
+
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    val notes: StateFlow<List<Note>?> = limit
+        .flatMapLatest { app.noteRepository.observe(coupleId, it) }
         .catch { Timber.w(it, "Notes unavailable") }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    /** A full window means older notes may exist. */
+    fun canLoadMore(): Boolean = ListLimits.hasMore(notes.value?.size ?: 0, limit.value)
+
+    fun loadMore() { limit.value = ListLimits.nextLimit(limit.value) }
 
     /**
      * [opened]: the note as it was when the editor opened (null for a new note). [onGone]: the partner deleted
@@ -163,7 +175,10 @@ fun NotesScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onSe
     // Opened from Arama on one note: open it once the notes have loaded.
     var opened by rememberSaveable { mutableStateOf(false) }
     androidx.compose.runtime.LaunchedEffect(notes, openId) {
-        if (!opened && openId != null) notes?.firstOrNull { it.id == openId }?.let { editing = it; opened = true }
+        if (!opened && openId != null) {
+            val hit = notes?.firstOrNull { it.id == openId }
+            if (hit != null) { editing = hit; opened = true } else if (notes != null && vm.canLoadMore()) vm.loadMore() // an older note from Arama
+        }
     }
 
     // "Emin misin?" before deleting.
@@ -231,6 +246,20 @@ fun NotesScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onSe
                         }
                     }
                 }
+            }
+
+            if (notes != null && vm.canLoadMore()) {
+                Text(
+                    stringResource(R.string.n_load_more),
+                    fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Brown,
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .clip(RoundedCornerShape(22.dp))
+                        .background(CreamCard)
+                        .semantics { role = Role.Button }
+                        .bounceClick { vm.loadMore() }
+                        .padding(horizontal = 18.dp, vertical = 12.dp),
+                )
             }
         }
 

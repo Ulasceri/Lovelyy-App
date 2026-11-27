@@ -2,6 +2,7 @@ package com.lovelyy.app.data
 
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -101,8 +102,12 @@ class EventRepository(private val db: FirebaseFirestore) {
         events(coupleId).document(id).delete().await()
     }
 
+    /**
+     * Up to 500 plans, ordered by [date] (ISO string, so single-field index, no composite index) newest
+     * first: if a couple ever passes the cap, the oldest past plans are the ones that drop off.
+     */
     fun observe(coupleId: String): Flow<List<CalEvent>> = callbackFlow {
-        val reg = events(coupleId).limit(500).addSnapshotListener { snap, err ->
+        val reg = events(coupleId).orderBy("date", Query.Direction.DESCENDING).limit(500).addSnapshotListener { snap, err ->
             if (err != null) {
                 close(err)
             } else if (snap != null) {
