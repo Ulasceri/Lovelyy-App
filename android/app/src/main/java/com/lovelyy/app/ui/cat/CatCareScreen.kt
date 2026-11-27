@@ -411,7 +411,9 @@ private fun CaredToday(name: String, color: Color, text: String, done: Boolean, 
         InitialAvatar(name, color, 26.dp, 11.sp)
         Text(
             text, fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Brown,
-            maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false),
+            lineHeight = 15.sp,
+            // Two lines so "Sen henüz bakmadın" fits on 360dp phones instead of being cut off.
+            maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false),
         )
         if (done) SvgStrokeIcon(Kit.CHECK_D, CheckInk, Modifier.size(14.dp), strokeWidth = 2.6f)
     }

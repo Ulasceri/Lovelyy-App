@@ -578,7 +578,7 @@
     <string name="streak_sheet_count_title">Gün nasıl sayılır?</string>
     <string name="streak_sheet_count_body">Aynı gün ikiniz de %1$s en az bir kez bakarsanız: besle, su ver, oyna ya da uyut.</string>
     <string name="streak_sheet_meaning_title">Seri ne demek?</string>
-    <string name="streak_sheet_meaning_body">Böyle geçen günlerin art arda sayısı. Her gün bir artar, sağ üstte görünür.</string>
+    <string name="streak_sheet_meaning_body">Böyle geçen günlerin art arda sayısı. Her gün bir artar, kedinin adının yanında görünür.</string>
     <string name="streak_sheet_missed_title">Bir gün kaçarsa</string>
     <string name="streak_sheet_missed_body">Gün gece yarısı biter. Biriniz bakamadıysa seri yeniden 1. günden başlar.</string>
     <string name="streak_sheet_plus_badge">Plus</string>
