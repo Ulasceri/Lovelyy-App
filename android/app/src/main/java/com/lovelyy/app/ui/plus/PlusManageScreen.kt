@@ -263,6 +263,7 @@ private fun DebugBox(vm: PlusViewModel) {
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             ChoicePill(stringResource(R.string.plus_debug_day), false, { vm.debugShiftDays(1) })
+            ChoicePill(stringResource(R.string.plus_debug_hours), false, { vm.debugShiftHours(3) })
             ChoicePill(stringResource(R.string.plus_debug_real_time), false, { vm.debugShiftDays(0) })
         }
         Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {

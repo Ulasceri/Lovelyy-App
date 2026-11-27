@@ -46,6 +46,13 @@ class AnalyticsEventTest {
         AnalyticsEvent.RestoreTapped(found = false),
         AnalyticsEvent.GiftSent(hasNote = true),
         AnalyticsEvent.TakeoverShown,
+        AnalyticsEvent.StreakDangerShown(hasPlus = false),
+        AnalyticsEvent.StreakDayOffUsed(left = 1),
+        AnalyticsEvent.StreakRepairShown(hasPlus = true),
+        AnalyticsEvent.StreakMadeUp(days = 13),
+        AnalyticsEvent.StreakRepairDeclined,
+        AnalyticsEvent.PaywallShown(source = "lock_streak_repair"),
+        AnalyticsEvent.PaywallShown(source = "lock_notes"),
         AnalyticsEvent.ScreenView("home"),
         AnalyticsEvent.ScreenView("day_counter"),
     )

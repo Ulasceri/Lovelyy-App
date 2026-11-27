@@ -176,8 +176,9 @@ sealed interface AnalyticsEvent {
     }
 
     /**
-     * A Plus plan screen opened. [source] is a fixed key: "trial_end" (automatic), "lock_<feature>" (P4),
-     * "biz_card", "home_card", "management", "takeover".
+     * A Plus plan screen opened. [source] is a fixed key: "trial_end" (automatic), "lock_<feature>" (P4, the
+     * streak protection "lock_streak_day_off" / "lock_streak_repair", or a free limit "lock_notes", "lock_events",
+     * "lock_dreams", "lock_capsules", "lock_wheels", "lock_drawings"), "biz_card", "home_card", "management", "takeover".
      */
     data class PaywallShown(val source: String) : AnalyticsEvent {
         override val name = "paywall_shown"
@@ -229,6 +230,35 @@ sealed interface AnalyticsEvent {
     data class StreakExplainerShown(val source: String) : AnalyticsEvent {
         override val name = "streak_explainer_shown"
         override val params: Map<String, Any> get() = mapOf("source" to source)
+    }
+
+    /** The "Seri tehlikede" card (P5a) was shown, at most once a day per phone. [hasPlus]: Plus right now. */
+    data class StreakDangerShown(val hasPlus: Boolean) : AnalyticsEvent {
+        override val name = "streak_danger_shown"
+        override val params: Map<String, Any> get() = mapOf("has_plus" to hasPlus)
+    }
+
+    /** A Plus day off (P5b, "izin günü") was used. [left]: days off left this month (0 or 1). */
+    data class StreakDayOffUsed(val left: Int) : AnalyticsEvent {
+        override val name = "streak_day_off_used"
+        override val params: Map<String, Any> get() = mapOf("left" to left.toLong())
+    }
+
+    /** The "Seriniz bitti" sheet (P5c) opened by itself. [hasPlus]: it offered the make-up, else Plus. */
+    data class StreakRepairShown(val hasPlus: Boolean) : AnalyticsEvent {
+        override val name = "streak_repair_shown"
+        override val params: Map<String, Any> get() = mapOf("has_plus" to hasPlus)
+    }
+
+    /** A missed day was made up with Plus (P5c, "telafi"). [days]: the streak length after it. */
+    data class StreakMadeUp(val days: Int) : AnalyticsEvent {
+        override val name = "streak_made_up"
+        override val params: Map<String, Any> get() = mapOf("days" to days.toLong())
+    }
+
+    /** "Seriye 1. günden başla" on the P5c sheet. */
+    data object StreakRepairDeclined : AnalyticsEvent {
+        override val name = "streak_repair_declined"
     }
 
     /**

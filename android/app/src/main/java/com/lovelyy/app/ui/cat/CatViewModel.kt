@@ -11,6 +11,10 @@ import com.lovelyy.app.data.CatLevels
 import com.lovelyy.app.data.CatRules
 import com.lovelyy.app.data.CoupleClock
 import com.lovelyy.app.data.OnboardingPrefs
+import com.lovelyy.app.data.PlusClock
+import com.lovelyy.app.data.SignalKind
+import com.lovelyy.app.data.SignalLimitException
+import com.lovelyy.app.data.StreakProtection
 import com.lovelyy.app.data.StreakExplainer
 import com.lovelyy.app.data.StreakExplainerSource
 import com.lovelyy.app.data.UserProfile
@@ -38,6 +42,14 @@ sealed interface CatEvent {
 
     /** The couple's streak just reached 1 for the first time on this phone: open "Seri nedir?" by itself, once. */
     data object FirstStreak : CatEvent
+
+    /** Streak protection (P5b/P5c) was written. */
+    data class DayOffTaken(val days: Int) : CatEvent
+    data class StreakMadeUp(val days: Int) : CatEvent
+
+    /** The danger card's nudge reached the partner, or hit the signal limit. */
+    data object NudgeSent : CatEvent
+    data object NudgeLimited : CatEvent
 }
 
 data class CatUi(val doc: CatDoc, val levels: CatLevels)
@@ -92,7 +104,7 @@ class CatViewModel(private val app: LovelyyApplication, private val coupleId: St
      * event channel, so only one of them gets it.
      */
     private suspend fun maybeExplainStreak(d: CatDoc) {
-        val current = d.streak.current(CoupleClock.today())
+        val current = d.streak.current(CoupleClock.today(streakNow()))
         if (!StreakExplainer.shouldAutoShow(current, OnboardingPrefs.streakExplainerSeen(app, coupleId))) return
         OnboardingPrefs.markStreakExplainerSeen(app, coupleId)
         Telemetry.track(AnalyticsEvent.StreakExplainerShown(StreakExplainerSource.Auto.key))
@@ -113,12 +125,90 @@ class CatViewModel(private val app: LovelyyApplication, private val coupleId: St
         canDo(type)?.let { r -> viewModelScope.launch { events.send(CatEvent.Refused(r)) }; return }
         viewModelScope.launch {
             try {
-                repo.act(coupleId, me, members, type, strokes, name)
+                repo.act(coupleId, me, members, type, strokes, name, dayNow = streakNow())
                 analyticsEvent(type, strokes)?.let(Telemetry::track)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
                 Timber.e(e, "Cat action %s failed", type)
+                events.send(CatEvent.Failed)
+            }
+        }
+    }
+
+    /**
+     * The time the streak day is counted at: real time, or the Plus debug clock in debug builds (P8 "+1 gün"),
+     * so streak protection can be tested on an emulator. Need levels always use real time.
+     */
+    fun streakNow(): Long = PlusClock.now(app)
+
+    // ---------- Lovelyy Plus streak protection (P5a, P5b, P5c) ----------
+
+    /** The "Seri tehlikede" card was shown (once per couple day on this phone, see CatStreakGuard). */
+    fun dangerCardShown(hasPlus: Boolean) = Telemetry.track(AnalyticsEvent.StreakDangerShown(hasPlus))
+
+    /** P5b: take today off. [isPlus] is checked again by firestore.rules. */
+    fun takeDayOff(isPlus: Boolean) {
+        viewModelScope.launch {
+            try {
+                val today = CoupleClock.today(streakNow())
+                val next = repo.changeStreak(coupleId) { StreakProtection.freeze(it, today, isPlus) }
+                if (next == null) {
+                    events.send(CatEvent.Failed)
+                    return@launch
+                }
+                Telemetry.track(AnalyticsEvent.StreakDayOffUsed(StreakProtection.freezesLeft(next, today)))
+                events.send(CatEvent.DayOffTaken(next.current(today)))
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.e(e, "Taking a day off failed")
+                events.send(CatEvent.Failed)
+            }
+        }
+    }
+
+    /** P5c: make up yesterday. */
+    fun makeUpStreak(isPlus: Boolean) {
+        viewModelScope.launch {
+            try {
+                val today = CoupleClock.today(streakNow())
+                val next = repo.changeStreak(coupleId) { StreakProtection.repair(it, today, isPlus) }
+                if (next == null) {
+                    events.send(CatEvent.Failed)
+                    return@launch
+                }
+                Telemetry.track(AnalyticsEvent.StreakMadeUp(next.current(today)))
+                events.send(CatEvent.StreakMadeUp(next.current(today)))
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.e(e, "Making up the streak failed")
+                events.send(CatEvent.Failed)
+            }
+        }
+    }
+
+    /** The P5c sheet opened by itself ([hasPlus]: the make-up button, else the Plus offer). */
+    fun streakRepairShown(hasPlus: Boolean) = Telemetry.track(AnalyticsEvent.StreakRepairShown(hasPlus))
+
+    /** "Seriye 1. günden başla": the couple lets the old streak go. */
+    fun streakRepairDeclined() = Telemetry.track(AnalyticsEvent.StreakRepairDeclined)
+
+    /** "Bora'yı dürt" on the danger card: the free way to save the streak. */
+    fun nudge(me: UserProfile, partnerUid: String) {
+        viewModelScope.launch {
+            try {
+                app.signalRepository.send(coupleId, me, partnerUid, SignalKind.Nudge)
+                com.lovelyy.app.signals.SignalCenter.vibrate(app, SignalKind.Nudge)
+                Telemetry.track(AnalyticsEvent.NudgeSent)
+                events.send(CatEvent.NudgeSent)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: SignalLimitException) {
+                events.send(CatEvent.NudgeLimited)
+            } catch (e: Exception) {
+                Timber.w(e, "Streak nudge failed")
                 events.send(CatEvent.Failed)
             }
         }
