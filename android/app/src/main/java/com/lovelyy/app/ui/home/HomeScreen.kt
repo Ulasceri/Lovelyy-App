@@ -100,6 +100,8 @@ import com.lovelyy.app.data.UserProfile
 import com.lovelyy.app.signals.labelRes
 import com.lovelyy.app.ui.cat.CatCareScreen
 import com.lovelyy.app.ui.cat.CatSection
+import com.lovelyy.app.ui.cat.CatItemsScreen
+import com.lovelyy.app.ui.cat.LastCareCard
 import com.lovelyy.app.ui.distance.DistanceScreen
 import com.lovelyy.app.ui.profile.ProfileScreen
 import com.lovelyy.app.ui.capsule.CapsuleScreen
@@ -194,6 +196,7 @@ private object Routes {
     const val QUESTION = "question"
     const val NOTES = "notes"
     const val CAT = "cat"
+    const val CAT_ITEMS = "cat_items"
     const val DISTANCE = "distance"
     const val DREAMS = "dreams"
     const val WHEEL = "wheel"
@@ -276,6 +279,7 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
                 Routes.QUESTION -> InnerScreens.QUESTION
                 Routes.NOTES -> InnerScreens.NOTES
                 Routes.CAT -> InnerScreens.CAT_CARE
+                Routes.CAT_ITEMS -> InnerScreens.CAT_ITEMS
                 Routes.DISTANCE -> InnerScreens.DISTANCE
                 Routes.DREAMS -> InnerScreens.DREAMS
                 Routes.WHEEL -> InnerScreens.WHEEL
@@ -524,7 +528,9 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
                     Routes.MOOD -> MoodScreen(me, partner, moods, onBack = ::pop, onHistory = { push(Routes.MOOD_HISTORY) })
                     Routes.QUESTION -> QuestionScreen(me, couple, partner, onBack = ::pop, onHistory = { push(Routes.QUESTION_HISTORY) })
                     Routes.NOTES -> NotesScreen(me, partner, onBack = ::pop, onSearch = { push("${Routes.SEARCH}:notes") }, openId = route.substringAfter(':', "").ifEmpty { null })
-                    Routes.CAT -> CatCareScreen(me, couple, partner, onBack = ::pop)
+                    Routes.CAT -> CatCareScreen(me, couple, partner, onBack = ::pop, onItems = { push(Routes.CAT_ITEMS) })
+                    // After a save Home opens, where Mırmır reacts to the new item (P7b).
+                    Routes.CAT_ITEMS -> CatItemsScreen(me, onBack = ::pop, onSaved = { stack.clear(); tab = Tab.Yuva })
                     Routes.DISTANCE -> DistanceScreen(me, partner, onBack = ::pop)
                     Routes.DREAMS -> DreamsScreen(me, partner, onBack = ::pop, onSearch = { push("${Routes.SEARCH}:dreams") }, openId = route.substringAfter(':', "").ifEmpty { null })
                     Routes.WHEEL -> WheelScreen(me, partner, onBack = ::pop, onHistory = { push(Routes.WHEEL_HISTORY) })
@@ -560,7 +566,7 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
             val routeKey = top?.substringBefore(':')
             val navTab = when (routeKey) {
                 null -> tab
-                Routes.COUNTER, Routes.CAT, Routes.INBOX -> Tab.Yuva
+                Routes.COUNTER, Routes.CAT, Routes.CAT_ITEMS, Routes.INBOX -> Tab.Yuva
                 Routes.MOOD, Routes.QUESTION, Routes.DISTANCE, Routes.WIDGETS,
                 Routes.MOOD_HISTORY, Routes.QUESTION_HISTORY, Routes.ACCOUNT, Routes.UNPAIR,
                 Routes.PLUS, Routes.PLUS_GIFT -> Tab.Biz
@@ -731,6 +737,9 @@ private fun YuvaTab(
         plusCard()
 
         TogetherCard(startMillis, Modifier.padding(top = 18.dp)) { open(Routes.COUNTER) }
+
+        // P7b: who cared for the cat last, in the space under the day counter.
+        LastCareCard(me, partner, Modifier.padding(top = 12.dp))
 
         Row(Modifier.padding(top = 14.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             HeartbeatCard(

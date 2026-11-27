@@ -590,6 +590,45 @@ test("streak: an expired Plus can't add protection", async () => {
   await assertSucceeds(setDoc(sub("alice", "cat", "main"), catDoc({ repairDays: ["2026-11-25"] })));
 });
 
+// ---------- Mırmır's items (CatRepository.setItems / CatRules.apply inside cat/main) ----------
+const freeItems = { feed: "mama_sade", water: "su_sade", play: "oyuncak_yumak", sleep: "yatak_minder" };
+const placeItems = (uid, items, itemsNew = null) =>
+  updateDoc(sub(uid, "cat", "main"), { items, itemsAt: Timestamp.now(), itemsNew });
+
+test("items: free models for everyone, Plus models need Plus", async () => {
+  await pairAB();
+  await assertSucceeds(setDoc(sub("alice", "cat", "main"), { ...catDoc({}), items: null, itemsAt: null, itemsNew: null, sleepRefillMin: null }));
+  await assertSucceeds(placeItems("alice", freeItems, "yatak_minder"));
+  // Without Plus a Plus model can't be chosen.
+  await assertFails(placeItems("bob", { ...freeItems, sleep: "yatak_kutu" }, "yatak_kutu"));
+  // Only known slots and each slot's own models.
+  await assertFails(placeItems("alice", { ...freeItems, hat: "bow" }));
+  await assertFails(placeItems("alice", { ...freeItems, feed: "su_sade" }));
+  await assertFails(placeItems("alice", { ...freeItems, play: "lazer" }));
+  await assertFails(placeItems("alice", freeItems, "Bad Id!"));
+  // With Plus they can, and the faster bed sleep too.
+  await assertSucceeds(updateDoc(couple("alice"), { plus: plusTrial() }));
+  await assertSucceeds(placeItems("bob", { ...freeItems, sleep: "yatak_kutu", play: "oyuncak_tuy" }, "oyuncak_tuy"));
+  await assertSucceeds(updateDoc(sub("bob", "cat", "main"), { sleepingSince: Timestamp.now(), sleepRefillMin: 45 }));
+  await assertFails(updateDoc(sub("bob", "cat", "main"), { sleepRefillMin: 10 }));
+});
+
+test("items: after Plus ends the stored choice stays, but nothing new", async () => {
+  await pairAB();
+  await assertSucceeds(updateDoc(couple("alice"), { plus: plusTrial() }));
+  await assertSucceeds(setDoc(sub("alice", "cat", "main"), { ...catDoc({}), items: { ...freeItems, feed: "mama_sut" }, sleepRefillMin: 45 }));
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await updateDoc(doc(ctx.firestore(), "couples", CODE), { "plus.trialStart": Date.now() - 15 * DAY });
+  });
+  // Care writes (the whole doc, items unchanged, the running Plus sleep kept) still work.
+  await assertSucceeds(setDoc(sub("bob", "cat", "main"), { ...catDoc({ careDay: today(), careBy: ["bob"] }), items: { ...freeItems, feed: "mama_sut" }, sleepRefillMin: 45 }));
+  // Going back to free models works; a new Plus model or a new Plus sleep doesn't.
+  await assertFails(placeItems("alice", { ...freeItems, feed: "mama_sut", water: "su_cesme" }, "su_cesme"));
+  await assertSucceeds(updateDoc(sub("alice", "cat", "main"), { sleepRefillMin: null }));
+  await assertFails(updateDoc(sub("alice", "cat", "main"), { sleepRefillMin: 45 }));
+  await assertSucceeds(placeItems("alice", freeItems));
+});
+
 test("plus: an ended couple takes no plus writes", async () => {
   await pairAB();
   await assertSucceeds(endAsAlice());

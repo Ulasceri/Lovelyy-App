@@ -70,6 +70,8 @@ object PaywallSource {
     /** P5a "İzin günü kullan" or P5c "Plus ile telafi et" tapped without Plus. */
     const val STREAK_DAY_OFF = "lock_streak_day_off"
     const val STREAK_REPAIR = "lock_streak_repair"
+    /** P7a "Plus ile yerleştir": Plus models of Mırmır's items chosen without Plus. */
+    const val CAT_ITEMS = "lock_cat_items"
     /** P9: adding to a list that is at its free limit. */
     fun limit(limit: com.lovelyy.app.data.PlusLimits.Limit) = "lock_${limit.key}"
 }

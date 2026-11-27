@@ -37,7 +37,7 @@ iOS comes later (`ios/` is a stub). Product: [docs/product.md](docs/product.md).
 
 **Built (designed + approved):** Karşılama, the try-it intro (onboarding), Giriş, Eşleşme, the post-pairing
 flow (Eşleştiniz + notification and location primers), Anasayfa with the bottom nav (Yuva, Anılar,
-Planlar, Biz), the cat and Kedi bakımı (care streak; accessories were removed 2026-11-26), day counter, heartbeat, mood, daily question,
+Planlar, Biz), the cat and Kedi bakımı (care streak; accessories were removed 2026-11-26), Mırmır's items (P7a/P7b, Plus models with a light care bonus), day counter, heartbeat, mood, daily question,
 notes, calendar, bucket list, decision wheel, live drawing, time capsule, distance, profile/settings,
 4 home-screen widgets, telemetry, and the second design round (mood/question/heartbeat/wheel history, search,
 saved drawings, opened letters, inbox, account, unpair screen), and the pairing screen's
@@ -64,7 +64,7 @@ android/app/src/main/java/com/lovelyy/app/
   ui/components/       Components.kt (buttons, text field, avatar), Design.kt (approved shared blocks)
   ui/{auth,onboarding,profile,pairing,home,cat,heartbeat,setup,history,search,inbox,...}/
 android/app/src/debug/   debug-only telemetry receiver
-android/app/src/main/assets/cat/   14 mp4 clips (played by CatAnimator, ExoPlayer)
+android/app/src/main/assets/cat/   14 cat clips + 12 item clips (played by CatAnimator, ExoPlayer)
 firebase/                firestore.rules, database.rules.json (deny all), functions/ (TS), tests/
 tools/cat-animation/     fal.ai clip generation + ffmpeg encode (see tools/README.md)
 assets/                  shared fonts/images; docs/  product, architecture, analytics, design

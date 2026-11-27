@@ -11,9 +11,7 @@
 - [ ] Bildirimler için FCM eklenirse gizlilik politikasını ve Data safety taslağını güncelle.
 - [ ] Ada ile giriş yapıp Plans ve History ekranlarındaki Türkçe tarihleri (PR #10 sonrası) gözle kontrol et.
 - [ ] Eşleşme ekranındaki hesap penceresini ve hesap silmeyi Google ile giriş yapan bir hesapla da dene.
-- [ ] `assets/items/` içindeki 12 eşya görselini Plus'ın eşya aşamasında uygulamaya bağla (seçim ekranı, anasayfa, widget).
-- [ ] `assets/item-clips/` içindeki 12 eşya klibini seçili eşyaya göre bakım animasyonu olarak uygulamaya bağla.
-- [ ] Eşyaya özel kedi animasyonlarını üret; pilot olarak tüy ile oyun klibinden başla.
+- [ ] Mırmır'ın eşyalarını ana ekran widget'larında da göster (tasarımı gerekir).
 - [ ] Ruh hali geçmişi yalnızca son 30 günü gösteriyor, daha eski aylara geçiş eklenmeli mi karar ver.
 - [ ] Kaydırma takılmasını (jank) emülatör yerine gerçek bir telefonda ölç.
 - [ ] Zayıf ağ (yavaş/gecikmeli bağlantı) testini emülatör konsol izni ayarlanınca tekrar yap.

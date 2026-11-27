@@ -1410,4 +1410,59 @@
         <item quantity="other">Ücretsizde %1$d çizim kaydedilir. Eski bir çizimi Anılar\'dan silebilir ya da Plus ile sınırsız kaydedebilirsiniz.</item>
     </plurals>
     <string name="plus_debug_hours" translatable="false">+3 saat</string>
+    <!-- Mırmır's items (P7a eşya seçimi, P7b anasayfa). Names and reactions: one full string per item. -->
+    <string name="items_title">%1$s eşyaları</string>
+    <string name="items_badge_plus">Plus</string>
+    <string name="items_selected">Seçili: %1$s</string>
+    <string name="items_free_note">Sade modeller herkese açık</string>
+    <string name="items_plus_model">Plus modeli</string>
+    <string name="items_plus_effect_note">Plus modelinde</string>
+    <string name="items_save_failed">Eşyalar yerleştirilemedi, biraz sonra tekrar dener misin?</string>
+    <plurals name="items_effect_feed">
+        <item quantity="one">+%1$d tokluk</item>
+        <item quantity="other">+%1$d tokluk</item>
+    </plurals>
+    <plurals name="items_effect_water">
+        <item quantity="one">+%1$d su</item>
+        <item quantity="other">+%1$d su</item>
+    </plurals>
+    <plurals name="items_effect_play">
+        <item quantity="one">+%1$d sevgi</item>
+        <item quantity="other">+%1$d sevgi</item>
+    </plurals>
+    <plurals name="items_effect_sleep">
+        <item quantity="one">%1$d dk erken</item>
+        <item quantity="other">%1$d dk erken</item>
+    </plurals>
+    <string name="items_place">Yerleştir</string>
+    <string name="items_place_plus">Plus ile yerleştir</string>
+    <string name="items_tile_free">%1$s, ücretsiz</string>
+    <string name="items_tile_plus">%1$s, Plus</string>
+    <string name="items_preview_label">%1$s ve seçili eşyalar</string>
+    <string name="item_mama_sade">Mama kabı</string>
+    <string name="item_mama_balik_tabagi">Balık tabağı</string>
+    <string name="item_mama_sut">Süt</string>
+    <string name="item_su_sade">Su kabı</string>
+    <string name="item_su_cesme">Çeşme</string>
+    <string name="item_oyuncak_yumak">Yumak</string>
+    <string name="item_oyuncak_fare">Fare</string>
+    <string name="item_oyuncak_tuy">Tüy</string>
+    <string name="item_oyuncak_tirmalama">Tırmalama direği</string>
+    <string name="item_yatak_minder">Minder</string>
+    <string name="item_yatak_kutu">Kutu</string>
+    <string name="item_yatak_sepet">Sepet</string>
+    <string name="item_love_mama_sade">Yeni mama kabımı çok sevdim</string>
+    <string name="item_love_mama_balik_tabagi">Balık tabağıma bayıldım</string>
+    <string name="item_love_mama_sut">Süt mü o? Çok sevdim</string>
+    <string name="item_love_su_sade">Yeni su kabımı çok sevdim</string>
+    <string name="item_love_su_cesme">Çeşmem şırıl şırıl, bayıldım</string>
+    <string name="item_love_oyuncak_yumak">Yumağımla oynamaya bayılıyorum</string>
+    <string name="item_love_oyuncak_fare">Bu fareyi yakalayacağım</string>
+    <string name="item_love_oyuncak_tuy">Tüylere dayanamıyorum</string>
+    <string name="item_love_oyuncak_tirmalama">Tırmalama direğim çok güzel</string>
+    <string name="item_love_yatak_minder">Yeni minderimi çok sevdim</string>
+    <string name="item_love_yatak_kutu">Yeni yatağımı çok sevdim</string>
+    <string name="item_love_yatak_sepet">Sepetim çok rahat, bayıldım</string>
+    <!-- P7b "son bakım" card on Home: each partner's latest care today. -->
+    <string name="last_care_label">Son bakım</string>
 </resources>

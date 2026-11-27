@@ -39,6 +39,15 @@ sealed interface AnalyticsEvent {
         override val name = "cat_slept"
     }
 
+    /**
+     * Mırmır's items were saved (P7a). [plusModels]: how many of the four are Plus models (0..4); [newItem]: the
+     * fixed id of the item placed for the first time ("yatak_kutu"), or "none".
+     */
+    data class CatItemsSaved(val plusModels: Int, val newItem: String) : AnalyticsEvent {
+        override val name = "cat_items_saved"
+        override val params: Map<String, Any> get() = mapOf("plus_models" to plusModels.toLong(), "new_item" to newItem)
+    }
+
     /** The couple's first day was set or changed on the day counter. */
     data object StartDateSet : AnalyticsEvent {
         override val name = "start_date_set"

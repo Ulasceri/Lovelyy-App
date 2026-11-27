@@ -51,6 +51,8 @@ class AnalyticsEventTest {
         AnalyticsEvent.StreakRepairShown(hasPlus = true),
         AnalyticsEvent.StreakMadeUp(days = 13),
         AnalyticsEvent.StreakRepairDeclined,
+        AnalyticsEvent.CatItemsSaved(plusModels = 2, newItem = "yatak_kutu"),
+        AnalyticsEvent.PaywallShown(source = "lock_cat_items"),
         AnalyticsEvent.PaywallShown(source = "lock_streak_repair"),
         AnalyticsEvent.PaywallShown(source = "lock_notes"),
         AnalyticsEvent.ScreenView("home"),

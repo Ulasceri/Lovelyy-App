@@ -49,8 +49,9 @@ python make_items.py generate food_drink out/ out/bowls.png   # extra refs pin s
 
 ### Item clips (`make_clips.py`)
 
-Needs ffmpeg too. Output: `assets/item-clips/*.mp4` (720², H.264, no audio), one clip per Plus item for
-its care action, three per bed (`_lie_down`, `_sleeping`, `_wake_up`). Not wired into the app yet.
+Needs ffmpeg too. Output: `android/app/src/main/assets/cat/<item>*.mp4` (720², H.264, no audio), next to the cat's
+own clips: one clip per Plus item for its care action, three per bed (`_lie_down`, `_sleeping`, `_wake_up`).
+`CatClip` plays them when that item is placed (`CatItems`); the free models use the cat's original clips.
 
 ```bash
 cd tools/item-art

@@ -3,7 +3,11 @@ package com.lovelyy.app.ui.cat
 import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Spacer
+import com.lovelyy.app.data.CatItems
 import com.lovelyy.app.data.CoupleClock
+import com.lovelyy.app.text.TurkishSuffix
+import com.lovelyy.app.ui.plus.LocalPlus
+import androidx.compose.foundation.shape.CircleShape
 import com.lovelyy.app.data.StreakExplainerSource
 import com.lovelyy.app.text.AppLocale
 import com.lovelyy.app.ui.components.InitialAvatar
@@ -37,6 +41,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -94,13 +99,14 @@ private val ButtonIdle = Color(0xFFF6EEE8)
 private const val BOWL_D = "M3 12h18a9 6 0 0 1-18 0z M8.5 9.5c0-1 .8-2 2-2M13 9c0-1 .8-2 2-2"
 private const val DROP_D = "M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"
 private const val MOON_D = "M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"
+private const val SOFA_D = "M5 11V8a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v3 M3 13a2 2 0 0 1 4 0v2h10v-2a2 2 0 0 1 4 0v5H3z M6 18v2 M18 18v2"
 
 /**
  * Kedi bakımı (approved board "14 · Kedi bakımı v2"): the cat up close with its speech bubble below the video,
  * its four needs with a button each, and the care streak card (who cared today; tap = "Seri nedir?").
  */
 @Composable
-fun CatCareScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBack: () -> Unit) {
+fun CatCareScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBack: () -> Unit, onItems: () -> Unit = {}) {
     val coupleId = me.coupleId ?: return
     val app = lovelyyApp()
     val vm: CatViewModel = viewModel(key = "cat-$coupleId") { CatViewModel(app, coupleId, me.uid) }
@@ -133,6 +139,11 @@ fun CatCareScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBac
 
     val levels = ui?.levels
     val mood = levels?.mood
+    val isPlus = LocalPlus.current?.isPlus == true
+    // The items in use: without Plus, Plus models fall back to the free ones (clips and bonus too).
+    val items = ui?.doc?.items?.effective(isPlus) ?: CatItems()
+    val itemsNow by rememberUpdatedState(items)
+    LaunchedEffect(items.sleep) { animator.setBed(Bed.of(items.sleep)) }
     LaunchedEffect(mood) {
         if (mood == null) return@LaunchedEffect
         animator.start(mood)
@@ -145,7 +156,7 @@ fun CatCareScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBac
         vm.oneTimeEvents.collect { e ->
             when (e) {
                 is CatEvent.PartnerAction -> {
-                    e.action.type.clip()?.let(animator::play)
+                    actionClip(e.action.type, itemsNow)?.let(animator::play)
                     banner = texts(e.action)
                 }
                 is CatEvent.Refused -> banner = refusalTexts(e.reason)
@@ -156,6 +167,7 @@ fun CatCareScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBac
                 is CatEvent.StreakMadeUp -> banner = context.resources.getQuantityString(R.plurals.streak_repair_done, e.days, e.days)
                 CatEvent.NudgeSent -> banner = context.getString(R.string.nudge_sent, partnerName)
                 CatEvent.NudgeLimited -> banner = context.getString(R.string.signal_limit)
+                is CatEvent.ItemsSaved -> Unit
             }
         }
     }
@@ -173,9 +185,9 @@ fun CatCareScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBac
             view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
             return
         }
-        type.clip()?.let(animator::play)
+        actionClip(type, items)?.let(animator::play)
         view.performHapticFeedback(confirmHaptic())
-        vm.act(me, members, type)
+        vm.act(me, members, type, plus = isPlus)
     }
 
     val catName = displayCatName(ui?.doc?.name)
@@ -195,7 +207,23 @@ fun CatCareScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBac
             .padding(top = 20.dp, bottom = 140.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        CenteredTopBar(catName, onBack)
+        // Board 14 v2: the sofa button on the right opens Mırmır's items (P7a).
+        val itemsLabel = stringResource(R.string.items_title, TurkishSuffix.genitive(catName))
+        CenteredTopBar(catName, onBack) {
+            Box(
+                Modifier
+                    .size(44.dp)
+                    .softShadow(CircleShape, 4.dp)
+                    .clip(CircleShape)
+                    .background(CreamCard)
+                    .bounceClick(onClick = onItems)
+                    .semantics {
+                        contentDescription = itemsLabel
+                        role = Role.Button
+                    },
+                contentAlignment = Alignment.Center,
+            ) { SvgStrokeIcon(SOFA_D, Brown, Modifier.size(22.dp), strokeWidth = 2.2f) }
+        }
 
         // Hero: the living cat, nothing drawn over it; the bubble (or a banner) sits below the video.
         val heroShape = RoundedCornerShape(28.dp)
@@ -220,7 +248,7 @@ fun CatCareScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBac
                     },
                     onPetting = { animator.setPetting(it) },
                     onStroke = { view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK) },
-                    onPetDone = { strokes -> if (strokes > 0) vm.act(me, members, CatActionType.Pet, strokes) },
+                    onPetDone = { strokes -> if (strokes > 0) vm.act(me, members, CatActionType.Pet, strokes, plus = isPlus) },
                     // Same video size and crop as the Yuva card, so the whole cat stays in view.
                     modifier = Modifier.height(CatCardGeometry.videoHeightDp(maxWidth.value).dp),
                     shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
@@ -283,7 +311,7 @@ fun CatCareScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBac
 
 /** One person's latest care today, as on the streak card: "Sen sevdin", "Elif su verdi". */
 @Composable
-private fun todayText(a: CatAction, myUid: String, partnerName: String): String {
+internal fun todayText(a: CatAction, myUid: String, partnerName: String): String {
     val mine = a.uid == myUid
     val who = a.name.ifBlank { partnerName }
     val text = when (a.type) {

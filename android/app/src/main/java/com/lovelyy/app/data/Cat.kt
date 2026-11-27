@@ -24,6 +24,17 @@ data class CatDoc(
     val lastAction: CatAction? = null,
     val recent: List<CatAction> = emptyList(),
     val streak: CareStreak = CareStreak(),
+    /** Mırmır's items (P7). Null until the couple placed items for the first time; then they show on Home. */
+    val items: CatItems? = null,
+    /** When [items] were last saved (epoch millis), for Mırmır's first-placement reaction on both phones. */
+    val itemsAt: Long? = null,
+    /** The item that save placed for the first time ([CatItemRules.newlyPlaced]), or null. */
+    val itemsNew: CatItem? = null,
+    /**
+     * Minutes from empty to full energy for the current sleep: 45 in a Plus bed (with Plus at bedtime), null = 60.
+     * Fixed when the cat lies down, so both phones compute the same wake-up time even if Plus changes meanwhile.
+     */
+    val sleepRefillMin: Int? = null,
 )
 
 /** The name every cat starts with; the couple can rename it later. */
@@ -163,7 +174,7 @@ object CatRules {
     const val THIRST_HOURS = 10.0
     const val ENERGY_HOURS = 16.0
     const val LOVE_HOURS = 8.0
-    /** Hours of sleep from empty to full energy. */
+    /** Hours of sleep from empty to full energy (a Plus bed is faster, see [CatDoc.sleepRefillMin]). */
     const val SLEEP_REFILL_HOURS = 1.0
 
     const val LOW = 30.0
@@ -190,7 +201,8 @@ object CatRules {
     private fun energyNow(doc: CatDoc, now: Long): Pair<Double, Boolean> {
         val since = doc.sleepingSince ?: return decayed(doc.energy, ENERGY_HOURS, now) to false
         val atSleep = decayed(doc.energy, ENERGY_HOURS, since)
-        val refillPerMs = 100.0 / (SLEEP_REFILL_HOURS * HOUR)
+        val refillHours = doc.sleepRefillMin?.takeIf { it > 0 }?.let { it / 60.0 } ?: SLEEP_REFILL_HOURS
+        val refillPerMs = 100.0 / (refillHours * HOUR)
         val wakeAt = since + ((100.0 - atSleep) / refillPerMs).toLong()
         return if (now < wakeAt) {
             (atSleep + (now - since) * refillPerMs).coerceIn(0.0, 100.0) to true
@@ -213,12 +225,14 @@ object CatRules {
 
     /**
      * The cat after an action. Returns null when the action makes no sense right now
-     * (e.g. playing while asleep); the UI explains why with [refusal].
+     * (e.g. playing while asleep); the UI explains why with [refusal]. [plus]: the couple has Lovelyy Plus, so a
+     * Plus item gives its small bonus ([CatItemRules]).
      */
-    fun apply(doc: CatDoc, type: CatActionType, now: Long, strokes: Int = 0): CatDoc? {
+    fun apply(doc: CatDoc, type: CatActionType, now: Long, strokes: Int = 0, plus: Boolean = false): CatDoc? {
         if (refusal(doc, type, now) != null) return null
         val l = levels(doc, now)
         fun need(v: Double) = Need(v.coerceIn(0.0, 100.0), now)
+        val bonus = CatItemRules.bonusItem(doc.items, type, plus) != null
         // Snapshot every need at "now" so the stored levels stay exact.
         val base = doc.copy(
             hunger = need(l.hunger),
@@ -226,18 +240,22 @@ object CatRules {
             energy = need(l.energy),
             love = need(l.love),
             sleepingSince = if (l.sleeping) now else null,
+            sleepRefillMin = if (l.sleeping) doc.sleepRefillMin else null,
         )
         return when (type) {
-            CatActionType.Feed -> base.copy(hunger = need(l.hunger + FEED), love = need(l.love + 5))
-            CatActionType.Water -> base.copy(thirst = need(l.thirst + WATER))
+            CatActionType.Feed -> base.copy(hunger = need(l.hunger + FEED + if (bonus) CatItemRules.FEED_BONUS else 0.0), love = need(l.love + 5))
+            CatActionType.Water -> base.copy(thirst = need(l.thirst + WATER + if (bonus) CatItemRules.WATER_BONUS else 0.0))
             CatActionType.Play -> base.copy(
-                love = need(l.love + PLAY_LOVE),
+                love = need(l.love + PLAY_LOVE + if (bonus) CatItemRules.PLAY_LOVE_BONUS else 0.0),
                 energy = need(l.energy - PLAY_ENERGY),
                 hunger = need(l.hunger - PLAY_HUNGER),
             )
             CatActionType.Pet -> base.copy(love = need(l.love + min(PET_MAX, strokes * PET_PER_STROKE)))
-            CatActionType.Sleep -> base.copy(sleepingSince = now)
-            CatActionType.Wake -> base.copy(sleepingSince = null)
+            CatActionType.Sleep -> base.copy(
+                sleepingSince = now,
+                sleepRefillMin = if (bonus) CatItemRules.PLUS_SLEEP_REFILL_MIN else null,
+            )
+            CatActionType.Wake -> base.copy(sleepingSince = null, sleepRefillMin = null)
             CatActionType.Name -> base
         }
     }

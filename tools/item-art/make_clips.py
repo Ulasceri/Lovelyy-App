@@ -1,7 +1,7 @@
 """Generates the item clips in clips.json (cat using one of its items) with fal and encodes them.
 
 Usage:  FAL_KEY=... python make_clips.py out_dir [clip ...]
-Output: ../../assets/item-clips/<clip>.mp4 (720x720 H.264, 24 fps, no audio), raw clips in out_dir.
+Output: ../../android/app/src/main/assets/cat/<clip>.mp4 (720x720 H.264, 24 fps, no audio), raw clips in out_dir.
 
 The video model takes reference images, which is what keeps the cat and the item identical to the
 rest of the app: Image 1 is always the cat's base pose, Image 2 the item picture on white.
@@ -77,7 +77,7 @@ def encode(raw, name):
     frames = int(subprocess.check_output(
         ["ffprobe", "-v", "error", "-count_frames", "-select_streams", "v:0",
          "-show_entries", "stream=nb_read_frames", "-of", "csv=p=0", raw]).split()[0])
-    dst = os.path.join(ROOT, "assets/item-clips", name + ".mp4")
+    dst = os.path.join(ROOT, "android/app/src/main/assets/cat", name + ".mp4")
     os.makedirs(os.path.dirname(dst), exist_ok=True)
     subprocess.check_call(
         ["ffmpeg", "-v", "error", "-y", "-i", raw, "-an", "-vf",
