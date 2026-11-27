@@ -70,3 +70,18 @@ python make_clips.py out/ su_cesme           # or just one
   night. Describe only what should be visible ("sunny daytime room"). A zooming camera was fixed the
   same way ("wide shot, the whole cat and rug stay visible at the same size").
 - The raw clips carry generated audio; encoding drops it.
+
+## store-assets (Google Play screenshots and feature graphic)
+
+Approved design: canvas "Lovelyy mağaza görselleri" (claude.ai artifact 1ybhsrBVA2vAUvgAFfRBUd).
+`src/*.html` are standalone copies of the boards (captions are plain text, so a translation only edits the
+text), `img/` holds the pictures they use, and `render.mjs` writes the PNGs at the exact Play sizes
+(1080x1920 screenshots, 1024x500 `feature-graphic`).
+
+```bash
+# needs Node + Playwright with Chromium
+node tools/store-assets/render.mjs                    # -> assets/store/tr/
+node tools/store-assets/render.mjs assets/store/en    # another language: copy src/, translate, render
+```
+
+The listing text lives in [docs/store-listing.md](../docs/store-listing.md).
