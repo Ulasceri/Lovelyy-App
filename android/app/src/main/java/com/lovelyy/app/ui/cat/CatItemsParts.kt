@@ -34,7 +34,8 @@ import com.lovelyy.app.ui.theme.Brown
  * Where each care slot's item stands around the cat (boards P7a/P7b, measured on a 350 × 236 video). Two depth
  * rows so the items stand on the floor instead of floating: water and bed at the back, food and toy in front,
  * partly over them. Every item gets a soft contact shadow drawn by the app (the pictures have none).
- * [x], [top], [size] place the picture; [shadow*] the ellipse under it. All in board pixels.
+ * [x], [top], [size] place the picture; [shadow*] the ellipse under it. All in board pixels. The bed sits 9 px
+ * further left than on the board so it is not cut at the card's right edge.
  */
 private class SlotPlace(
     val slot: CareSlot,
@@ -49,7 +50,7 @@ private const val BOARD_H = 236f
 private val PLACES = listOf(
     SlotPlace(CareSlot.Water, -1f, 175f, 62f, 6f, 209f, 49f, 11f),
     SlotPlace(CareSlot.Feed, 14f, 184f, 72f, 21f, 224f, 58f, 13f),
-    SlotPlace(CareSlot.Sleep, 252f, 144f, 104f, 248f, 205f, 111f, 24f),
+    SlotPlace(CareSlot.Sleep, 243f, 144f, 104f, 239f, 205f, 111f, 24f),
     SlotPlace(CareSlot.Play, 219f, 156f, 86f, 235f, 225f, 54f, 12f),
 )
 

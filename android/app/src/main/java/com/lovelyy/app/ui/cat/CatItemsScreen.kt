@@ -47,6 +47,7 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -82,7 +83,7 @@ import com.lovelyy.app.ui.theme.PeachDeep
 import com.lovelyy.app.ui.theme.PeachTint
 import com.lovelyy.app.ui.theme.Quicksand
 
-private const val LABEL_W = 84
+private const val LABEL_W = 92
 private const val TILE_MAX = 58
 private const val GAP = 8
 
@@ -127,7 +128,7 @@ fun CatItemsScreen(me: UserProfile, onBack: () -> Unit, onSaved: () -> Unit) {
                 }
                 CatEvent.Failed -> {
                     saving = false
-                    Toast.makeText(context, context.getString(R.string.cat_error), Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, context.getString(R.string.items_save_failed), Toast.LENGTH_LONG).show()
                 }
                 else -> Unit
             }
@@ -232,7 +233,8 @@ private fun ItemRow(slot: CareSlot, chosen: CatItem, showLocks: Boolean, tile: D
             Text(slot.effectText(), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = BrownMuted, lineHeight = 15.sp)
             Text(
                 stringResource(R.string.items_plus_effect_note),
-                fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, color = BrownSoft, lineHeight = 15.sp,
+                fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 11.sp, color = BrownSoft, lineHeight = 14.sp,
+                maxLines = 1, overflow = TextOverflow.Ellipsis,
             )
         }
         CatItem.forSlot(slot).forEach { item ->

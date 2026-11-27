@@ -183,9 +183,8 @@ fun CatSection(me: UserProfile, couple: Couple?, partner: UserProfile?, modifier
 
     val mood = ui?.levels?.mood
     val isPlus = LocalPlus.current?.isPlus == true
-    // Mırmır's items (P7b): shown once the couple placed them; without Plus the Plus models fall back to free ones.
-    val placedItems = ui?.doc?.items?.effective(isPlus)
-    val items = placedItems ?: CatItems()
+    // Mırmır's items (P7b): the free set until the couple places others; without Plus the Plus models fall back to free ones.
+    val items = ui?.doc?.items?.effective(isPlus) ?: CatItems()
     val itemsNow by rememberUpdatedState(items)
     LaunchedEffect(items.sleep) { animator.setBed(Bed.of(items.sleep)) }
     LaunchedEffect(mood) {
@@ -271,8 +270,8 @@ fun CatSection(me: UserProfile, couple: Couple?, partner: UserProfile?, modifier
                     explainer = StreakExplainerSource.Chip
                 },
             )
-            val itemsOverlay: (@Composable () -> Unit)? = placedItems?.let { placed ->
-                @Composable { CatItemsLayer(placed, Modifier.fillMaxSize(), hidden = animator.currentClip?.slot, pop = popItem) }
+            val itemsOverlay: @Composable () -> Unit = {
+                CatItemsLayer(items, Modifier.fillMaxSize(), hidden = animator.currentClip?.slot, pop = popItem)
             }
             BoxWithConstraints(Modifier.fillMaxWidth()) {
                 CatStage(

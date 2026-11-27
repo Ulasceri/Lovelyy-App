@@ -1417,6 +1417,7 @@
     <string name="items_free_note">Sade modeller herkese açık</string>
     <string name="items_plus_model">Plus modeli</string>
     <string name="items_plus_effect_note">Plus modelinde</string>
+    <string name="items_save_failed">Eşyalar yerleştirilemedi, biraz sonra tekrar dener misin?</string>
     <plurals name="items_effect_feed">
         <item quantity="one">+%1$d tokluk</item>
         <item quantity="other">+%1$d tokluk</item>
