@@ -21,6 +21,7 @@ enums) found only a handful of literal UI strings; the rest of the work was maki
 | UI language | `AppLocale.current()` follows the language of the strings Android shows: the `app_language` string (`tr` in `values/`). If the device or per-app language has a `values-xx`, that locale is used; otherwise the Turkish default strings show and dates/name endings follow them (no English dates inside Turkish text). |
 | Turkish grammar | `TurkishSuffix` ("Elif'e", "Ulaş'ın", "Perşembe'den") only applies when the UI language is Turkish; any other language gets the plain name, so a translation just writes `%1$s`. Unit test added for this. |
 | Per-app language | `res/xml/locales_config.xml` (only `tr` for now) referenced from the manifest via `android:localeConfig`. |
+| Daily questions | The 366 questions moved from `data/Questions.kt` to `res/values/questions.xml` (`daily_questions` string-array). `QuestionBank.init(list)` runs in `LovelyyApplication.onCreate` and `onConfigurationChanged`; `forDay` is still `floorMod(epochDay, size)`. Unit tests parse the XML directly (`TestQuestions`). |
 | Widgets / channel | `widget/LocaleChangedReceiver` (manifest, `LOCALE_CHANGED`) redraws all widgets and refreshes the notification channel name/description. |
 
 ## Adding a language (checklist)
@@ -37,28 +38,25 @@ enums) found only a handful of literal UI strings; the rest of the work was maki
    etc. need a fallback font family or a different font for that locale (`ui/theme/Type.kt`).
 5. Right-to-left languages: `supportsRtl="true"` is set, but screens use fixed-direction drawings (SVG paths, arrows,
    the wheel) and some `Alignment.Start/End` choices have not been checked in RTL. Review visually first.
-6. Translate the 60 daily questions once they are resourced (see "Remaining" 1).
+6. Translate the 366 daily questions: copy `values/questions.xml` to `values-xx/questions.xml` (`daily_questions` string-array,
+   same order and same size, escape apostrophes and quotes with a backslash). The day index is `epochDay mod size`, so both partners
+   get the same question for a day in every language. A question already saved in Firestore keeps the language it was saved in.
 7. Set the Play Store listing and `app_name` per language if wanted.
 
 ## Remaining (not fixed, on purpose)
 
-1. **Daily question bank** (`data/Questions.kt`, 60 Turkish questions) is hardcoded in Kotlin and the chosen text is
-   written into Firestore (`couples/{id}/questions/{day}.question`) by `QuestionRepository`. Moving it to a
-   `string-array` needs the repository to get a `Context` or to store only the index and resolve the text at display
-   time (keep the order and size identical in every language, the index is `epochDay mod size`). Touches Firestore data
-   and tests (`CalendarMathTest`, `CoupleDayTest`), so it was left for a separate PR.
-2. **Data, not UI**: default cat name `Mırmır` (`DEFAULT_CAT_NAME`, stored name falls back to it), built-in wheel ids
+1. **Data, not UI**: default cat name `Mırmır` (`DEFAULT_CAT_NAME`, stored name falls back to it), built-in wheel ids
    (`yemek`, `gezi`, `izle`, ids not labels), default event emoji, signal text such as `"<wheel> → <result>"` (stored in
    Firestore and sent to the partner, in the sender's language), user-written notes, titles, answers, city names.
    Stored content stays in the language it was written in.
-3. Partner-visible notification text is built on the **receiver's** device from the signal kind (good), but the free text
+2. Partner-visible notification text is built on the **receiver's** device from the signal kind (good), but the free text
    inside it (event title, wheel result) is the sender's.
-4. Some abbreviated units are still translated as one phrase: `ds_duration` ("%1$d sa %2$d dk", hours + minutes) and
+3. Some abbreviated units are still translated as one phrase: `ds_duration` ("%1$d sa %2$d dk", hours + minutes) and
    `dc_unit_*` (countdown unit labels). A translator can handle them, but they are not plural-aware.
-5. Calendar grid is Monday-first for every locale (`cal_weekdays_short` is Monday-first); `HistoryScreens` truncates
+4. Calendar grid is Monday-first for every locale (`cal_weekdays_short` is Monday-first); `HistoryScreens` truncates
    a formatted date with `take(6)`. Both are fine in Turkish and should be revisited per language.
-6. Digits: `String.format`/`%02d` clocks use the default locale, so e.g. Arabic gets Arabic-Indic digits.
-7. Analytics event/screen names, Timber logs, exception messages are English by design and are not UI.
+5. Digits: `String.format`/`%02d` clocks use the default locale, so e.g. Arabic gets Arabic-Indic digits.
+6. Analytics event/screen names, Timber logs, exception messages are English by design and are not UI.
 
 ## Verification
 

@@ -53,10 +53,10 @@ Ertelenen işler: [todo.md](todo.md).
 |---|---|
 | `android/` | Android uygulaması (Gradle projesi, Android Studio'da bu klasörü aç) |
 | `firebase/` | Firestore / Realtime Database güvenlik kuralları, kural testleri (`tests/`), Cloud Functions iskeleti (`functions/`) |
-| `assets/` | Ortak dosyalar: Quicksand fontu, `brand/` (uygulama logosu), `items/` (Mırmır'ın 12 eşyasının şeffaf PNG'leri; henüz uygulamaya bağlı değil), `animations/` ve `images/` (şimdilik boş, ileri için ayrıldı) |
+| `assets/` | Ortak dosyalar: Quicksand fontu, `brand/` (uygulama logosu), `items/` (Mırmır'ın 12 eşyasının şeffaf PNG'leri) ve `item-clips/` (Plus eşyaların 12 animasyon klibi); ikisi de henüz uygulamaya bağlı değil, `animations/` ve `images/` (şimdilik boş, ileri için ayrıldı) |
 | `web/` | Play için herkese açık sayfalar (gizlilik, şartlar, hesap silme), Firebase Hosting; bkz. [web/README.md](web/README.md) |
 | `docs/` | Ürün özeti, tasarım prensipleri, mimari, güvenlik, analytics |
-| `tools/` | Yardımcı araçlar: `tools/cat-animation/` kedi kliplerini, `tools/item-art/` Mırmır'ın eşya görsellerini fal.ai ile üretir (bkz. [tools/README.md](tools/README.md)) |
+| `tools/` | Yardımcı araçlar: `tools/cat-animation/` kedi kliplerini, `tools/item-art/` Mırmır'ın eşya görsellerini ve eşya kliplerini fal.ai ile üretir (bkz. [tools/README.md](tools/README.md)) |
 | `ios/` | İleride iOS uygulaması (şimdilik sadece not) |
 
 Android paket düzeni (`android/app/src/main/java/com/lovelyy/app/`):

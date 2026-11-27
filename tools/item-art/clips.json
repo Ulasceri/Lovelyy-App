@@ -1,0 +1,102 @@
+{
+  "model": "minimax/h3-max/reference-to-video",
+  "args": {
+    "prompt_expansion_mode": "disabled",
+    "duration": 5,
+    "resolution": "768P",
+    "aspect_ratio": "1:1"
+  },
+  "clips": {
+    "oyuncak_tuy": {
+      "item": "oyuncak_tuy",
+      "start": "base",
+      "end": "base",
+      "prompt": "The cat from Image 1 sits on its rug. The feather wand toy from Image 2 (wooden stick with peach handle, small yellow bell, pink, yellow and mint clay feathers) dips into the frame from the top right corner, held from off screen, and its feathers dangle and wiggle in front of the cat. The cat's eyes go wide and follow the feathers, it lifts its front paws and playfully bats at the feathers several times, hopping up a little with excitement. Then the wand lifts away and leaves the frame at the top right, and the cat sits back down happily in exactly its starting pose. No hand or person visible. Static camera, no camera movement, background and lighting unchanged, soft clay toy style, smooth natural cute motion."
+    },
+    "mama_balik_tabagi": {
+      "item": "mama_balik_tabagi",
+      "place": {
+        "width": 250,
+        "center_x": 300,
+        "base_y": 915
+      },
+      "start": "placed",
+      "end": "placed",
+      "prompt": "The cat from Image 1 sits next to the plate with a clay fish from Image 2. The cat sniffs, happily lowers its head to the plate and nibbles the fish with munching motions, chewing contentedly, then lifts its head and licks its lips with a satisfied face. The fish stays on the plate. Then the cat sits back up and returns to exactly its starting pose, with the item exactly where it started. Static camera, no camera movement, background and lighting unchanged, soft clay toy style, smooth natural cute motion, no people or hands."
+    },
+    "mama_sut": {
+      "item": "mama_sut",
+      "place": {
+        "width": 250,
+        "center_x": 290,
+        "base_y": 915
+      },
+      "start": "placed",
+      "end": "placed",
+      "prompt": "Wide shot, the whole cat and the whole rug stay fully visible at the same size for the entire video, no zoom, no close-up. The cat from Image 1 sits next to the glass milk bottle and the terracotta saucer of milk from Image 2. The cat lowers its head to the saucer and laps the milk with its little pink tongue, small ripples in the milk, then lifts its head with a drop of milk on its nose and licks its lips happily. The bottle does not move. Then the cat sits back up and returns to exactly its starting pose, with the item exactly where it started. Static camera, no camera movement, background and lighting unchanged, soft clay toy style, smooth natural cute motion, no people or hands."
+    },
+    "su_cesme": {
+      "item": "su_cesme",
+      "place": {
+        "width": 280,
+        "center_x": 285,
+        "base_y": 920
+      },
+      "start": "placed",
+      "end": "placed",
+      "prompt": "The cat from Image 1 sits next to the small mint green water fountain from Image 2, whose water is alive the whole time: the blue water arcs keep flowing and splashing continuously from the top into the basin, droplets fall and ripples spread on the water surface for the entire video. The cat watches the water curiously, lowers its head and laps water from the fountain basin with its little tongue, taps a water arc once with its paw, then lifts its head and licks its lips. Then the cat sits back up and returns to exactly its starting pose, with the item exactly where it started. Static camera, no camera movement, background and lighting unchanged, soft clay toy style, smooth natural cute motion, no people or hands."
+    },
+    "oyuncak_fare": {
+      "item": "oyuncak_fare",
+      "place": {
+        "width": 210,
+        "center_x": 790,
+        "base_y": 900
+      },
+      "start": "placed",
+      "end": "placed",
+      "prompt": "The cat from Image 1 sits next to the grey felt toy mouse with pink ears from Image 2. The cat notices the mouse, wiggles, bats it playfully with a front paw so the toy slides a little, pounces on it and pats it with both paws excitedly, then pushes it back to its place. Then the cat sits back up and returns to exactly its starting pose, with the item exactly where it started. Static camera, no camera movement, background and lighting unchanged, soft clay toy style, smooth natural cute motion, no people or hands."
+    },
+    "oyuncak_tirmalama": {
+      "item": "oyuncak_tirmalama",
+      "place": {
+        "width": 260,
+        "center_x": 840,
+        "base_y": 910
+      },
+      "start": "placed",
+      "end": "placed",
+      "prompt": "The cat from Image 1 sits next to the rope scratching post with a mint base and a small hanging peach ball from Image 2. The cat turns to the post, stands up on its hind legs, puts both front paws on the rope and scratches it up and down happily, then bats the hanging ball once so it swings. Then the cat sits back up and returns to exactly its starting pose, with the item exactly where it started. Static camera, no camera movement, background and lighting unchanged, soft clay toy style, smooth natural cute motion, no people or hands."
+    },
+    "yatak_kutu_lie_down": {
+      "start": "keys/yatak_kutu_awake.jpg",
+      "end": "keys/yatak_kutu_sleep.jpg",
+      "prompt": "The sleepy cat sits inside the cardboard box with a heart. Its eyelids droop, it gives a big yawn, turns a little and slowly curls up inside the bed, rests its head on the edge, wraps its tail around and closes its eyes to fall asleep. Wide shot, static camera, no zoom, no camera movement, the bed stays exactly the same size and in the same place, background and lighting unchanged, soft clay toy style, smooth natural cute motion, no people or hands."
+    },
+    "yatak_kutu_sleeping": {
+      "start": "keys/yatak_kutu_sleep.jpg",
+      "end": "keys/yatak_kutu_sleep.jpg",
+      "prompt": "The cat rests curled up inside the cardboard box with a heart, eyes closed, calm and cozy. Its body rises and falls with slow gentle breathing, one ear twitches slightly, the tail tip moves softly. Eyes stay closed the whole time. Sunny daytime room with the same plain cream wall and bright soft light in every frame. Wide shot, static camera, the bed stays exactly the same size and in the same place, soft clay toy style, smooth natural cute motion."
+    },
+    "yatak_kutu_wake_up": {
+      "start": "keys/yatak_kutu_sleep.jpg",
+      "end": "keys/yatak_kutu_awake.jpg",
+      "prompt": "The cat sleeping inside the cardboard box with a heart slowly wakes up, opens its eyes, gives a little yawn and stretch, then sits up inside the bed with its front paws on the edge and looks at the viewer happily. Wide shot, static camera, no zoom, no camera movement, the bed stays exactly the same size and in the same place, background and lighting unchanged, soft clay toy style, smooth natural cute motion, no people or hands."
+    },
+    "yatak_sepet_lie_down": {
+      "start": "keys/yatak_sepet_awake.jpg",
+      "end": "keys/yatak_sepet_sleep.jpg",
+      "prompt": "The sleepy cat sits inside the wicker basket bed with a pink cushion. Its eyelids droop, it gives a big yawn, turns a little and slowly curls up inside the bed, rests its head on the edge, wraps its tail around and closes its eyes to fall asleep. Wide shot, static camera, no zoom, no camera movement, the bed stays exactly the same size and in the same place, background and lighting unchanged, soft clay toy style, smooth natural cute motion, no people or hands."
+    },
+    "yatak_sepet_sleeping": {
+      "start": "keys/yatak_sepet_sleep.jpg",
+      "end": "keys/yatak_sepet_sleep.jpg",
+      "prompt": "The cat sleeps peacefully curled up inside the wicker basket bed with a pink cushion. Its body rises and falls with slow gentle breathing, one ear twitches slightly in its sleep, the tail tip moves softly. Eyes stay closed the whole time. Wide shot, static camera, no zoom, no camera movement, the bed stays exactly the same size and in the same place, background and lighting unchanged, soft clay toy style, smooth natural cute motion, no people or hands."
+    },
+    "yatak_sepet_wake_up": {
+      "start": "keys/yatak_sepet_sleep.jpg",
+      "end": "keys/yatak_sepet_awake.jpg",
+      "prompt": "The cat resting inside the wicker basket bed with a pink cushion opens its eyes, gives a little yawn and stretch, then sits up inside the bed with its front paws on the edge and looks at the viewer happily. Sunny daytime room with the same plain cream wall and bright soft light in every frame. Wide shot, static camera, the bed stays exactly the same size and in the same place, soft clay toy style, smooth natural cute motion."
+    }
+  }
+}

@@ -48,6 +48,21 @@ enum class CatActionType { Feed, Water, Play, Pet, Sleep, Wake, Name }
  * Shared daily care streak: the streak grows by one for every day on which BOTH partners
  * took care of the cat. Lovelyy Plus can protect it (see [StreakProtection]): an "izin günü" (day off) or a
  * "telafi" (make-up) day bridges a missed day, so the streak neither grows nor breaks on it.
+ *
+ * Days come from each phone's clock ([CoupleClock.today], the couple's shared zone), and there is no server
+ * time on the Spark plan, so a phone whose clock is a day off must not destroy the stored progress. The rule:
+ * - The stored days only move forward: a care stamped with a day EARLIER than [careDay] (this phone is behind,
+ *   or the other phone was ahead) is merged into [careDay] (its uid is added to [careBy], nothing is replaced),
+ *   and [lastCompleteDay] never moves backwards, so [count] is never reset by a late phone.
+ * - When such a merge completes the day, the streak continues if the last complete day was the day before
+ *   [careDay] OR the day before this phone's own day (the gap was the clock skew, not a missed day).
+ * - A care stamped with a LATER day starts that day (it cannot be told apart from a real new day); if it was a
+ *   wrong clock, the partner's care on the real day merges into it by the rule above and the streak still grows.
+ *   That day then counts as done in advance (the next real day adds nothing, the one after continues).
+ * - [current] treats a [lastCompleteDay] later than the local day as alive, and [caredToday] treats a [careDay]
+ *   later than the local day as today, matching the merge.
+ * What stays unfixable without a server: a phone ahead replaces an unfinished day's [careBy] (the partner's earlier
+ * care that day is dropped until the partner cares again), and a phone set days ahead can complete days early.
  */
 data class CareStreak(
     val count: Int = 0,
@@ -76,32 +91,43 @@ data class CareStreak(
 
     /** The streak as it should be shown today (it breaks if a whole unprotected day was missed). */
     fun current(today: LocalDate): Int {
-        val last = lastCompleteDay?.let(LocalDate::parse) ?: return 0
-        return if (StreakProtection.alive(last, today, protectedDays)) count else 0
+        val last = lastCompleteDay.day() ?: return 0
+        // Alive if done yesterday or later (a later day is clock skew), or if the gap is only protected days.
+        return if (!last.isBefore(today.minusDays(1)) || StreakProtection.alive(last, today, protectedDays)) count else 0
     }
 
-    fun caredToday(uid: String, today: LocalDate) = careDay == today.toString() && uid in careBy
+    fun caredToday(uid: String, today: LocalDate): Boolean {
+        val day = careDay.day() ?: return false
+        return !day.isBefore(today) && uid in careBy
+    }
 
-    /** The streak after [uid] cared on [today]. [members] are both partners. */
+    /** The streak after [uid] cared on [today] (this phone's couple day). [members] are both partners. */
     fun afterCare(uid: String, members: List<String>, today: LocalDate): CareStreak {
-        val day = today.toString()
-        val by = if (careDay == day) (careBy + uid).distinct() else listOf(uid)
+        val stored = careDay.day()
+        // Never move careDay backwards: a care from an earlier day joins the stored day.
+        val day = if (stored != null && stored.isAfter(today)) stored else today
+        val dayStr = day.toString()
+        val by = if (careDay == dayStr) (careBy + uid).distinct() else listOf(uid)
         val bothCared = members.size == 2 && by.containsAll(members)
-        if (!bothCared || lastCompleteDay == day) return copy(careDay = day, careBy = by)
-        val last = lastCompleteDay?.let(LocalDate::parse)
-        val continues = last != null && last.isBefore(today) && StreakProtection.alive(last, today, protectedDays)
+        val last = lastCompleteDay.day()
+        if (!bothCared || (last != null && !last.isBefore(day))) return copy(careDay = dayStr, careBy = by)
+        val continues = last != null &&
+            (last == day.minusDays(1) || last == today.minusDays(1) || StreakProtection.alive(last, day, protectedDays))
         val newCount = if (continues) count + 1 else 1
+        // copy, not a new CareStreak: the Plus protection fields (days off, made-up days) must survive a care.
         return copy(
             count = newCount,
             best = max(best, newCount),
-            lastCompleteDay = day,
-            careDay = day,
+            lastCompleteDay = dayStr,
+            careDay = dayStr,
             careBy = by,
             // A new streak starts: remember the old one, it may still be made up today (StreakProtection.repair).
             brokenCount = if (!continues && last != null && count > 0) count else brokenCount,
             brokenLast = if (!continues && last != null && count > 0) lastCompleteDay else brokenLast,
         )
     }
+
+    private fun String?.day(): LocalDate? = this?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
 }
 
 /** What the cat feels right now. Decides the looping animation, the widget picture and texts. */

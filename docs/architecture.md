@@ -8,7 +8,7 @@ com.lovelyy.app
 ├── MainActivity         edge-to-edge + splash + LovelyyTheme
 ├── data/                Firebase access (AuthRepository, UserRepository, PairingRepository)
 └── ui/
-    ├── AppViewModel     decides which screen to show from auth + Firestore state
+    ├── AppViewModel     decides which screen to show from auth + Firestore state; owns the per-account ViewModelStore for screen ViewModels
     ├── LovelyyRoot      cross-fades between: Setup → Login (Karşılama → intro → form) → Name → Pairing → JustPaired → Home
     ├── theme/           colors, Quicksand typography, rounded shapes
     ├── components/      shared buttons, text field, avatars, beating heart
@@ -63,6 +63,8 @@ stored snapshot and the clock (`data/Cat.kt`, `CatRules`). Actions run in a Fire
 that snapshots all needs at "now" and applies the change, so two partners acting at the same
 moment never lose an update. Rates: hunger empties in 12h, thirst 10h, energy 16h (1h of sleep
 refills it), love 8h. The streak grows by one for each day on which both partners cared.
+A phone with a wrong clock can't undo progress: stored days only move forward (a care from an earlier day
+joins the stored `careDay`), see the `CareStreak` KDoc.
 
 ## Animation (`ui/cat/`)
 
@@ -174,7 +176,7 @@ treats them as valid for 30 minutes (the rules still allow up to 24h).
 | `config/limits` | signalsPerHour, signalsPerDay, minGapSeconds | app-wide config edited in the Firebase console, read-only for the app |
 | `couples/{id}/moods/{uid}` | kind, note, at | each partner's current mood |
 | `couples/{id}/moodLog/{uid}_{yyyy-MM-dd}` | kind, note, at, uid, day | one entry per person per day (the last mood that day), written next to `moods/{uid}`; read by Ruh hali geçmişi (last 31 days). Started 2026-11-26, older moods were not logged |
-| `couples/{id}/questions/{yyyy-MM-dd}` | day, question, answers.{uid} = {name, text, at} | günün sorusu; question text comes from `QuestionBank.forDay` so both phones agree without a server |
+| `couples/{id}/questions/{yyyy-MM-dd}` | day, question, answers.{uid} = {name, text, at} | günün sorusu; question text comes from `QuestionBank.forDay` (366 questions, loaded from `res/values/questions.xml`) and the first answerer fixes it: later answers and the screen keep the stored text, so partners on different app versions still see the same question |
 | `couples/{id}/notes/{auto}` | text, color (0-4), pinned, by, byName, at, updatedAt, updatedBy (last text/color edit; missing on old notes) | shared sticky notes; an edit is saved in a transaction and asks before overwriting a partner's newer change |
 | `couples/{id}/events/{auto}` | title, date (yyyy-MM-dd), emoji, yearly, by, byName, at | plans and special days; the anniversary is built in from `startDate`, not stored |
 | `couples/{id}/locations/{uid}` | city, lat, lng (rounded: 0.1° city-only or 0.01°), cityOnly, at | only while the partner shares location on Mesafe; turning sharing off deletes it. The app shows only city and distance |

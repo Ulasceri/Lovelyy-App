@@ -8,6 +8,7 @@ import com.lovelyy.app.data.CatAction
 import com.lovelyy.app.data.CatActionType
 import com.lovelyy.app.data.CatDoc
 import com.lovelyy.app.data.CatLevels
+import com.lovelyy.app.data.CatOffline
 import com.lovelyy.app.data.CatRules
 import com.lovelyy.app.data.CoupleClock
 import com.lovelyy.app.data.OnboardingPrefs
@@ -31,6 +32,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import timber.log.Timber
 
 /** Things the cat screen reacts to once (an animation, a little banner). */
@@ -39,6 +41,9 @@ sealed interface CatEvent {
     data class PartnerAction(val action: CatAction) : CatEvent
     data class Refused(val reason: CatRules.Refusal) : CatEvent
     data object Failed : CatEvent
+
+    /** No connection: care actions can't be queued offline, so say so. */
+    data object Offline : CatEvent
 
     /** The couple's streak just reached 1 for the first time on this phone: open "Seri nedir?" by itself, once. */
     data object FirstStreak : CatEvent
@@ -125,13 +130,17 @@ class CatViewModel(private val app: LovelyyApplication, private val coupleId: St
         canDo(type)?.let { r -> viewModelScope.launch { events.send(CatEvent.Refused(r)) }; return }
         viewModelScope.launch {
             try {
-                repo.act(coupleId, me, members, type, strokes, name, dayNow = streakNow())
+                withTimeout(CatOffline.ACTION_TIMEOUT_MS) { repo.act(coupleId, me, members, type, strokes, name, dayNow = streakNow()) }
                 analyticsEvent(type, strokes)?.let(Telemetry::track)
-            } catch (e: CancellationException) {
-                throw e
             } catch (e: Exception) {
-                Timber.e(e, "Cat action %s failed", type)
-                events.send(CatEvent.Failed)
+                if (e is CancellationException && !CatOffline.isOffline(e)) throw e
+                if (CatOffline.isOffline(e)) {
+                    Timber.w(e, "Cat action %s failed: offline", type)
+                    events.send(CatEvent.Offline)
+                } else {
+                    Timber.e(e, "Cat action %s failed", type)
+                    events.send(CatEvent.Failed)
+                }
             }
         }
     }

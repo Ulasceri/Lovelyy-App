@@ -46,6 +46,7 @@ class CapsuleRepository(private val db: FirebaseFirestore) {
         capsules(coupleId).document(id).delete().await()
     }
 
+    /** Newest 200 letters only; counts derived from this list are "at most 200" (a couple writes a few per year). */
     fun observe(coupleId: String): Flow<List<Capsule>> = callbackFlow {
         val reg = capsules(coupleId).orderBy("at", Query.Direction.DESCENDING).limit(200).addSnapshotListener { snap, err ->
             if (err != null) {
