@@ -1,6 +1,8 @@
 package com.lovelyy.app.text
 
+import android.content.Context
 import android.text.format.DateFormat
+import com.lovelyy.app.R
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
@@ -9,20 +11,34 @@ import java.util.concurrent.ConcurrentHashMap
 /**
  * The one place that knows which locale the UI formats dates, numbers and case in.
  *
- * It follows the process default, which Android points at the per-app language (API 33+) or the
- * system language, so nothing here caches a locale: always call [current] at the point of use.
- * Turkish is the only shipped language today; a new language is added to [SHIPPED].
+ * The UI language is whatever language Android picked for our strings: the `app_language` resource holds
+ * the language code of each `values-xx/strings.xml` (default `values/` = "tr"). When the device or per-app
+ * language has a translation, that locale is used as is (keeping its region); when it doesn't, Android shows
+ * the Turkish default strings and dates and name endings follow them, so an English phone never mixes
+ * "December 11" into Turkish text. Adding a language needs only its `values-xx` folder and locales_config.
+ * Nothing caches a locale: always call [current] at the point of use.
  */
 object AppLocale {
-    /**
-     * Languages the app ships strings for. On any other device language Android falls back to the Turkish
-     * `values/` strings, so dates and name suffixes must fall back to Turkish too; otherwise an English phone
-     * shows "December 11 kadar" and "Bora Plus hediye et". Add a language here when its `values-xx` lands.
-     */
-    private val SHIPPED = setOf("tr")
-    private val FALLBACK: Locale = Locale.forLanguageTag("tr-TR")
+    /** Used before [init] runs (unit tests, very early startup): the default strings' language. */
+    private const val DEFAULT_LANGUAGE = "tr"
 
-    fun current(): Locale = Locale.getDefault().let { if (it.language in SHIPPED) it else FALLBACK }
+    @Volatile private var appContext: Context? = null
+
+    /** Called once from LovelyyApplication.onCreate. */
+    fun init(context: Context) {
+        appContext = context.applicationContext
+    }
+
+    /** Language code of the strings Android is showing right now (e.g. "tr", later "en"). */
+    fun uiLanguage(): String =
+        appContext?.let { ctx -> runCatching { ctx.getString(R.string.app_language) }.getOrNull() }
+            ?.takeIf { it.isNotBlank() } ?: DEFAULT_LANGUAGE
+
+    fun current(): Locale {
+        val device = Locale.getDefault()
+        val ui = uiLanguage()
+        return if (device.language == ui) device else Locale.forLanguageTag(ui)
+    }
 
     fun isTurkish(): Boolean = current().language == "tr"
 
