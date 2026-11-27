@@ -151,6 +151,10 @@ fun CatCareScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBac
                 is CatEvent.Refused -> banner = refusalTexts(e.reason)
                 CatEvent.Failed -> banner = context.getString(R.string.cat_error)
                 CatEvent.FirstStreak -> explainer = StreakExplainerSource.Auto
+                is CatEvent.DayOffTaken -> banner = context.resources.getQuantityString(R.plurals.streak_off_done, e.days, e.days)
+                is CatEvent.StreakMadeUp -> banner = context.resources.getQuantityString(R.plurals.streak_repair_done, e.days, e.days)
+                CatEvent.NudgeSent -> banner = context.getString(R.string.nudge_sent, partnerName)
+                CatEvent.NudgeLimited -> banner = context.getString(R.string.signal_limit)
             }
         }
     }
@@ -174,7 +178,7 @@ fun CatCareScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBac
     }
 
     val catName = displayCatName(ui?.doc?.name)
-    val today = com.lovelyy.app.ui.coupleToday()
+    val today = streakToday()
     val zone by CoupleClock.zone.collectAsStateWithLifecycle()
     val latestToday = ui?.doc?.recent?.let { CareRewards.todayLatest(it, me.uid, today, zone) }.orEmpty()
     val streak = ui?.doc?.streak
@@ -259,6 +263,9 @@ fun CatCareScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBac
                 explainer = StreakExplainerSource.Card
             },
         )
+
+        // P5a: after 20:00 while today's care is missing (with the P5b day-off sheet).
+        StreakDangerSection(vm, me, partner, catName)
     }
 
     explainer?.let {
