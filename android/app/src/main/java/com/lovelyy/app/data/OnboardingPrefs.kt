@@ -12,6 +12,7 @@ object OnboardingPrefs {
     private const val KEY_PAIRING_PREFIX = "pairing_started_"
     private const val KEY_NOTIFICATIONS_ASKED = "notifications_asked"
     private const val KEY_STREAK_EXPLAINER_PREFIX = "streak_explainer_seen_"
+    private const val KEY_ITEMS_SEEN_PREFIX = "items_seen_at_"
 
     private fun prefs(context: Context) = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
@@ -39,4 +40,13 @@ object OnboardingPrefs {
 
     fun markStreakExplainerSeen(context: Context, coupleId: String) =
         prefs(context).edit { putBoolean(KEY_STREAK_EXPLAINER_PREFIX + coupleId, true) }
+
+    /**
+     * Up to which item save (CatDoc.itemsAt) Mırmır's first-placement reaction was already shown on this phone
+     * (P7b). Per couple, so each partner sees it once, whoever placed the item.
+     */
+    fun itemsSeenAt(context: Context, coupleId: String): Long = prefs(context).getLong(KEY_ITEMS_SEEN_PREFIX + coupleId, 0L)
+
+    fun markItemsSeen(context: Context, coupleId: String, at: Long) =
+        prefs(context).edit { putLong(KEY_ITEMS_SEEN_PREFIX + coupleId, at) }
 }

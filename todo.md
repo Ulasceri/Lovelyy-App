@@ -13,9 +13,7 @@
 - [ ] Ada ile giriş yapıp Plans ve History ekranlarındaki Türkçe tarihleri (PR #10 sonrası) gözle kontrol et.
 - [ ] Eşleşme ekranındaki hesap penceresini ve hesap silmeyi Google ile giriş yapan bir hesapla da dene.
 - [ ] Kod girme ekranı açılır açılmaz yapılan ilk tuş dokunuşunun bazen algılanmamasını incele.
-- [ ] `assets/items/` içindeki 12 eşya görselini Plus'ın eşya aşamasında uygulamaya bağla (seçim ekranı, anasayfa, widget).
-- [ ] `assets/item-clips/` içindeki 12 eşya klibini seçili eşyaya göre bakım animasyonu olarak uygulamaya bağla.
-- [ ] Eşyaya özel kedi animasyonlarını üret; pilot olarak tüy ile oyun klibinden başla.
+- [ ] Mırmır'ın eşyalarını ana ekran widget'larında da göster (tasarımı gerekir).
 - [ ] Günün sorusunda çevrimdışı yedek yazımın da kayıtlı soruyu koruması gerekiyor (şimdilik forDay yazıyor).
 - [ ] Notlar ekranındaki kendi aramasının da yüklenmemiş eski notları kapsaması gerekiyor (genel arama kapsıyor).
 - [ ] Saati ileri bir telefonun yarım kalmış günün bakım kaydını silmesi sunucu saati olmadan tam çözülemiyor, sonra ele al.

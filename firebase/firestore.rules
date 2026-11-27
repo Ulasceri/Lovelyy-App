@@ -67,7 +67,8 @@ service cloud.firestore {
     // ---------- shared feature documents (field names match the Android repositories) ----------
     function validCat(d) {
       return d.keys().hasOnly(['name', 'hunger', 'thirst', 'energy', 'love', 'sleepingSince',
-                               'lastAction', 'recent', 'streak', 'wearing'])
+                               'lastAction', 'recent', 'streak', 'wearing', 'items', 'itemsAt', 'itemsNew',
+                               'sleepRefillMin'])
         && optStr(d.get('name', null), 20)
         && optStr(d.get('wearing', null), 32)
         && d.get('hunger', {}) is map && d.get('thirst', {}) is map
@@ -75,6 +76,37 @@ service cloud.firestore {
         && d.get('streak', {}) is map
         && (d.get('lastAction', null) == null || d.lastAction is map)
         && d.get('recent', []) is list && d.get('recent', []).size() <= 10;
+    }
+    // Mırmır's items (CatItems / CatItemRules), inside cat/main. Every slot holds one of its own models; the free
+    // ("sade") model of each slot is open to everyone, the others need an active Plus when they are newly chosen
+    // (an already stored choice may stay after Plus ends; the app then shows the free model). sleepRefillMin is the
+    // Plus bed's faster sleep (45 min), set when the cat lies down. d = new doc, o = old doc (or {}).
+    function plusItem(id) {
+      return id in ['mama_balik_tabagi', 'mama_sut', 'su_cesme', 'oyuncak_fare', 'oyuncak_tuy', 'oyuncak_tirmalama',
+                    'yatak_kutu', 'yatak_sepet'];
+    }
+    function validItemMap(i) {
+      return i is map && i.keys().hasOnly(['feed', 'water', 'play', 'sleep'])
+        && i.get('feed', 'mama_sade') in ['mama_sade', 'mama_balik_tabagi', 'mama_sut']
+        && i.get('water', 'su_sade') in ['su_sade', 'su_cesme']
+        && i.get('play', 'oyuncak_yumak') in ['oyuncak_yumak', 'oyuncak_fare', 'oyuncak_tuy', 'oyuncak_tirmalama']
+        && i.get('sleep', 'yatak_minder') in ['yatak_minder', 'yatak_kutu', 'yatak_sepet'];
+    }
+    function noNewPlusItems(i, o) {
+      return (!plusItem(i.get('feed', '')) || i.get('feed', '') == o.get('feed', ''))
+        && (!plusItem(i.get('water', '')) || i.get('water', '') == o.get('water', ''))
+        && (!plusItem(i.get('play', '')) || i.get('play', '') == o.get('play', ''))
+        && (!plusItem(i.get('sleep', '')) || i.get('sleep', '') == o.get('sleep', ''));
+    }
+    function validItems(d, o, plus) {
+      let i = d.get('items', null);
+      let oi = o.get('items', null);
+      let r = d.get('sleepRefillMin', null);
+      return (i == null || (validItemMap(i) && (plus || noNewPlusItems(i, oi == null ? {} : oi))))
+        && (d.get('itemsAt', null) == null || d.itemsAt is timestamp)
+        && (d.get('itemsNew', null) == null
+            || (d.itemsNew is string && d.itemsNew.size() <= 32 && d.itemsNew.matches('^[a-z_]+$')))
+        && (r == null || r == 60 || (r == 45 && (plus || r == o.get('sleepRefillMin', null))));
     }
     // "2026-11" for a timestamp (UTC), to check a day-off month against the server clock.
     function monthOf(t) {
@@ -410,7 +442,8 @@ service cloud.firestore {
         allow create, update: if openCouple() && docId == 'main' && validCat(request.resource.data)
           && validStreak(request.resource.data.get('streak', {}),
                          resource == null ? {} : resource.data.get('streak', {}),
-                         plusActive());
+                         plusActive())
+          && validItems(request.resource.data, resource == null ? {} : resource.data, plusActive());
       }
 
       // signals/{auto} (SignalRepository.send): heartbeat, nudge and "I did something" notices.

@@ -56,6 +56,8 @@ arrive.
 | `hunger`, `thirst`, `energy`, `love` | `{level 0..100, at}`: the level at time `at` |
 | `sleepingSince` | set while asleep; energy refills, the cat wakes up by itself when full |
 | `lastAction`, `recent` | who did what ("Deniz besledi"), last 10 |
+| `items`, `itemsAt`, `itemsNew` | Mırmır's items (P7): `{feed, water, play, sleep}` → item id (`CatItems`), when they were last saved, and the item that save placed for the first time (Mırmır's reaction) |
+| `sleepRefillMin` | 45 while asleep in a Plus bed (fixed at bedtime), else absent = 60 minutes from empty to full |
 | `streak` | shared care streak: `count`, `best`, `lastCompleteDay`, `careDay`, `careBy`, and the Plus streak protection: `freezeMonth` (`yyyy-MM`), `freezeUsed` (0..2 in that month), `freezeDays` and `repairDays` (protected days, last 6 kept), `brokenCount` / `brokenLast` (the streak that just broke, for the make-up) |
 
 No server code: needs decay with time, so every phone computes the current levels from the
@@ -116,6 +118,29 @@ streak's "today" is the couple's day at Plus time (`PlusClock`, so the P8 debug 
   (paywall `lock_streak_repair`, reopened after the purchase) and not on a day the trial-end paywall already
   opened. If both partners already cared today the streak restarted at 1, so the make-up gives `brokenCount + 1`.
   Two missed days can never be made up.
+
+### Mırmır's items (Lovelyy Plus, boards E1, P7a, P7b)
+
+`data/CatItems.kt` (`CatItemsTest`): one item per care action, 12 in all (food 3, water 2, toy 4, bed 3). The plain
+("sade") model of each is free, the rest are Plus models with a light bonus (Ulaş, 2026-11-27): food +10 fullness
+(40 → 50), water 45 → 55, toy love 25 → 35, and the bed fills energy in 45 minutes instead of 60
+(`CatItemRules`, applied in `CatRules.apply(plus = …)`). Nothing else changes for free couples (decay, caps, streak).
+Without Plus a stored Plus model stays stored but falls back to the free one (`CatItems.effective`): free picture,
+free clip, no bonus; it comes back with Plus. firestore.rules `validItems` allow only each slot's own models and
+need `plusActive()` for a newly chosen Plus model or a new 45-minute sleep.
+
+- **P7a** (`ui/cat/CatItemsScreen.kt`): sofa button on Kedi bakımı's top bar. Preview (cat + chosen items), one
+  row per care action with its Plus bonus, "Yerleştir" (`CatRepository.setItems`, a transaction that also stores
+  `itemsNew`). Plus models without Plus: "Plus ile yerleştir" opens the plans (`lock_cat_items`). A save opens Home.
+- **P7b** (`CatSection`): once placed, the items stand on the floor of the cat video (`CatItemsLayer`, two depth
+  rows, app-drawn contact shadows, positions from the board). The item inside the clip that is playing is hidden
+  (`CatClip.slot`). First placement: the item pops in, the happy clip plays and Mırmır's line
+  (`item_love_<id>`) replaces the bubble, once per save on each phone (`OnboardingPrefs.itemsSeenAt`).
+  The "Son bakım" card (`LastCareCard`) under the day counter shows each partner's latest care today.
+- **Clips** (`CatClip`, files in `assets/cat/` from `tools/item-art`): a Plus model plays its own care clip
+  (fish plate, milk, fountain, mouse, feather, scratching post) and the Plus beds their own lie-down / sleeping /
+  wake-up clips (`Bed`). Item clips start and end on the cat with the item in place, so they cross-fade in and out.
+- Not yet: items on the home-screen widgets.
 
 ### Free limits (Lovelyy Plus, board P9)
 

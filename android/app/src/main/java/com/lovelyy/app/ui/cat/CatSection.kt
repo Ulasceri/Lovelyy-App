@@ -1,5 +1,8 @@
 package com.lovelyy.app.ui.cat
 
+import com.lovelyy.app.data.CatItem
+import com.lovelyy.app.data.CatItems
+import com.lovelyy.app.ui.plus.LocalPlus
 import android.os.Build
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.togetherWith
@@ -179,6 +182,12 @@ fun CatSection(me: UserProfile, couple: Couple?, partner: UserProfile?, modifier
     }
 
     val mood = ui?.levels?.mood
+    val isPlus = LocalPlus.current?.isPlus == true
+    // Mırmır's items (P7b): shown once the couple placed them; without Plus the Plus models fall back to free ones.
+    val placedItems = ui?.doc?.items?.effective(isPlus)
+    val items = placedItems ?: CatItems()
+    val itemsNow by rememberUpdatedState(items)
+    LaunchedEffect(items.sleep) { animator.setBed(Bed.of(items.sleep)) }
     LaunchedEffect(mood) {
         if (mood == null) return@LaunchedEffect
         animator.start(mood) // no-op after the first time
@@ -191,7 +200,7 @@ fun CatSection(me: UserProfile, couple: Couple?, partner: UserProfile?, modifier
         vm.oneTimeEvents.collect { e ->
             when (e) {
                 is CatEvent.PartnerAction -> {
-                    e.action.type.clip()?.let(animator::play)
+                    actionClip(e.action.type, itemsNow)?.let(animator::play)
                     banner = texts(e.action)
                 }
                 is CatEvent.Refused -> banner = refusalTexts(e.reason)
@@ -202,8 +211,26 @@ fun CatSection(me: UserProfile, couple: Couple?, partner: UserProfile?, modifier
                 is CatEvent.StreakMadeUp -> banner = context.resources.getQuantityString(R.plurals.streak_repair_done, e.days, e.days)
                 CatEvent.NudgeSent -> banner = context.getString(R.string.nudge_sent, partnerName)
                 CatEvent.NudgeLimited -> banner = context.getString(R.string.signal_limit)
+                is CatEvent.ItemsSaved -> Unit
             }
         }
+    }
+
+    // First placement (P7b): the new item lands with a bounce, Mırmır plays her happy clip and says she loves it,
+    // once per save on each phone (the partner sees it too). Waits until the video is on screen.
+    var reaction by remember { mutableStateOf<String?>(null) }
+    var popItem by remember { mutableStateOf<CatItem?>(null) }
+    LaunchedEffect(ui?.doc?.itemsAt, animator.started) {
+        val d = ui?.doc ?: return@LaunchedEffect
+        if (!animator.started) return@LaunchedEffect
+        val item = vm.pendingItemReaction(d) ?: return@LaunchedEffect
+        vm.markItemReactionSeen(d)
+        popItem = item
+        animator.play(CatClip.Happy)
+        view.performHapticFeedback(confirmHaptic())
+        reaction = context.getString(item.reactionRes)
+        delay(REACTION_MS)
+        reaction = null
     }
     LaunchedEffect(banner) {
         if (banner != null) {
@@ -219,9 +246,9 @@ fun CatSection(me: UserProfile, couple: Couple?, partner: UserProfile?, modifier
             view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
             return
         }
-        type.clip()?.let(animator::play)
+        actionClip(type, items)?.let(animator::play)
         view.performHapticFeedback(confirmHaptic())
-        vm.act(me, members, type, strokes)
+        vm.act(me, members, type, strokes, plus = isPlus)
     }
 
     val today = streakToday()
@@ -244,6 +271,9 @@ fun CatSection(me: UserProfile, couple: Couple?, partner: UserProfile?, modifier
                     explainer = StreakExplainerSource.Chip
                 },
             )
+            val itemsOverlay: (@Composable () -> Unit)? = placedItems?.let { placed ->
+                @Composable { CatItemsLayer(placed, Modifier.fillMaxSize(), hidden = animator.currentClip?.slot, pop = popItem) }
+            }
             BoxWithConstraints(Modifier.fillMaxWidth()) {
                 CatStage(
                     animator = animator,
@@ -258,11 +288,12 @@ fun CatSection(me: UserProfile, couple: Couple?, partner: UserProfile?, modifier
                     },
                     onPetting = { animator.setPetting(it) },
                     onStroke = { view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK) },
-                    onPetDone = { strokes -> if (strokes > 0) vm.act(me, members, CatActionType.Pet, strokes) },
+                    onPetDone = { strokes -> if (strokes > 0) vm.act(me, members, CatActionType.Pet, strokes, plus = isPlus) },
                     modifier = Modifier.height(CatCardGeometry.videoHeightDp(maxWidth.value).dp),
+                    overlay = itemsOverlay,
                 )
             }
-            CatSpeech(bubble = mood?.let { stringResource(it.bubbleRes()) }, banner = banner)
+            CatSpeech(bubble = reaction ?: mood?.let { stringResource(it.bubbleRes()) }, banner = banner)
             NeedsRow(ui?.levels)
         }
 
@@ -276,16 +307,6 @@ fun CatSection(me: UserProfile, couple: Couple?, partner: UserProfile?, modifier
             onSleepToggle = { act(if (ui?.levels?.sleeping == true) CatActionType.Wake else CatActionType.Sleep) },
             modifier = Modifier.padding(top = 18.dp),
         )
-
-        ui?.let { u ->
-            StatusLine(
-                streak = u.doc.streak,
-                me = me,
-                partnerUid = partner?.uid,
-                partnerName = partnerName,
-                modifier = Modifier.padding(top = 14.dp),
-            )
-        }
     }
 
     explainer?.let {
@@ -307,25 +328,19 @@ fun CatSection(me: UserProfile, couple: Couple?, partner: UserProfile?, modifier
             onDismiss = { naming = false },
             onSave = { n ->
                 naming = false
-                vm.act(me, members, CatActionType.Name, name = n)
+                vm.act(me, members, CatActionType.Name, name = n, plus = isPlus)
                 animator.play(CatClip.Happy)
             },
         )
     }
 }
 
+/** How long Mırmır's first-placement line stays in the bubble. */
+private const val REACTION_MS = 4_500L
+
 internal fun confirmHaptic() =
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) HapticFeedbackConstants.CONFIRM else HapticFeedbackConstants.KEYBOARD_TAP
 
-/** The animation that shows an action. Sleep/Wake are shown by the mood itself. */
-internal fun CatActionType.clip(): CatClip? = when (this) {
-    CatActionType.Feed -> CatClip.Eating
-    CatActionType.Water -> CatClip.Drinking
-    CatActionType.Play -> CatClip.Playing
-    CatActionType.Pet -> CatClip.Petted
-    CatActionType.Name -> CatClip.Happy
-    CatActionType.Sleep, CatActionType.Wake -> null
-}
 
 // ---------- the stage ----------
 
@@ -349,6 +364,8 @@ internal fun CatStage(
     shape: Shape = RectangleShape,
     /** Which part of the square video stays visible when the stage is wider than tall (0.5 = middle). */
     cropBias: Float = 0.5f,
+    /** Drawn over the video in the stage's own size (Mırmır's items on Home); it takes no touches. */
+    overlay: (@Composable () -> Unit)? = null,
 ) {
     val hearts = remember { mutableStateListOf<Heart>() }
     val density = LocalDensity.current
@@ -432,6 +449,7 @@ internal fun CatStage(
             }
         }
 
+        overlay?.invoke()
         hearts.forEach { h -> key(h.id) { FloatingHeart(h) { hearts.remove(h) } } }
     }
 }
@@ -761,37 +779,6 @@ private fun CareButton(icon: ImageVector, label: String, enabled: Boolean, highl
         ) { Icon(icon, null, Modifier.size(28.dp), tint = Brown) }
         Text(label, fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Brown, maxLines = 1)
     }
-}
-
-// ---------- last action + streak ----------
-
-/** "Elif 2 sa önce su verdi · Sen bugün ilgilendin ✓" */
-@Composable
-private fun StatusLine(
-    streak: CareStreak,
-    me: UserProfile,
-    partnerUid: String?,
-    partnerName: String,
-    modifier: Modifier = Modifier,
-) {
-    val today = streakToday()
-    val parts = buildList {
-        val meDone = streak.caredToday(me.uid, today)
-        val partnerDone = partnerUid != null && streak.caredToday(partnerUid, today)
-        add(
-            when {
-                meDone && partnerDone -> stringResource(R.string.cat_both_cared)
-                meDone -> stringResource(R.string.cat_waiting_partner, partnerName)
-                else -> stringResource(R.string.cat_your_turn)
-            },
-        )
-    }
-    Text(
-        parts.joinToString("\n"),
-        fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, lineHeight = 19.sp, color = BrownSoft,
-        textAlign = TextAlign.Center,
-        modifier = modifier.fillMaxWidth(),
-    )
 }
 
 /** "Deniz besledi", "Sen oynadın"... */

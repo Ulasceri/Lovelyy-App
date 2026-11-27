@@ -49,6 +49,8 @@ object CatWidget {
             putNeed("energy", doc.energy)
             putNeed("love", doc.love)
             putLong("sleepingSince", doc.sleepingSince ?: 0L)
+            // A Plus bed fills energy faster; the widget must wake the cat at the same time as the app.
+            putInt("sleepRefillMin", doc.sleepRefillMin ?: 0)
             putInt("streak.count", doc.streak.count)
             putString("streak.last", doc.streak.lastCompleteDay)
             // Days off and made-up days keep the streak alive (StreakProtection), so the widget needs them too.
@@ -74,6 +76,7 @@ object CatWidget {
             energy = need("energy"),
             love = need("love"),
             sleepingSince = p.getLong("sleepingSince", 0L).takeIf { it > 0 },
+            sleepRefillMin = p.getInt("sleepRefillMin", 0).takeIf { it > 0 },
             streak = CareStreak(
                 count = p.getInt("streak.count", 0),
                 lastCompleteDay = p.getString("streak.last", null),

@@ -48,13 +48,14 @@ class CatRepository(private val db: FirebaseFirestore) {
         strokes: Int = 0,
         newName: String? = null,
         dayNow: Long = System.currentTimeMillis(),
+        plus: Boolean = false,
     ): CatDoc? {
         val ref = catRef(coupleId)
         return db.runTransaction { tx ->
             val snap = tx.get(ref)
             val doc = if (snap.exists()) snap.toCatDoc() else CatDoc()
             val now = System.currentTimeMillis()
-            val changed = CatRules.apply(doc, type, now, strokes) ?: return@runTransaction null
+            val changed = CatRules.apply(doc, type, now, strokes, plus) ?: return@runTransaction null
             val action = CatAction(type, me.uid, me.displayName, now)
             val result = changed.copy(
                 name = newName?.trim()?.take(MAX_NAME)?.takeIf { it.isNotEmpty() } ?: changed.name,
@@ -86,6 +87,27 @@ class CatRepository(private val db: FirebaseFirestore) {
         }.await()
     }
 
+    /**
+     * Saves Mırmır's items (P7a "Yerleştir"). Only the item fields change, in a transaction on the latest cat so
+     * the reaction item is computed against what is really stored. firestore.rules check that Plus models need
+     * an active Plus. Returns the item Mırmır reacts to (null when nothing new was placed).
+     */
+    suspend fun setItems(coupleId: String, items: CatItems): CatItem? {
+        val ref = catRef(coupleId)
+        return db.runTransaction { tx ->
+            val snap = tx.get(ref)
+            val before = if (snap.exists()) snap.toCatDoc().items else null
+            val placed = CatItemRules.newlyPlaced(before, items)
+            val fields = mapOf(
+                "items" to items.toMap(),
+                "itemsAt" to System.currentTimeMillis().ts(),
+                "itemsNew" to placed?.id,
+            )
+            if (snap.exists()) tx.update(ref, fields) else tx.set(ref, CatDoc().toMap() + fields)
+            placed
+        }.await()
+    }
+
     companion object {
         const val MAX_NAME = 20
         const val MAX_RECENT = 10
@@ -110,6 +132,10 @@ internal fun CatDoc.toMap(): Map<String, Any?> = mapOf(
     "lastAction" to lastAction?.toMap(),
     "recent" to recent.map { it.toMap() },
     "streak" to streak.toMap(),
+    "items" to items?.toMap(),
+    "itemsAt" to itemsAt?.ts(),
+    "itemsNew" to itemsNew?.id,
+    "sleepRefillMin" to sleepRefillMin,
 )
 
 /** Field names match firestore.rules `validStreak`. */
@@ -174,5 +200,9 @@ internal fun DocumentSnapshot.toCatDoc(): CatDoc {
             brokenCount = (s?.get("brokenCount") as? Number)?.toInt() ?: 0,
             brokenLast = s?.get("brokenLast") as? String,
         ),
+        items = CatItems.fromMap(get("items") as? Map<*, *>),
+        itemsAt = get("itemsAt").millis(),
+        itemsNew = CatItem.of(getString("itemsNew")),
+        sleepRefillMin = (get("sleepRefillMin") as? Number)?.toInt(),
     )
 }

@@ -88,6 +88,9 @@ class CatAnimator(private val context: Context, private val scope: CoroutineScop
     private val queue = ArrayDeque<CatClip>()
     private var petting = false
 
+    /** The bed the cat sleeps in (Mırmır's items). A change shows on the next sleep clip. */
+    private var bed: Bed = Bed.Minder
+
     /** Waiting for the back layer to be ready, then switch. */
     private var pendingSwitch: Switch? = null
     private var fadeJob: Job? = null
@@ -108,7 +111,7 @@ class CatAnimator(private val context: Context, private val scope: CoroutineScop
     fun start(initialMood: CatMood) {
         if (front.clip != null) return
         mood = initialMood
-        front.load(moodClip(mood, 0))
+        front.load(moodClip(mood, 0, bed))
         front.player.playWhenReady = !paused
     }
 
@@ -119,8 +122,8 @@ class CatAnimator(private val context: Context, private val scope: CoroutineScop
         moodLoops = 0
         // Falling asleep / waking up should start right away, not after a full idle loop.
         val f = front.clip
-        if (f != null && !f.isBridge && (newMood == CatMood.Sleeping) != (f.end == Pose.Sleep)) {
-            interrupt(bridgeTo(f.end, moodClip(newMood, 0)))
+        if (f != null && !f.isBridge && (newMood == CatMood.Sleeping) != f.end.isSleep) {
+            interrupt(bridgeTo(f.end, moodClip(newMood, 0, bed)))
         } else {
             prepareNext()
         }
@@ -139,11 +142,18 @@ class CatAnimator(private val context: Context, private val scope: CoroutineScop
         interrupt(first)
     }
 
+    /** The couple placed another bed: the next sleep clips use it. */
+    fun setBed(newBed: Bed) {
+        if (newBed == bed) return
+        bed = newBed
+        if (front.clip != null) prepareNext()
+    }
+
     /** While a finger strokes the cat, the "petted" clip keeps playing. */
     fun setPetting(on: Boolean) {
         if (on == petting) return
         petting = on
-        if (on && currentPose != Pose.Sleep && front.clip != CatClip.Petted) play(CatClip.Petted) else prepareNext()
+        if (on && currentPose?.isSleep != true && front.clip != CatClip.Petted) play(CatClip.Petted) else prepareNext()
     }
 
     fun pause() {
@@ -168,8 +178,8 @@ class CatAnimator(private val context: Context, private val scope: CoroutineScop
         val after = front.clip?.end
         val target = when {
             queue.isNotEmpty() -> queue.first()
-            petting && after != Pose.Sleep -> CatClip.Petted
-            else -> moodClip(mood, moodLoops)
+            petting && after?.isSleep != true -> CatClip.Petted
+            else -> moodClip(mood, moodLoops, bed)
         }
         return bridgeTo(after, target)
     }
@@ -264,7 +274,7 @@ class CatAnimator(private val context: Context, private val scope: CoroutineScop
     private fun onClipStarted(clip: CatClip?) {
         clip ?: return
         if (queue.firstOrNull() == clip) queue.removeFirst()
-        if (clip == moodClip(mood, moodLoops)) moodLoops++
+        if (clip == moodClip(mood, moodLoops, bed)) moodLoops++
     }
 
     companion object {

@@ -7,6 +7,9 @@ import com.lovelyy.app.analytics.AnalyticsEvent
 import com.lovelyy.app.data.CatAction
 import com.lovelyy.app.data.CatActionType
 import com.lovelyy.app.data.CatDoc
+import com.lovelyy.app.data.CatItem
+import com.lovelyy.app.data.CatItemRules
+import com.lovelyy.app.data.CatItems
 import com.lovelyy.app.data.CatLevels
 import com.lovelyy.app.data.CatOffline
 import com.lovelyy.app.data.CatRules
@@ -51,6 +54,9 @@ sealed interface CatEvent {
     /** Streak protection (P5b/P5c) was written. */
     data class DayOffTaken(val days: Int) : CatEvent
     data class StreakMadeUp(val days: Int) : CatEvent
+
+    /** P7a: the items were saved; [placed] is the item Mırmır reacts to on Home (null: nothing new). */
+    data class ItemsSaved(val placed: CatItem?) : CatEvent
 
     /** The danger card's nudge reached the partner, or hit the signal limit. */
     data object NudgeSent : CatEvent
@@ -126,11 +132,12 @@ class CatViewModel(private val app: LovelyyApplication, private val coupleId: St
     fun canDo(type: CatActionType): CatRules.Refusal? =
         doc.value?.let { CatRules.refusal(it, type, System.currentTimeMillis()) }
 
-    fun act(me: UserProfile, members: List<String>, type: CatActionType, strokes: Int = 0, name: String? = null) {
+    /** [plus]: the couple has Plus right now, so Plus items give their bonus (firestore.rules don't check levels). */
+    fun act(me: UserProfile, members: List<String>, type: CatActionType, strokes: Int = 0, name: String? = null, plus: Boolean = false) {
         canDo(type)?.let { r -> viewModelScope.launch { events.send(CatEvent.Refused(r)) }; return }
         viewModelScope.launch {
             try {
-                withTimeout(CatOffline.ACTION_TIMEOUT_MS) { repo.act(coupleId, me, members, type, strokes, name, dayNow = streakNow()) }
+                withTimeout(CatOffline.ACTION_TIMEOUT_MS) { repo.act(coupleId, me, members, type, strokes, name, dayNow = streakNow(), plus = plus) }
                 analyticsEvent(type, strokes)?.let(Telemetry::track)
             } catch (e: Exception) {
                 if (e is CancellationException && !CatOffline.isOffline(e)) throw e
@@ -143,6 +150,42 @@ class CatViewModel(private val app: LovelyyApplication, private val coupleId: St
                 }
             }
         }
+    }
+
+    // ---------- Mırmır's items (P7a, P7b) ----------
+
+    /** P7a "Yerleştir": saves the items. The caller already checked Plus for Plus models (rules check it again). */
+    fun saveItems(items: CatItems) {
+        viewModelScope.launch {
+            try {
+                val placed = withTimeout(CatOffline.ACTION_TIMEOUT_MS) { repo.setItems(coupleId, items) }
+                Telemetry.track(AnalyticsEvent.CatItemsSaved(items.all.count { it.plus }, placed?.id ?: "none"))
+                events.send(CatEvent.ItemsSaved(placed))
+            } catch (e: Exception) {
+                if (e is CancellationException && !CatOffline.isOffline(e)) throw e
+                if (CatOffline.isOffline(e)) {
+                    Timber.w(e, "Saving the cat items failed: offline")
+                    events.send(CatEvent.Offline)
+                } else {
+                    Timber.e(e, "Saving the cat items failed")
+                    events.send(CatEvent.Failed)
+                }
+            }
+        }
+    }
+
+    /**
+     * The item Mırmır should react to on this phone now (P7b: happy clip + "Yeni yatağımı çok sevdim"), or null.
+     * Shown once per save on each phone ([markItemReactionSeen]), for the partner too.
+     */
+    fun pendingItemReaction(d: CatDoc?): CatItem? {
+        d ?: return null
+        val seen = OnboardingPrefs.itemsSeenAt(app, coupleId)
+        return d.itemsNew.takeIf { CatItemRules.shouldReact(d.itemsAt, it, seen, System.currentTimeMillis()) }
+    }
+
+    fun markItemReactionSeen(d: CatDoc) {
+        d.itemsAt?.let { OnboardingPrefs.markItemsSeen(app, coupleId, it) }
     }
 
     /**

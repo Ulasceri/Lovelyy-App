@@ -29,6 +29,8 @@ object InnerScreens {
     const val NOTES = "notes"
     const val PLANS = "plans"
     const val CAT_CARE = "cat_care"
+    /** P7a, Mırmır's items (from Kedi bakımı). */
+    const val CAT_ITEMS = "cat_items"
     const val PROFILE = "profile"
     const val DISTANCE = "distance"
     const val DREAMS = "dreams"
