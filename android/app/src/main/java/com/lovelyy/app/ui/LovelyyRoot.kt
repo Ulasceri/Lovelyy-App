@@ -10,11 +10,14 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lovelyy.app.LovelyyApplication
 import com.lovelyy.app.ui.auth.LoginScreen
@@ -39,26 +42,40 @@ fun LovelyyRoot() {
             transitionSpec = { fadeIn() togetherWith fadeOut() },
             label = "root",
         ) { s ->
-            when (s) {
-                AppState.Loading -> LoadingScreen()
-                AppState.FirebaseMissing -> FirebaseSetupScreen()
-                AppState.SignedOut -> LoginScreen()
-                is AppState.NeedsName -> NameScreen(s.me)
-                is AppState.Pairing -> PairingScreen(s.me)
-                is AppState.JustPaired -> PairedFlow(
-                    me = s.me,
-                    coupleId = s.coupleId,
-                    onNotificationAnswer = vm::notificationPrimerAnswered,
-                    onLocationAnswer = vm::locationPrimerAnswered,
-                    onStartTrial = { vm.startTrial(s.coupleId) },
-                    onDone = { vm.finishPairedFlow(s.me.uid) },
-                )
-                is AppState.Home -> HomeScreen(s.me, s.couple, s.partner)
-                is AppState.Failed -> ErrorScreen(s.message)
+            // Screen ViewModels belong to the signed-in account (see AppViewModel.sessionOwner); a screen that is
+            // fading out keeps the store it started with.
+            val owner = remember(s.uid) { vm.sessionOwner() }
+            CompositionLocalProvider(LocalViewModelStoreOwner provides owner) {
+                when (s) {
+                    AppState.Loading -> LoadingScreen()
+                    AppState.FirebaseMissing -> FirebaseSetupScreen()
+                    AppState.SignedOut -> LoginScreen()
+                    is AppState.NeedsName -> NameScreen(s.me)
+                    is AppState.Pairing -> PairingScreen(s.me)
+                    is AppState.JustPaired -> PairedFlow(
+                        me = s.me,
+                        coupleId = s.coupleId,
+                        onNotificationAnswer = vm::notificationPrimerAnswered,
+                        onLocationAnswer = vm::locationPrimerAnswered,
+                        onStartTrial = { vm.startTrial(s.coupleId) },
+                        onDone = { vm.finishPairedFlow(s.me.uid) },
+                    )
+                    is AppState.Home -> HomeScreen(s.me, s.couple, s.partner)
+                    is AppState.Failed -> ErrorScreen(s.message)
+                }
             }
         }
     }
 }
+
+private val AppState.uid: String?
+    get() = when (this) {
+        is AppState.NeedsName -> me.uid
+        is AppState.Pairing -> me.uid
+        is AppState.JustPaired -> me.uid
+        is AppState.Home -> me.uid
+        else -> null
+    }
 
 @Composable
 private fun LoadingScreen() {

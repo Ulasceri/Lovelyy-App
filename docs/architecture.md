@@ -8,7 +8,7 @@ com.lovelyy.app
 ├── MainActivity         edge-to-edge + splash + LovelyyTheme
 ├── data/                Firebase access (AuthRepository, UserRepository, PairingRepository)
 └── ui/
-    ├── AppViewModel     decides which screen to show from auth + Firestore state
+    ├── AppViewModel     decides which screen to show from auth + Firestore state; owns the per-account ViewModelStore for screen ViewModels
     ├── LovelyyRoot      cross-fades between: Setup → Login (Karşılama → intro → form) → Name → Pairing → JustPaired → Home
     ├── theme/           colors, Quicksand typography, rounded shapes
     ├── components/      shared buttons, text field, avatars, beating heart
@@ -63,6 +63,8 @@ stored snapshot and the clock (`data/Cat.kt`, `CatRules`). Actions run in a Fire
 that snapshots all needs at "now" and applies the change, so two partners acting at the same
 moment never lose an update. Rates: hunger empties in 12h, thirst 10h, energy 16h (1h of sleep
 refills it), love 8h. The streak grows by one for each day on which both partners cared.
+A phone with a wrong clock can't undo progress: stored days only move forward (a care from an earlier day
+joins the stored `careDay`), see the `CareStreak` KDoc.
 
 ## Animation (`ui/cat/`)
 
