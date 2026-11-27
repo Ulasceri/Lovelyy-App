@@ -335,10 +335,10 @@ Not: Uygulamanın arayüzü şu an yalnızca Türkçe ([LOCALIZATION.md](LOCALIZ
 |---|---|
 | Yükleme anahtarı + `keystore.properties` (bölüm 1) | Ulaş, PC |
 | SDK 36'yı kur, emülatörde dene, `bundleRelease` (bölüm 2) | Ulaş, PC |
-| Web sitesini yayınla (gizlilik linki) | Ulaş, PC (`npx firebase-tools deploy --only hosting --project lovelyy-native`) |
+| Web sitesini yayınla (gizlilik linki) | Yapıldı (27 Kasım 2026) |
 | Play'de uygulamayı oluştur, AAB yükle (bölüm 3) | Ulaş |
 | SHA'ları Firebase'e ekle, Play Integrity, App Check (bölüm 4) | Ulaş |
-| Uygulama içeriği formları (bölüm 5) + inceleme hesabı | Ulaş (cevaplar burada) |
+| Uygulama içeriği formları (bölüm 5) | Ulaş (cevaplar burada). İnceleme hesapları açıldı: applovelyy+inceleme1@gmail.com ve +inceleme2 (şifre thread mesajında) |
 | Ödeme profili + Plus ürünleri + lisans testçileri (bölüm 6) | Ulaş |
 | Mağaza görselleri | Fable |
 | Kapalı test: en az 12 kişi, 14 gün | Ulaş |
