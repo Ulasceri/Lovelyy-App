@@ -157,15 +157,26 @@ private fun MoodLine(d: MoodDay, mine: Boolean, name: String) {
 fun QuestionHistoryScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onAnswer: () -> Unit) {
     val coupleId = me.coupleId ?: return
     val app = lovelyyApp()
-    val days by remember(coupleId) { app.questionRepository.observeRecent(coupleId, 365).catch { emit(emptyList()) } }.collectAsStateWithLifecycle(null)
+    // The list loads 30 days at a time; the header numbers don't need the whole list: the streak looks at the last
+    // 60 days (more only if it is that long) and "answered together" is counted on the server.
+    val partnerUid = partner?.uid
+    val stats by androidx.compose.runtime.produceState<Pair<Long, Long>?>(null, coupleId, partnerUid) {
+        value = partnerUid?.let { app.questionRepository.bothCount(coupleId, me.uid, it) }
+    }
+    val paged = com.lovelyy.app.ui.components.rememberPaged(
+        coupleId, QUESTION_PAGE_DAYS,
+        hasMore = { loaded, limit -> stats?.let { loaded.size < it.second } ?: (limit < QUESTION_MAX_DAYS) },
+    ) { app.questionRepository.observeRecent(coupleId, it.toLong()) }
+    val days = paged.items
+    val streakDays by remember(coupleId) { app.questionRepository.observeStreakDays(coupleId).catch { emit(emptyList()) } }.collectAsStateWithLifecycle(emptyList())
     val partnerName = partner?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.home_partner_fallback)
     val today = LocalDate.now()
     val list = days.orEmpty().sortedByDescending { it.day }
     val todayQ = list.firstOrNull { it.day == today.toString() }
     // Today is listed once I answered it (until then it's the "Cevapla" card above).
     val past = list.filter { it.answers.isNotEmpty() && (it.day != today.toString() || it.answers.containsKey(me.uid)) }
-    val both = list.count { it.answers.size >= 2 }
-    val streak = QuestionMath.streak(list, today)
+    val both = maxOf(stats?.first?.toInt() ?: 0, list.count { it.answers.size >= 2 })
+    val streak = QuestionMath.streak(streakDays, today)
 
     InnerColumn(spacing = 12) {
         CenteredTopBar(stringResource(R.string.hi_q_title), onBack)
@@ -222,8 +233,19 @@ fun QuestionHistoryScreen(me: UserProfile, partner: UserProfile?, onBack: () -> 
                 )
             }
         }
+        if (paged.canLoadMore) {
+            com.lovelyy.app.ui.components.LoadMoreButton(paged.loadMore, Modifier.align(Alignment.CenterHorizontally).padding(top = 4.dp))
+        }
     }
 }
+
+/** Days of questions per page, and how far back the list goes when the server count is unknown (offline). */
+private const val QUESTION_PAGE_DAYS = 30
+private const val QUESTION_MAX_DAYS = 730
+
+/** Signals per history page (heartbeats are mixed with the other kinds, so the page is a bit larger). */
+private const val HISTORY_PAGE = 50
+private const val WHEEL_PAGE = 30
 
 @Composable
 private fun AnswerBubble(name: String, avatar: Color, bubble: Color, text: String) {
@@ -242,7 +264,9 @@ private fun AnswerBubble(name: String, avatar: Color, bubble: Color, text: Strin
 fun HeartbeatHistoryScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit) {
     val coupleId = me.coupleId ?: return
     val app = lovelyyApp()
-    val signals by remember(coupleId) { app.signalRepository.observeRecent(coupleId, 150).catch { emit(emptyList()) } }.collectAsStateWithLifecycle(null)
+    // One page at a time (each signal is a billed read); all kinds come back, so a page shows fewer than 50 rows.
+    val paged = com.lovelyy.app.ui.components.rememberPaged(coupleId, HISTORY_PAGE) { app.signalRepository.observeRecent(coupleId, it.toLong()) }
+    val signals = paged.items
     val partnerName = partner?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.home_partner_fallback)
     var filter by rememberSaveable { mutableIntStateOf(0) }
     val list = signals.orEmpty()
@@ -281,6 +305,9 @@ fun HeartbeatHistoryScreen(me: UserProfile, partner: UserProfile?, onBack: () ->
                 )
             }
         }
+        if (paged.canLoadMore) {
+            com.lovelyy.app.ui.components.LoadMoreButton(paged.loadMore, Modifier.align(Alignment.CenterHorizontally).padding(top = 4.dp))
+        }
     }
 }
 
@@ -290,7 +317,8 @@ fun HeartbeatHistoryScreen(me: UserProfile, partner: UserProfile?, onBack: () ->
 fun WheelHistoryScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit) {
     val coupleId = me.coupleId ?: return
     val app = lovelyyApp()
-    val log by remember(coupleId) { app.wheelRepository.observeLog(coupleId).catch { emit(emptyList()) } }.collectAsStateWithLifecycle(null)
+    val paged = com.lovelyy.app.ui.components.rememberPaged(coupleId, WHEEL_PAGE) { app.wheelRepository.observeLog(coupleId, it.toLong()) }
+    val log = paged.items
     val partnerName = partner?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.home_partner_fallback)
     val wheels = log.orEmpty().map { it.wheelId to it.label }.distinctBy { it.first }
     var filter by rememberSaveable { mutableStateOf<String?>(null) }
@@ -328,6 +356,9 @@ fun WheelHistoryScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Uni
                     },
                 )
             }
+        }
+        if (paged.canLoadMore) {
+            com.lovelyy.app.ui.components.LoadMoreButton(paged.loadMore, Modifier.align(Alignment.CenterHorizontally).padding(top = 4.dp))
         }
     }
 }

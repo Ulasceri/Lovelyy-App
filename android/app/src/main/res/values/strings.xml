@@ -499,6 +499,7 @@
     <string name="n_pinned">Sabit</string>
     <string name="n_write">Not yaz</string>
     <string name="n_load_more">Daha eski notları göster</string>
+    <string name="list_load_more">Daha eskilerini göster</string>
     <string name="n_empty">Henüz not yok. İlk notu sen yaz.</string>
     <string name="n_today">Bugün %1$s</string>
     <string name="n_yesterday">Dün %1$s</string>

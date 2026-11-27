@@ -65,6 +65,10 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
@@ -75,30 +79,58 @@ import java.time.temporal.ChronoUnit
 
 private const val NOTE_D = "M6 4h12a2 2 0 0 1 2 2v8l-6 6H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z M14 20v-6h6"
 
+/**
+ * Anılar shows previews only, so it listens to small windows (a handful of notes, dreams, letters and drawings)
+ * instead of whole collections: each listed document is a billed read, and the tab is opened often.
+ */
 class MemoriesViewModel(app: LovelyyApplication, coupleId: String) : ViewModel() {
     private fun <T> Flow<T>.state(initial: T): StateFlow<T> =
         catch { Timber.w(it, "Memories source unavailable") }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), initial)
 
-    val notes = app.noteRepository.observe(coupleId).state(emptyList())
+    val notes = app.noteRepository.observe(coupleId, PREVIEW).state(emptyList())
 
-    /** Real note total, asked only when the loaded page is full (null = unknown, shown as "200+"). */
+    /** Real note total, asked only when the preview window is full (null = unknown, shown as "5+"). */
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     val noteTotal: StateFlow<Long?> = notes
-        .map { it.size }
+        .map { list -> list.map { it.id } }
         .distinctUntilChanged()
-        .mapLatest { if (ListLimits.needsCount(it, ListLimits.NOTES_PAGE)) app.noteRepository.count(coupleId) else null }
+        .mapLatest { ids -> if (ListLimits.needsCount(ids.size, PREVIEW)) app.noteRepository.count(coupleId) else null }
         .state(null)
-    val capsules = app.capsuleRepository.observe(coupleId).state(emptyList())
-    val dreams = app.dreamRepository.observe(coupleId).state(emptyList())
-    val saved = app.drawingRepository.observeSaved(coupleId).state(emptyList())
-    val strokes = app.drawingRepository.observe(coupleId).state(emptyList())
+
+    /** The newest letters (for "Son anılar") and every still-sealed one (for the capsule tile). */
+    val capsules = combine(
+        app.capsuleRepository.observe(coupleId, PREVIEW.toLong()),
+        app.capsuleRepository.observeSealed(coupleId, com.lovelyy.app.data.CoupleClock.today()),
+    ) { recent, sealed -> (recent + sealed).distinctBy { it.id }.sortedByDescending { it.at } }
+        .state(emptyList())
+    val dreams = app.dreamRepository.observe(coupleId, DREAMS_PREVIEW).state(emptyList())
+    val saved = app.drawingRepository.observeSaved(coupleId, PREVIEW.toLong()).state(emptyList())
     val presence = app.drawingRepository.observePresence(coupleId).state(emptyMap())
+
+    /**
+     * The canvas preview: a live listener only while someone is drawing right now; otherwise one check against the
+     * local cache (2 reads) instead of re-reading up to 600 strokes each time the tab opens.
+     */
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    val strokes = combine(presence, ticker()) { p, _ -> p.values.any { System.currentTimeMillis() - it < DrawingMath.ACTIVE_MS } }
+        .distinctUntilChanged()
+        .flatMapLatest { live -> if (live) app.drawingRepository.observe(coupleId) else flow { emit(app.drawingRepository.canvasOnce(coupleId)) } }
+        .state(emptyList())
+
+    private fun ticker() = flow { while (true) { emit(Unit); delay(10_000) } }
+
+    companion object {
+        /** Notes, letters and drawings in the previews (the memories list shows up to 5 of each). */
+        const val PREVIEW = 5
+        /** The memories list shows up to 10 dreams. */
+        const val DREAMS_PREVIEW = 10L
+    }
 }
 
 /** "320 not", or "200+ not" while the real total is unknown and the loaded page is full. */
 @Composable
 private fun noteCountText(loaded: Int, total: Long?): String {
-    val label = ListLimits.countLabel(loaded, ListLimits.NOTES_PAGE, total)
+    val label = ListLimits.countLabel(loaded, MemoriesViewModel.PREVIEW, total)
     return if (label.atLeast) stringResource(R.string.mm_notes_count_plus, label.count)
     else pluralStringResource(R.plurals.mm_notes_count, label.count, label.count)
 }

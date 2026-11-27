@@ -73,12 +73,12 @@ import timber.log.Timber
  *    but receives nothing until something wakes it, so the listener alone can lag by minutes.
  *  - Periodic WorkManager work can't run more often than every 15 minutes and Doze may defer it
  *    further (maintenance windows); one-time work with a delay is also only "at the earliest".
- * What we do about it: the listener is started as soon as the process starts (also when a worker
- * starts it) and re-subscribes after transient errors instead of stopping for good (before, one
- * error ended it until the next 15-minute check); and when the app goes to the background we queue
- * a short series of one-time checks (~1, 3, 7 and 15 minutes later, see
- * [SignalWorker.scheduleFollowUps]). Each job run wakes the process, so the listener catches up
- * then too. Only FCM (Blaze plan + a Cloud Function) makes delivery instant.
+ * What we do about it: the listener is started as soon as the app comes on screen and keeps running
+ * while the process lives, re-subscribing after transient errors instead of stopping for good; and
+ * when the app goes to the background we queue a short series of one-time checks (~1, 3, 7 and 15
+ * minutes later, see [SignalWorker.scheduleFollowUps]). Each check asks only for signals newer than
+ * the last one handled (one read when there is nothing new). Only FCM (Blaze plan + a Cloud
+ * Function) makes delivery instant.
  */
 class SignalCenter(private val app: LovelyyApplication) {
 
@@ -102,12 +102,15 @@ class SignalCenter(private val app: LovelyyApplication) {
     fun onAppVisible(visible: Boolean) {
         appVisible = visible
         if (!app.isFirebaseConfigured || savedCouple(app) == null) return
+        if (visible) runCatching { resumeIfSignedIn() }.onFailure { Timber.w(it, "Resuming signal updates failed") }
         if (visible) SignalWorker.cancelFollowUps(app) else SignalWorker.scheduleFollowUps(app)
     }
 
     /**
-     * Process start (Application.onCreate, also when WorkManager starts the process): listen again
-     * for the couple saved last time, so the listener lives as long as the process does.
+     * The app came on screen: listen again for the couple saved last time (before Home is even shown), and
+     * keep listening as long as the process lives, also in the background. Not called when WorkManager or a
+     * widget starts the process: [SignalWorker] does its own cheap check there, and a listener opened in such
+     * a short-lived process re-read the latest signals each time (up to 30 reads per 15-minute check).
      */
     fun resumeIfSignedIn() {
         if (!app.isFirebaseConfigured) return
@@ -163,6 +166,7 @@ class SignalCenter(private val app: LovelyyApplication) {
         private const val K_LEGACY_LAST = "lastSeenAt"
         private const val K_FLOOR = "floor"
         private const val K_SEEN = "seenIds"
+        private const val K_CURSOR = "cursor"
         private const val K_COUPLE = "coupleId"
         private const val K_UID = "uid"
         private const val CHANNEL = "partner_signals"
@@ -185,6 +189,7 @@ class SignalCenter(private val app: LovelyyApplication) {
                     SignalFreshness.State(
                         floor = prefs.getLong(K_FLOOR, 0L),
                         seen = prefs.getString(K_SEEN, null).orEmpty().split(',').filter { it.isNotEmpty() },
+                        cursor = prefs.getLong(K_CURSOR, 0L).takeIf { it > 0L },
                     )
                 } else {
                     null
@@ -195,6 +200,7 @@ class SignalCenter(private val app: LovelyyApplication) {
                 save(context) {
                     putLong(K_FLOOR, decision.state.floor)
                     putString(K_SEEN, decision.state.seen.joinToString(","))
+                    decision.state.cursor?.let { putLong(K_CURSOR, it) }
                     remove(K_LEGACY_LAST)
                 }
                 decision.fresh
@@ -203,6 +209,11 @@ class SignalCenter(private val app: LovelyyApplication) {
             val (single, rest) = SignalFreshness.split(fresh, MAX_NOTIFY)
             if (rest.isNotEmpty()) notifySummary(context, rest)
             single.forEach { notify(context, it) }
+        }
+
+        /** Newest server time of a signal for me already handled; the background check asks only for newer ones. */
+        fun cursor(context: Context): Long? = synchronized(LOCK) {
+            context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getLong(K_CURSOR, 0L).takeIf { it > 0L }
         }
 
         fun savedCouple(context: Context): Pair<String, String>? {
@@ -325,7 +336,8 @@ class SignalWorker(context: Context, params: WorkerParameters) : CoroutineWorker
         val (coupleId, myUid) = SignalCenter.savedCouple(app) ?: return Result.success()
         if (app.signalCenter.appVisible) return Result.success()
         return try {
-            SignalCenter.deliver(app, myUid, app.signalRepository.recent(coupleId))
+            // Only signals newer than the last one handled: usually none, billed as one read (not 20).
+            SignalCenter.deliver(app, myUid, app.signalRepository.recent(coupleId, newerThan = SignalCenter.cursor(app)))
             val step = inputData.getInt(K_STEP, -1)
             if (step >= 0 && !app.signalCenter.appVisible) enqueueFollowUp(app, step + 1)
             Result.success()

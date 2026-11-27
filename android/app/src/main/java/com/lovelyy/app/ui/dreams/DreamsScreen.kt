@@ -82,14 +82,39 @@ import com.lovelyy.app.ui.theme.Quicksand
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
 class DreamsViewModel(private val app: LovelyyApplication, private val coupleId: String) : ViewModel() {
-    val dreams: StateFlow<List<Dream>?> = app.dreamRepository.observe(coupleId)
+    /** How many dreams are loaded (newest first); "load more" grows it. Counts come from the server, not this list. */
+    private val limit = kotlinx.coroutines.flow.MutableStateFlow(PAGE)
+
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    val dreams: StateFlow<List<Dream>?> = limit
+        .flatMapLatest { app.dreamRepository.observe(coupleId, it.toLong()) }
         .catch { Timber.w(it, "Dreams unavailable") }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    /** (all, done) counted on the server, re-asked when the loaded list changes; null until known or offline. */
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    val counts: StateFlow<Pair<Long, Long>?> = dreams
+        .map { list -> list?.map { it.id to (it.doneAt != null) } }
+        .distinctUntilChanged()
+        .mapLatest { key -> if (key == null || !canLoadMore(key.size)) null else app.dreamRepository.counts(coupleId) }
+        .catch { Timber.w(it, "Dream counts unavailable") }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    private fun canLoadMore(loaded: Int) = com.lovelyy.app.data.ListLimits.hasMore(loaded, limit.value)
+    fun canLoadMore(): Boolean = canLoadMore(dreams.value?.size ?: 0)
+    fun loadMore() { limit.value = com.lovelyy.app.data.ListLimits.nextLimit(limit.value, PAGE) }
+
+    /** An open dream left the loaded window: only "deleted" if the server agrees (a new dream may have pushed it out). */
+    suspend fun stillExists(id: String): Boolean = app.dreamRepository.exists(coupleId, id)
 
     /**
      * [opened]: the dream as it was when the editor opened (null for a new one). [onGone]: the partner deleted
@@ -130,6 +155,11 @@ class DreamsViewModel(private val app: LovelyyApplication, private val coupleId:
     fun delete(id: String) {
         viewModelScope.launch { runCatching { app.dreamRepository.delete(coupleId, id) }.onFailure { Timber.w(it, "Deleting the dream failed") } }
     }
+
+    companion object {
+        /** Dreams per page. */
+        const val PAGE = 50
+    }
 }
 
 private class Editing(val dream: Dream?)
@@ -150,7 +180,11 @@ fun DreamsScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onS
     // Opened from Arama on one dream: open it once the list has loaded.
     var opened by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     androidx.compose.runtime.LaunchedEffect(dreams, openId) {
-        if (!opened && openId != null) dreams?.firstOrNull { it.id == openId }?.let { editing = Editing(it); opened = true }
+        if (!opened && openId != null) {
+            val hit = dreams?.firstOrNull { it.id == openId }
+            // An older dream from Arama: load the next page until it shows up.
+            if (hit != null) { editing = Editing(hit); opened = true } else if (dreams != null && vm.canLoadMore()) vm.loadMore()
+        }
     }
 
     // "Emin misin?" before deleting.
@@ -172,12 +206,16 @@ fun DreamsScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onS
     val editingId = editing?.dream?.id
     androidx.compose.runtime.LaunchedEffect(dreams, editingId) {
         val list = dreams
-        if (editingId != null && list != null && list.none { it.id == editingId }) { editing = null; showGone() }
+        if (editingId != null && list != null && list.none { it.id == editingId } && !vm.stillExists(editingId)) { editing = null; showGone() }
     }
 
+    val counts by vm.counts.collectAsStateWithLifecycle()
     val all = dreams.orEmpty()
     val open = all.filter { it.doneAt == null }.sortedByDescending { it.at }
     val done = all.filter { it.doneAt != null }.sortedByDescending { it.doneAt }
+    // Totals: the server's counts while older dreams are not loaded, else the list itself.
+    val allCount = maxOf(counts?.first?.toInt() ?: 0, all.size)
+    val doneCount = maxOf(counts?.second?.toInt() ?: 0, done.size)
 
     Column(
         Modifier
@@ -192,7 +230,7 @@ fun DreamsScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onS
             RoundSvgButton(Kit.SEARCH_D, stringResource(R.string.dr_search), onSearch)
         }
         // P9: over the free limit every dream stays readable, editable and deletable; only a new one needs Plus.
-        val gate = com.lovelyy.app.ui.plus.rememberLimitGate(com.lovelyy.app.data.PlusLimits.Limit.Dreams, dreams?.size ?: 0)
+        val gate = com.lovelyy.app.ui.plus.rememberLimitGate(com.lovelyy.app.data.PlusLimits.Limit.Dreams, allCount)
         com.lovelyy.app.ui.plus.PlusLimitBanner(gate)
 
         // Progress: how many came true.
@@ -204,11 +242,11 @@ fun DreamsScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onS
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Column(Modifier.weight(1f)) {
                     Text(stringResource(R.string.dr_done_together), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Kit.CellLabel)
-                    Text(stringResource(R.string.dr_count, done.size, all.size), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 30.sp, color = Brown)
+                    Text(stringResource(R.string.dr_count, doneCount, allCount), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 30.sp, color = Brown)
                 }
                 CoupleAvatars(me.displayName, partnerName, size = 44.dp, fontSize = 17.sp)
             }
-            val progress by animateFloatAsState(if (all.isEmpty()) 0f else done.size.toFloat() / all.size, label = "dreams")
+            val progress by animateFloatAsState(if (allCount == 0) 0f else doneCount.toFloat() / allCount, label = "dreams")
             Box(Modifier.fillMaxWidth().height(10.dp).clip(RoundedCornerShape(5.dp)).background(Color.White.copy(alpha = 0.8f))) {
                 Box(Modifier.fillMaxWidth(progress).height(10.dp).clip(RoundedCornerShape(5.dp)).background(Kit.Green))
             }
@@ -223,6 +261,9 @@ fun DreamsScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onS
                 onOpen = { editing = Editing(it) })
         }
 
+        if (dreams != null && vm.canLoadMore()) {
+            com.lovelyy.app.ui.components.LoadMoreButton(vm::loadMore, Modifier.align(Alignment.CenterHorizontally))
+        }
         if (gate.blocked) com.lovelyy.app.ui.plus.LockedAddButton(stringResource(R.string.limit_dreams_add), gate::openPlans)
         else MainAction(stringResource(R.string.dr_add), Kit.PLUS_D, { editing = Editing(null) })
     }

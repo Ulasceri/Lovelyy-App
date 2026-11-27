@@ -61,16 +61,24 @@ private val DashLine = Color(0xFFF0E2D8)
 fun LettersScreen(me: UserProfile, partner: UserProfile?, startId: String?, onBack: () -> Unit) {
     val coupleId = me.coupleId ?: return
     val app = lovelyyApp()
-    val capsules by remember(coupleId) { app.capsuleRepository.observe(coupleId).catch { emit(emptyList()) } }
-        .collectAsStateWithLifecycle(null)
-    val partnerName = partner?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.home_partner_fallback)
     val today = LocalDate.now()
-    val all = capsules.orEmpty()
-    val opened = all.filter { it.isOpen(today) }.sortedByDescending { it.openOn }
-    val sealed = all.filter { !it.isOpen(today) }.sortedBy { it.openOn }
+    // Opened letters a page at a time (latest opening first); the sealed ones are few and all needed for "N waiting".
+    val paged = com.lovelyy.app.ui.components.rememberPaged(coupleId, LETTERS_PAGE) { app.capsuleRepository.observeOpened(coupleId, today, it.toLong()) }
+    val capsules = paged.items
+    val sealedList by remember(coupleId) { app.capsuleRepository.observeSealed(coupleId, today).catch { emit(emptyList()) } }
+        .collectAsStateWithLifecycle(emptyList())
+    val openedTotal by androidx.compose.runtime.produceState<Long?>(null, coupleId, capsules?.size, paged.canLoadMore) {
+        value = if (paged.canLoadMore) app.capsuleRepository.openedCount(coupleId, today) else null
+    }
+    val partnerName = partner?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.home_partner_fallback)
+    val opened = capsules.orEmpty().filter { it.isOpen(today) }.sortedByDescending { it.openOn }
+    val sealed = sealedList.filter { !it.isOpen(today) }.sortedBy { it.openOn }
+    val openedCount = maxOf(openedTotal?.toInt() ?: 0, opened.size)
 
     var openId by rememberSaveable { mutableStateOf(startId) }
     val reading = opened.firstOrNull { it.id == openId }
+    // An older letter from Arama: load the next page until it shows up.
+    androidx.compose.runtime.LaunchedEffect(openId, capsules) { if (openId != null && capsules != null && reading == null && paged.canLoadMore) paged.loadMore() }
     // Opened straight from search: back leaves the screen; opened from the list: back returns to the list.
     BackHandler(enabled = openId != null && openId != startId) { openId = null }
 
@@ -83,7 +91,7 @@ fun LettersScreen(me: UserProfile, partner: UserProfile?, startId: String?, onBa
         CenteredTopBar(stringResource(R.string.ol_title), onBack)
         if (capsules != null) {
             Text(
-                if (opened.isEmpty()) stringResource(R.string.ol_none) else pluralStringResource(R.plurals.ol_intro, opened.size.toInt(), opened.size),
+                if (opened.isEmpty()) stringResource(R.string.ol_none) else pluralStringResource(R.plurals.ol_intro, openedCount, openedCount),
                 fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, lineHeight = 19.sp, color = SubText,
                 modifier = Modifier.padding(start = 4.dp),
             )
@@ -91,6 +99,9 @@ fun LettersScreen(me: UserProfile, partner: UserProfile?, startId: String?, onBa
         opened.groupBy { it.openOn.year }.forEach { (year, letters) ->
             Text(year.toString(), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Muted, modifier = Modifier.padding(start = 4.dp, top = 4.dp))
             letters.forEach { c -> LetterRow(c, me, partnerName) { openId = c.id } }
+        }
+        if (paged.canLoadMore) {
+            com.lovelyy.app.ui.components.LoadMoreButton(paged.loadMore, Modifier.align(Alignment.CenterHorizontally).padding(top = 4.dp))
         }
         if (capsules != null && opened.isEmpty() && sealed.isEmpty()) EmptyNote(stringResource(R.string.ol_empty))
         sealed.firstOrNull()?.let { next ->
@@ -195,3 +206,6 @@ private fun LetterRead(c: Capsule, me: UserProfile, partnerName: String, onBack:
         }
     }
 }
+
+/** Opened letters per page. */
+private const val LETTERS_PAGE = 30

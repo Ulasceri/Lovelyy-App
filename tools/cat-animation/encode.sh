@@ -15,7 +15,7 @@ for f in "$RAW"/*.mp4; do
   frames=$(ffprobe -v error -count_frames -select_streams v:0 -show_entries stream=nb_read_frames -of csv=p=0 "$f")
   ffmpeg -v error -y -i "$f" -an \
     -vf "trim=end_frame=$((frames - 1)),setpts=N/24/TB,scale=720:720:flags=lanczos,format=yuv420p" \
-    -r 24 -c:v libx264 -profile:v main -preset slow -crf 21 -g 24 -movflags +faststart "$OUT/$n.mp4"
+    -r 24 -c:v libx264 -profile:v main -preset slow -crf 24 -g 24 -movflags +faststart "$OUT/$n.mp4"
   echo "$n: $(du -h "$OUT/$n.mp4" | cut -f1)"
 done
 

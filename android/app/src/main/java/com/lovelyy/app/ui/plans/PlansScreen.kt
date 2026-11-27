@@ -93,6 +93,10 @@ import com.lovelyy.app.ui.theme.Quicksand
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -113,9 +117,35 @@ private const val WHEEL_D = "M12 3.5a8.5 8.5 0 1 1 0 17a8.5 8.5 0 1 1 0-17zM12 3
 private const val BUILT_IN_ANNIVERSARY = "anniversary"
 
 class PlansViewModel(private val app: LovelyyApplication, private val coupleId: String) : ViewModel() {
-    val events: StateFlow<List<CalEvent>?> = app.eventRepository.observe(coupleId)
+    private val month = kotlinx.coroutines.flow.MutableStateFlow(YearMonth.from(com.lovelyy.app.data.CoupleClock.today()))
+
+    /** The month on screen; its plans are loaded for the calendar dots. */
+    fun showMonth(m: YearMonth) { month.value = m }
+
+    /**
+     * What the tab shows, instead of every plan ever: all yearly special days (countdowns, dots in any month), the
+     * next upcoming plans, and the plans of the month on screen.
+     */
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    val events: StateFlow<List<CalEvent>?> = kotlinx.coroutines.flow.combine(
+        app.eventRepository.observeYearly(coupleId),
+        app.eventRepository.observeUpcoming(coupleId, com.lovelyy.app.data.CoupleClock.today()),
+        month.flatMapLatest { m -> app.eventRepository.observeRange(coupleId, m.atDay(1), m.atEndOfMonth()) },
+    ) { yearly, upcoming, inMonth -> (yearly + upcoming + inMonth).distinctBy { it.id } }
         .catch { Timber.w(it, "Calendar unavailable") }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    /** Every plan, counted on the server (the free limit counts them all); re-asked when the shown ones change. */
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    val total: StateFlow<Long?> = events
+        .map { list -> list?.map { it.id }?.toSet() }
+        .distinctUntilChanged()
+        .mapLatest { ids -> if (ids == null) null else app.eventRepository.count(coupleId) }
+        .catch { Timber.w(it, "Plan count unavailable") }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    /** A plan open in the editor left the loaded set: only "deleted" if the server agrees. */
+    suspend fun stillExists(id: String): Boolean = app.eventRepository.exists(coupleId, id)
 
     /**
      * [opened]: the plan as it was when the editor opened (null for a new one). [onGone]: the partner deleted
@@ -172,6 +202,7 @@ fun PlansScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBucke
     val coupleId = couple?.id ?: me.coupleId ?: return
     val vm: PlansViewModel = viewModel(key = "plans-$coupleId") { PlansViewModel(app, coupleId) }
     val stored by vm.events.collectAsStateWithLifecycle()
+    val total by vm.total.collectAsStateWithLifecycle()
     val partnerName = partner?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.home_partner_fallback)
     val today = com.lovelyy.app.ui.coupleToday()
     val anniversaryTitle = stringResource(R.string.p_anniversary)
@@ -186,9 +217,10 @@ fun PlansScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBucke
 
     var monthKey by rememberSaveable { mutableStateOf(YearMonth.from(today).toString()) }
     val month = YearMonth.parse(monthKey)
+    androidx.compose.runtime.LaunchedEffect(month) { vm.showMonth(month) }
     var editing by remember { mutableStateOf<Editing?>(null) }
     // P9: a new plan or special day over the free limit opens the plans; existing ones stay editable.
-    val gate = com.lovelyy.app.ui.plus.rememberLimitGate(com.lovelyy.app.data.PlusLimits.Limit.Events, stored?.size ?: 0)
+    val gate = com.lovelyy.app.ui.plus.rememberLimitGate(com.lovelyy.app.data.PlusLimits.Limit.Events, maxOf(total?.toInt() ?: 0, stored?.size ?: 0))
     fun startNew(date: LocalDate) = gate.tryAdd { editing = Editing(null, date) }
 
     // "Emin misin?" before deleting.
@@ -321,7 +353,7 @@ fun PlansScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBucke
     val editingId = editing?.event?.takeIf { !it.builtIn }?.id
     androidx.compose.runtime.LaunchedEffect(stored, editingId) {
         val list = stored
-        if (editingId != null && list != null && list.none { it.id == editingId }) { editing = null; showGone() }
+        if (editingId != null && list != null && list.none { it.id == editingId } && !vm.stillExists(editingId)) { editing = null; showGone() }
     }
 
     // The partner changed the plan while it was open here: ask before overwriting their version.

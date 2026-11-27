@@ -21,7 +21,7 @@ python generate.py keys.json raw/ playing         # or just one
 - Clips: `fal-ai/kling-video/v2.5-turbo/pro/image-to-video` with `image_url` = start pose and
   `tail_image_url` = end pose. Every clip starting and ending on a key pose is what makes the loops
   and transitions seamless in the app. Prompts live in `clips.json`.
-- `encode.sh` drops each clip's last frame (it repeats the first), scales to 720², H.264 CRF 21.
+- `encode.sh` drops each clip's last frame (it repeats the first), scales to 720², H.264 CRF 24 (about 30% smaller than CRF 21 with no visible difference at this size).
 
 ## `item-art/`: Mırmır's items (fal.ai)
 

@@ -24,7 +24,6 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lovelyy.app.R
 import com.lovelyy.app.data.SavedDrawing
 import com.lovelyy.app.data.UserProfile
@@ -53,7 +52,6 @@ import com.lovelyy.app.ui.theme.Mint
 import com.lovelyy.app.ui.theme.Peach
 import com.lovelyy.app.ui.theme.Quicksand
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.time.format.DateTimeFormatter
@@ -71,12 +69,20 @@ private val LONG_DAY: DateTimeFormatter get() = AppLocale.formatter("dMMMMyEEEE"
 fun DrawingsScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onNew: () -> Unit) {
     val coupleId = me.coupleId ?: return
     val app = lovelyyApp()
-    val drawings by remember(coupleId) { app.drawingRepository.observeSaved(coupleId).catch { emit(emptyList()) } }
-        .collectAsStateWithLifecycle(null)
+    // Saved drawings are big documents (every stroke): load a page at a time, count the rest on the server.
+    val paged = com.lovelyy.app.ui.components.rememberPaged(coupleId, GALLERY_PAGE) { app.drawingRepository.observeSaved(coupleId, it.toLong()) }
+    val drawings = paged.items
+    val total by androidx.compose.runtime.produceState<Int?>(null, coupleId, drawings?.map { it.id }) {
+        val loaded = drawings ?: return@produceState
+        value = if (paged.canLoadMore) app.drawingRepository.savedCount(coupleId)?.toInt() ?: loaded.size else loaded.size
+    }
     val partnerName = partner?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.home_partner_fallback)
     var openId by rememberSaveable { mutableStateOf<String?>(null) }
     val list = drawings.orEmpty()
     val open = list.indexOfFirst { it.id == openId }.takeIf { it >= 0 }
+    val count = maxOf(total ?: list.size, list.size)
+    // Reading the oldest loaded drawing: load the next page so "older" keeps working.
+    LaunchedEffect(open, list.size) { if (open != null && open == list.lastIndex && paged.canLoadMore) paged.loadMore() }
 
     BackHandler(enabled = openId != null) { openId = null }
     // The open drawing was deleted (here or on the partner's phone): back to the grid.
@@ -90,11 +96,11 @@ fun DrawingsScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, o
     InnerColumn(spacing = 12) {
         CenteredTopBar(stringResource(R.string.dg_title), onBack)
         // P9: every saved drawing stays here; only saving more needs Plus.
-        com.lovelyy.app.ui.plus.PlusLimitBanner(com.lovelyy.app.ui.plus.rememberLimitGate(com.lovelyy.app.data.PlusLimits.Limit.Drawings, list.size))
+        com.lovelyy.app.ui.plus.PlusLimitBanner(com.lovelyy.app.ui.plus.rememberLimitGate(com.lovelyy.app.data.PlusLimits.Limit.Drawings, count))
         if (drawings != null) {
             Text(
                 buildAnnotatedString {
-                    withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = Brown)) { append(pluralStringResource(R.plurals.dg_count, list.size.toInt(), list.size)) }
+                    withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = Brown)) { append(pluralStringResource(R.plurals.dg_count, count, count)) }
                     append(" · ")
                     append(stringResource(R.string.dg_sub))
                 },
@@ -108,10 +114,16 @@ fun DrawingsScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, o
                 if (row.size == 1) Spacer(Modifier.weight(1f))
             }
         }
+        if (paged.canLoadMore) {
+            com.lovelyy.app.ui.components.LoadMoreButton(paged.loadMore, Modifier.align(Alignment.CenterHorizontally))
+        }
         Spacer(Modifier.height(4.dp))
         MainAction(stringResource(R.string.dg_new), Kit.PENCIL_D, onNew, Modifier.fillMaxWidth())
     }
 }
+
+/** Saved drawings per gallery page (two-column grid). */
+private const val GALLERY_PAGE = 12
 
 @Composable
 private fun DrawingTile(d: SavedDrawing, me: UserProfile, partnerName: String, modifier: Modifier, onClick: () -> Unit) {

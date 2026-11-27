@@ -46,9 +46,24 @@ class CapsuleRepository(private val db: FirebaseFirestore) {
         capsules(coupleId).document(id).delete().await()
     }
 
-    /** Newest 200 letters only; counts derived from this list are "at most 200" (a couple writes a few per year). */
-    fun observe(coupleId: String): Flow<List<Capsule>> = callbackFlow {
-        val reg = capsules(coupleId).orderBy("at", Query.Direction.DESCENDING).limit(200).addSnapshotListener { snap, err ->
+    /** Newest [limit] letters (200 by default; counts derived from that list are "at most 200", a couple writes a few per year). */
+    fun observe(coupleId: String, limit: Long = 200): Flow<List<Capsule>> =
+        observeQuery(capsules(coupleId).orderBy("at", Query.Direction.DESCENDING).limit(limit))
+
+    /** Letters still sealed after [today] (openOn is an ISO date, so a string range works on a single-field index). */
+    fun observeSealed(coupleId: String, today: LocalDate): Flow<List<Capsule>> =
+        observeQuery(capsules(coupleId).whereGreaterThan("openOn", today.toString()).limit(200))
+
+    /** Letters whose day has come (openOn <= [today]), the latest opening first, [limit] at a time. */
+    fun observeOpened(coupleId: String, today: LocalDate, limit: Long): Flow<List<Capsule>> =
+        observeQuery(capsules(coupleId).whereLessThanOrEqualTo("openOn", today.toString()).orderBy("openOn", Query.Direction.DESCENDING).limit(limit))
+
+    /** How many letters are open by [today], counted on the server; null offline. */
+    suspend fun openedCount(coupleId: String, today: LocalDate): Long? =
+        capsules(coupleId).whereLessThanOrEqualTo("openOn", today.toString()).countOrNull()
+
+    private fun observeQuery(query: Query): Flow<List<Capsule>> = callbackFlow {
+        val reg = query.addSnapshotListener { snap, err ->
             if (err != null) {
                 close(err)
             } else if (snap != null) {

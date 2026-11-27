@@ -38,8 +38,8 @@ class LovelyyApplication : Application() {
         com.lovelyy.app.data.CoupleClock.init(this)
         // Server time learned last time (unless the phone restarted since), see TrustedClock.
         com.lovelyy.app.data.TrustedClock.init(this)
-        // Partner signals: listen from process start, not only once Home is shown (see SignalCenter).
-        if (isFirebaseConfigured) runCatching { signalCenter.resumeIfSignedIn() }.onFailure { timber.log.Timber.w(it, "Resuming signal updates failed") }
+        // Partner signals: the listener starts when the app comes on screen (SignalCenter.onAppVisible), not here,
+        // so a process started by WorkManager or a widget doesn't re-read the latest signals (see SignalWorker).
     }
 
     /** A language change swaps the resources; re-read the questions (same order and size in every language). */

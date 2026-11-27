@@ -81,7 +81,12 @@ object SignalFreshness {
     /** Larger than any query window (30), so a signal still in view is never forgotten. */
     const val MAX_SEEN_IDS = 100
 
-    data class State(val floor: Long, val seen: List<String>)
+    /**
+     * [cursor]: newest server time of a signal for me seen so far (partner-written, so always a real server
+     * time, never a local estimate). The background check only asks for signals newer than it, which costs
+     * one read instead of re-reading the last 20 every 15 minutes. Null until the first signal for me.
+     */
+    data class State(val floor: Long, val seen: List<String>, val cursor: Long? = null)
 
     data class Decision(
         /** New signals for me, oldest first. */
@@ -107,7 +112,8 @@ object SignalFreshness {
         val fresh = mine.filter { it.id !in seenSet && it.time > floor }.sortedBy { it.time }
         // Remember every signal for me we have looked at (fresh or too old), newest additions last.
         val added = mine.sortedBy { it.time }.map { it.id }.filter { it !in seenSet }
-        return Decision(fresh, State(floor, (seen + added).takeLast(MAX_SEEN_IDS)))
+        val cursor = listOfNotNull(state?.cursor, mine.mapNotNull { it.createdAt }.maxOrNull()).maxOrNull()
+        return Decision(fresh, State(floor, (seen + added).takeLast(MAX_SEEN_IDS), cursor))
     }
 
     /**
@@ -224,7 +230,41 @@ class SignalRepository(private val db: FirebaseFirestore) {
         }
         val couple = db.collection(Paths.COUPLES).document(coupleId)
         val limitRef = couple.collection(Paths.LIMITS).document(me.uid)
-        val current = limitRef.get().await()
+        try {
+            sendWithLimits(coupleId, limitRef, me, partnerUid, kind, emotion, mood, text, cfg, fromServer = false)
+        } catch (e: com.google.firebase.firestore.FirebaseFirestoreException) {
+            if (e.code != com.google.firebase.firestore.FirebaseFirestoreException.Code.PERMISSION_DENIED) throw e
+            // The cached limits doc may be stale (e.g. the same account sent from another phone): read the server's.
+            sendWithLimits(coupleId, limitRef, me, partnerUid, kind, emotion, mood, text, cfg, fromServer = true)
+        }
+    }
+
+    /**
+     * Only this account writes its limits doc, so the copy in the local cache (updated with the server's
+     * timestamps when our last batch was acknowledged) is normally current: that saves a read per send.
+     * Throws PERMISSION_DENIED (never [SignalLimitException]) only when a cached read may be the cause.
+     */
+    private suspend fun sendWithLimits(
+        coupleId: String,
+        limitRef: com.google.firebase.firestore.DocumentReference,
+        me: UserProfile,
+        partnerUid: String,
+        kind: SignalKind,
+        emotion: Emotion?,
+        mood: MoodKind?,
+        text: String?,
+        cfg: SignalLimits.Config,
+        fromServer: Boolean,
+    ) {
+        val cached = if (fromServer) null else try {
+            limitRef.get(com.google.firebase.firestore.Source.CACHE).await().takeIf { it.exists() && !it.metadata.hasPendingWrites() }
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (notCached: Exception) {
+            null
+        }
+        val usedCache = cached != null
+        val current = cached ?: limitRef.get().await()
         val hourStart = current.getTimestamp("hourStart")
         val dayStart = current.getTimestamp("dayStart")
         val state = if (!current.exists()) null else SignalLimits.State(
@@ -265,7 +305,7 @@ class SignalRepository(private val db: FirebaseFirestore) {
         try {
             commit(plan)
         } catch (e: com.google.firebase.firestore.FirebaseFirestoreException) {
-            if (e.code != com.google.firebase.firestore.FirebaseFirestoreException.Code.PERMISSION_DENIED) throw e
+            if (e.code != com.google.firebase.firestore.FirebaseFirestoreException.Code.PERMISSION_DENIED || usedCache) throw e
             // The phone's clock may disagree with the server about a window being over: try the other way once.
             val flipped = SignalLimits.plan(state, System.currentTimeMillis(), flip = true)
             if (flipped == plan || SignalLimits.isOverLimit(flipped, cfg)) throw SignalLimitException()
@@ -278,8 +318,11 @@ class SignalRepository(private val db: FirebaseFirestore) {
         }
     }
 
-    /** The latest signals of the couple, newest first (both directions). */
-    fun observeRecent(coupleId: String, limit: Long = 30): Flow<List<Signal>> = callbackFlow {
+    /**
+     * The latest signals of the couple, newest first (both directions). 10 is enough for "is there something
+     * new" (more than [SignalCenter]'s 3 single notifications) and keeps a fresh listener at 10 reads.
+     */
+    fun observeRecent(coupleId: String, limit: Long = LIVE_LIMIT): Flow<List<Signal>> = callbackFlow {
         val reg = signals(coupleId)
             // Server time, not the sender's clock: a phone with a wrong clock can't push its signals out of the window.
             .orderBy("createdAt", Query.Direction.DESCENDING)
@@ -290,10 +333,16 @@ class SignalRepository(private val db: FirebaseFirestore) {
         awaitClose { reg.remove() }
     }
 
-    /** One-time read for the background check. */
-    suspend fun recent(coupleId: String, limit: Long = 20): List<Signal> =
-        signals(coupleId).orderBy("createdAt", Query.Direction.DESCENDING).limit(limit).get().await()
+    /**
+     * One-time read for the background check. With a [newerThan] server time (the saved cursor) only signals
+     * after it come back: usually none, which Firestore bills as a single read instead of [limit] reads.
+     */
+    suspend fun recent(coupleId: String, newerThan: Long? = null, limit: Long = 20): List<Signal> {
+        var q: Query = signals(coupleId)
+        if (newerThan != null) q = q.whereGreaterThan("createdAt", com.google.firebase.Timestamp(java.util.Date(newerThan)))
+        return q.orderBy("createdAt", Query.Direction.DESCENDING).limit(limit).get().await()
             .documents.mapNotNull { it.toSignal() }
+    }
 
     private fun DocumentSnapshot.toSignal(): Signal? {
         val kind = SignalKind.of(getString("kind")) ?: return null
@@ -315,7 +364,9 @@ class SignalRepository(private val db: FirebaseFirestore) {
     companion object {
         /** Added to the configured minimum gap, so phone-side timing never hits the server limit. */
         const val GAP_MARGIN_MS = 100L
-        const val CONFIG_TTL_MS = 10 * 60_000L
+        /** config/limits changes rarely (console only); re-read hourly. */
+        const val CONFIG_TTL_MS = 60 * 60_000L
+        const val LIVE_LIMIT = 10L
         /** Longest [Signal.text] the rules accept. */
         const val MAX_TEXT = 120
     }

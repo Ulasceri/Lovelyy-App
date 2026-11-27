@@ -91,6 +91,7 @@ import com.lovelyy.app.ui.theme.Quicksand
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -101,9 +102,24 @@ import java.time.temporal.ChronoUnit
 private val DATE: DateTimeFormatter get() = AppLocale.formatter("dMMMMy")
 
 class CapsuleViewModel(private val app: LovelyyApplication, private val coupleId: String) : ViewModel() {
-    val capsules: StateFlow<List<Capsule>?> = app.capsuleRepository.observe(coupleId)
+    private val today = com.lovelyy.app.data.CoupleClock.today()
+    private val openedLimit = kotlinx.coroutines.flow.MutableStateFlow(OPENED_PAGE)
+
+    /** Every sealed letter (the hero and the free limit need them) plus the latest opened ones, a page at a time. */
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    private val opened = openedLimit.flatMapLatest { app.capsuleRepository.observeOpened(coupleId, today, it.toLong()) }
+        .catch { Timber.w(it, "Opened letters unavailable"); emit(emptyList()) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    val capsules: StateFlow<List<Capsule>?> = kotlinx.coroutines.flow.combine(
+        app.capsuleRepository.observeSealed(coupleId, today),
+        opened,
+    ) { sealed, open -> open?.let { (sealed + it).distinctBy { c -> c.id } } }
         .catch { Timber.w(it, "Capsules unavailable") }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    fun canLoadMore(): Boolean = opened.value?.let { com.lovelyy.app.data.ListLimits.hasMore(it.size, openedLimit.value) } == true
+    fun loadMore() { openedLimit.value = com.lovelyy.app.data.ListLimits.nextLimit(openedLimit.value, OPENED_PAGE) }
 
     fun seal(me: UserProfile, title: String, text: String, openOn: LocalDate) {
         viewModelScope.launch {
@@ -212,6 +228,9 @@ fun CapsuleScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, on
         if (rest.isNotEmpty()) {
             Text(stringResource(R.string.tc_letters), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = BrownSoft, modifier = Modifier.padding(start = 4.dp))
             rest.forEach { c -> LetterRow(c, me, partnerName, today) { viewing = c } }
+        }
+        if (vm.canLoadMore()) {
+            com.lovelyy.app.ui.components.LoadMoreButton(vm::loadMore, Modifier.align(Alignment.CenterHorizontally))
         }
 
         com.lovelyy.app.ui.plus.PlusLimitBanner(gate)
@@ -358,3 +377,6 @@ private fun LetterSheet(c: Capsule, today: LocalDate, mine: Boolean, onDismiss: 
         }
     }
 }
+
+/** Opened letters per page on the capsule screen (all of them are in Açılmış mektuplar too). */
+private const val OPENED_PAGE = 20

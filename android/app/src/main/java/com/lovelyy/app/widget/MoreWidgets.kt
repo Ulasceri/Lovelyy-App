@@ -196,8 +196,22 @@ object DrawingWidget {
     fun hasWidgets(context: Context) =
         AppWidgetManager.getInstance(context).getAppWidgetIds(ComponentName(context, DrawingWidgetProvider::class.java)).isNotEmpty()
 
-    /** Renders the canvas to a small picture (off the main thread) and refreshes the widgets. */
-    suspend fun save(context: Context, strokes: List<Stroke>, liveName: String?) {
+    /** [com.lovelyy.app.data.DrawingMath.stamp] of the canvas last drawn into the picture (null = unknown). */
+    fun stamp(context: Context): String? = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString("stamp", null)
+
+    /** The background refresh found the canvas unchanged: only drop a "drawing now" badge that is no longer live. */
+    fun clearLive(context: Context) {
+        val p = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        if (p.getString("live", null) == null) return
+        p.edit { putString("live", null) }
+        updateAll(context)
+    }
+
+    /**
+     * Renders the canvas to a small picture (off the main thread) and refreshes the widgets. [stamp]: the canvas'
+     * fingerprint when [strokes] is the whole canvas (null when it may be cut at the listener's limit).
+     */
+    suspend fun save(context: Context, strokes: List<Stroke>, liveName: String?, stamp: String? = null) {
         if (!hasWidgets(context)) return
         withContext(Dispatchers.Default) {
             val bmp = Bitmap.createBitmap(SIZE, SIZE, Bitmap.Config.ARGB_8888)
@@ -226,6 +240,7 @@ object DrawingWidget {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit {
             putBoolean("empty", strokes.isEmpty())
             putString("live", liveName)
+            putString("stamp", stamp)
         }
         updateAll(context)
     }

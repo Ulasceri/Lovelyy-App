@@ -46,6 +46,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
@@ -105,7 +106,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -130,16 +130,23 @@ class DrawingViewModel(private val app: LovelyyApplication, private val coupleId
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
 
     /** How many drawings are saved to Anılar (for the free limit, PlusLimits.Limit.Drawings). */
-    val savedCount: StateFlow<Int> = app.drawingRepository.observeSaved(coupleId)
-        .map { it.size }
-        .catch { Timber.w(it, "Saved drawings unavailable") }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+    // A count aggregation (one read), not a listener on every saved drawing (big documents) just to count them.
+    private val _savedCount = MutableStateFlow(0)
+    val savedCount: StateFlow<Int> = _savedCount
+
+    init { refreshSavedCount() }
+
+    private fun refreshSavedCount() {
+        viewModelScope.launch { app.drawingRepository.savedCount(coupleId)?.let { _savedCount.value = it.toInt() } }
+    }
 
     private var lastTouch = 0L
 
     fun add(color: Long, width: Float, points: List<Float>) {
         viewModelScope.launch {
-            runCatching { app.drawingRepository.add(coupleId, myUid, color, width, points) }.onFailure { Timber.w(it, "Saving the stroke failed") }
+            runCatching { app.drawingRepository.add(coupleId, myUid, color, width, points) }
+                .onSuccess { touch() }
+                .onFailure { Timber.w(it, "Saving the stroke failed") }
         }
     }
 
@@ -167,6 +174,7 @@ class DrawingViewModel(private val app: LovelyyApplication, private val coupleId
                 // false = the partner saved this canvas first; it is cleared already, so just carry on quietly.
                 val saved = app.drawingRepository.saveAndClear(coupleId, me, current)
                 if (saved) Telemetry.track(AnalyticsEvent.DrawingSaved(current.size))
+                refreshSavedCount()
                 onDone()
             } catch (e: CancellationException) {
                 throw e
@@ -208,7 +216,10 @@ fun DrawingScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, on
 
     // Keep the home-screen widget in step with the canvas.
     LaunchedEffect(strokes, widgetOn, partnerLive) {
-        strokes?.let { DrawingWidget.save(context, it, if (partnerLive) partnerName else null) }
+        strokes?.let {
+            val stamp = DrawingMath.stampOf(it).takeIf { _ -> it.size < com.lovelyy.app.data.DrawingRepository.MAX_STROKES }
+            DrawingWidget.save(context, it, if (partnerLive) partnerName else null, stamp)
+        }
     }
 
     Column(
@@ -362,6 +373,14 @@ private fun DrawingCanvas(
     BoxWithConstraints(modifier.softShadow(shape, 12.dp).clip(shape).background(CreamCard)) {
         val w = constraints.maxWidth.toFloat()
         val h = constraints.maxHeight.toFloat()
+        // Finished strokes: paths built once per canvas change, on their own layer, so the stroke being drawn
+        // (redrawn on every finger move) doesn't rebuild up to 600 paths each frame.
+        val finished = remember(strokes, w, h) {
+            strokes.map { PreparedStroke(normalizedPath(it.points, w, h), Color(it.color), roundStroke(it.width * w)) }
+        }
+        Canvas(Modifier.fillMaxSize().graphicsLayer()) {
+            finished.forEach { drawPath(it.path, it.color, style = it.style) }
+        }
         Canvas(
             Modifier
                 .fillMaxSize()
@@ -387,7 +406,6 @@ private fun DrawingCanvas(
                     }
                 },
         ) {
-            strokes.forEach { drawNormalized(it.points, Color(it.color), it.width) }
             if (current.size >= 2) drawNormalized(current, Color(color), width)
         }
         if (hint != null) {
@@ -419,26 +437,42 @@ private fun DrawingCanvas(
     }
 }
 
-/** Draws a normalized stroke into this canvas. Also used for the small previews. */
-fun DrawScope.drawNormalized(points: List<Float>, color: Color, width: Float, blendMode: BlendMode = BlendMode.SrcOver) {
-    if (points.size < 2) return
+/** A finished stroke ready to paint: its path in pixels, color and stroke style. */
+private class PreparedStroke(val path: Path, val color: Color, val style: Stroke)
+
+private fun roundStroke(px: Float) = Stroke(px, cap = StrokeCap.Round, join = StrokeJoin.Round)
+
+/** A normalized (0..1) point list as a path on a [w] x [h] canvas. */
+private fun normalizedPath(points: List<Float>, w: Float, h: Float): Path {
     val path = Path()
-    path.moveTo(points[0] * size.width, points[1] * size.height)
+    if (points.size < 2) return path
+    path.moveTo(points[0] * w, points[1] * h)
     var i = 2
     while (i + 1 < points.size) {
-        path.lineTo(points[i] * size.width, points[i + 1] * size.height)
+        path.lineTo(points[i] * w, points[i + 1] * h)
         i += 2
     }
-    drawPath(path, color, style = Stroke(width * size.width, cap = StrokeCap.Round, join = StrokeJoin.Round), blendMode = blendMode)
+    return path
+}
+
+/** Draws a normalized stroke into this canvas (the stroke being drawn right now). */
+fun DrawScope.drawNormalized(points: List<Float>, color: Color, width: Float, blendMode: BlendMode = BlendMode.SrcOver) {
+    if (points.size < 2) return
+    drawPath(normalizedPath(points, size.width, size.height), color, style = roundStroke(width * size.width), blendMode = blendMode)
 }
 
 /** A small read-only preview of a drawing (Anılar card). */
 @Composable
 fun DrawingPreview(strokes: List<LineStroke>, modifier: Modifier) {
     // Eraser strokes are white on the white canvas; here the card behind is tinted, so clear them instead.
-    Canvas(modifier.graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)) {
-        strokes.forEach {
-            drawNormalized(it.points, Color(it.color), it.width, if (it.color == ERASER) BlendMode.Clear else BlendMode.SrcOver)
-        }
-    }
+    // Paths are built once per size and drawing (drawWithCache), not on every redraw of the card.
+    androidx.compose.foundation.layout.Spacer(
+        modifier.graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen).drawWithCache {
+            val prepared = strokes.filter { it.points.size >= 2 }.map {
+                PreparedStroke(normalizedPath(it.points, size.width, size.height), Color(it.color), roundStroke(it.width * size.width)) to
+                    (if (it.color == ERASER) BlendMode.Clear else BlendMode.SrcOver)
+            }
+            onDrawBehind { prepared.forEach { (s, blend) -> drawPath(s.path, s.color, style = s.style, blendMode = blend) } }
+        },
+    )
 }
