@@ -179,6 +179,13 @@ fun CatItemsScreen(me: UserProfile, onBack: () -> Unit, onSaved: () -> Unit) {
             }
         }
 
+        if (needsPlan) {
+            Text(
+                stringResource(R.string.items_plus_hint),
+                fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 13.sp,
+                color = BrownSoft, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth(),
+            )
+        }
         PeachButton(
             text = stringResource(if (needsPlan) R.string.items_place_plus else R.string.items_place),
             enabled = ui != null && (changed || needsPlan),
