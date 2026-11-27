@@ -1,0 +1,34 @@
+{
+  "bowls": {
+    "cols": 3, "rows": 2, "width": 2400, "height": 1600,
+    "items": {
+      "mama_sade": "a plain peach cat food bowl filled with brown kibble",
+      "su_sade": "a plain mint green cat water bowl with light-blue water",
+      "su_cesme": "a mint green cat water fountain: wide shallow basin with a central column and two water arcs"
+    }
+  },
+  "toys_beds": {
+    "cols": 3, "rows": 2, "width": 2400, "height": 1600,
+    "items": {
+      "oyuncak_yumak": "a mint green ball of yarn with one loose thread",
+      "oyuncak_fare": "a gray toy mouse with pink ears and a pink tail",
+      "oyuncak_tuy": "a feather wand toy: wooden stick with a peach handle, a small yellow bell and three feathers (pink, yellow, mint)",
+      "yatak_minder": "a round cushion bed: mint green outer ring with a soft cream-white padded center and one small mint button",
+      "yatak_kutu": "a kraft cardboard box with open flaps and one brown heart on the front, no letters",
+      "yatak_sepet": "a woven wicker basket bed with a pink cushion inside"
+    }
+  },
+  "food_drink": {
+    "cols": 2, "rows": 1, "width": 1600, "height": 800,
+    "items": {
+      "mama_balik_tabagi": "a small oval cream plate with one whole cute peach-pink fish on it",
+      "mama_sut": "a small glass milk bottle with a mint cap standing next to a peach saucer full of white milk"
+    }
+  },
+  "scratch": {
+    "cols": 1, "rows": 1, "width": 1024, "height": 1024,
+    "items": {
+      "oyuncak_tirmalama": "a classic cat scratching post: a round mint base, a vertical post wrapped in cream sisal rope, a small peach ball hanging from the top"
+    }
+  }
+}
