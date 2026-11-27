@@ -23,60 +23,26 @@ data class DayQuestion(val day: String, val question: String, val answers: Map<S
  * you answered too (the app hides it; both answers live in the couple's own document).
  */
 object QuestionBank {
-    fun forDay(day: LocalDate): String = QUESTIONS[Math.floorMod(day.toEpochDay(), QUESTIONS.size.toLong()).toInt()]
+    fun forDay(day: LocalDate): String {
+        val q = QUESTIONS
+        return q[Math.floorMod(day.toEpochDay(), q.size.toLong()).toInt()]
+    }
 
-    val QUESTIONS = listOf(
-        "İlk buluşmamızdan en çok neyi hatırlıyorsun?",
-        "Bende en sevdiğin üç şey ne?",
-        "Birlikte gitmek istediğin ilk yer neresi?",
-        "Beni ilk gördüğünde aklından ne geçti?",
-        "Seni en çok ne güldürür?",
-        "Hayalindeki sıradan bir pazar günü nasıl geçer?",
-        "Birlikte öğrenmek istediğin bir şey var mı?",
-        "Sana kendini en sevilmiş hissettiren şey ne?",
-        "Çocukluğundan en sevdiğin anın hangisi?",
-        "Beş yıl sonra bizi nerede görüyorsun?",
-        "Bana söylemeye çekindiğin küçük bir şey var mı?",
-        "En sevdiğin ortak anımız hangisi?",
-        "Bir gün hayatımızı değiştirebilsek ilk neyi değiştirirdin?",
-        "Benimle ilgili seni en çok şaşırtan şey ne oldu?",
-        "Zor bir günde benden ne duymak istersin?",
-        "Birlikte yapmayı en çok sevdiğin şey ne?",
-        "Kedimiz konuşabilseydi bize ne derdi?",
-        "Hangi şarkı seni bana hatırlatıyor?",
-        "Birlikte izlediğimiz en iyi film ya da dizi hangisi?",
-        "Sence ilişkimizin süper gücü ne?",
-        "Bugün seni mutlu eden küçük bir şey neydi?",
-        "Benimle ilgili en sevdiğin alışkanlık hangisi?",
-        "Birlikte bir restoran açsak adı ne olurdu?",
-        "Seni sakinleştiren şey ne?",
-        "Hayatında en çok minnettar olduğun şey ne?",
-        "Bana bir gün boyunca sürpriz yapacak olsan ne yapardın?",
-        "Kendinde değiştirmek istediğin bir şey var mı?",
-        "İlk tartışmamızı hatırlıyor musun? Ne öğrendik?",
-        "Birlikte yaşlandığımızı düşününce aklına ne geliyor?",
-        "Sence ben hangi hayvana benziyorum, neden?",
-        "En sevdiğin yemeği birlikte yapsak hangisi olurdu?",
-        "Bu hafta benim için yapabileceğim en güzel şey ne?",
-        "Hiç söylemediğin bir iltifatı şimdi söyler misin?",
-        "Hangi mevsim bize daha çok yakışıyor?",
-        "Birlikte gitmek istediğin bir konser ya da etkinlik var mı?",
-        "En çok hangi anımızı tekrar yaşamak isterdin?",
-        "Sence birbirimizden ne öğrendik?",
-        "Mükemmel bir randevu nasıl olurdu?",
-        "Bugün beni ne zaman düşündün?",
-        "Bize ait küçük bir gelenek başlatsak ne olurdu?",
-        "Seni en çok neyin heyecanlandırdığını merak ediyorum, nedir?",
-        "Birlikte bir rekor kırsak hangi konuda olurdu?",
-        "Sana yazdığım ya da söylediğim en güzel şey neydi?",
-        "Bir haftalığına başka bir şehirde yaşasak hangisini seçerdin?",
-        "Kendini en çok hangi anlarda güçlü hissediyorsun?",
-        "Birlikte okumak istediğin bir kitap var mı?",
-        "Sence ben en çok neye gülüyorum?",
-        "Bu yıl birlikte başarmak istediğin bir şey ne?",
-        "Bana hangi lakabı takmak isterdin?",
-        "Şu an yanında olsam ilk ne yapardık?",
-    )
+    @Volatile private var questions: List<String> = emptyList()
+
+    /**
+     * Loads the questions (R.array.daily_questions; call from Application.onCreate and again on a locale change).
+     * Every language must keep the same order and size, so the day index stays the same for both partners.
+     */
+    fun init(list: List<String>) {
+        if (list.isNotEmpty()) questions = list
+    }
+
+    /** The loaded questions (a one-item fallback while [init] has not run). */
+    val QUESTIONS: List<String> get() = questions.ifEmpty { FALLBACK }
+
+    /** Only if something runs before [init]; Application.onCreate always runs first. */
+    private val FALLBACK = listOf("Bugün seni en çok ne mutlu etti?")
 }
 
 /** Both partners answered the day's question, so my answer can no longer change. */
@@ -117,8 +83,8 @@ class QuestionRepository(private val db: FirebaseFirestore) {
      */
     suspend fun answer(coupleId: String, day: LocalDate, me: UserProfile, text: String) {
         val ref = questions(coupleId).document(day.toString())
-        val data = mapOf(
-            "question" to QuestionBank.forDay(day),
+        fun data(question: String) = mapOf(
+            "question" to question,
             "answers" to mapOf(
                 me.uid to mapOf(
                     "name" to me.displayName,
@@ -128,12 +94,16 @@ class QuestionRepository(private val db: FirebaseFirestore) {
             ),
             "updatedAt" to FieldValue.serverTimestamp(),
         )
+        val data = data(QuestionBank.forDay(day))
         try {
             db.runTransaction { tx ->
                 val snap = tx.get(ref)
                 val answered = (snap.get("answers") as? Map<*, *>)?.keys?.filterIsInstance<String>().orEmpty()
                 if (QuestionMath.isLocked(answered, me.uid)) throw AnswersLockedException()
-                tx.set(ref, data, SetOptions.merge())
+                // The first answerer fixes the day's question; a partner on another app version (other list
+                // size) must not overwrite it, or the two phones would show different questions.
+                val stored = snap.getString("question")?.takeIf { it.isNotBlank() }
+                tx.set(ref, if (stored != null) data(stored) else data, SetOptions.merge())
                 null
             }.await()
         } catch (e: CancellationException) {

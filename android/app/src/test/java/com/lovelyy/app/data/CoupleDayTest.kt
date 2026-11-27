@@ -3,6 +3,7 @@ package com.lovelyy.app.data
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
+import org.junit.Before
 import org.junit.Test
 import java.time.Instant
 import java.time.LocalDate
@@ -10,6 +11,9 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 
 class CoupleDayTest {
+    @Before
+    fun loadQuestions() { TestQuestions.init() }
+
     private val plus3: ZoneId = ZoneOffset.ofHours(3)
     private val minus5: ZoneId = ZoneOffset.ofHours(-5)
     private fun at(iso: String) = Instant.parse(iso).toEpochMilli()

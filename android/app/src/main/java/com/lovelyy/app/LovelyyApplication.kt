@@ -28,6 +28,8 @@ class LovelyyApplication : Application() {
         super.onCreate()
         // Dates and name endings follow the language of the strings Android shows (docs/LOCALIZATION.md).
         com.lovelyy.app.text.AppLocale.init(this)
+        // Daily questions come from resources (values/questions.xml, translatable); always loaded first.
+        loadQuestions()
         // Logging, analytics, crash reports, performance. See docs/analytics.md.
         Telemetry.init(this)
         // App Check before any Firestore call, so every request carries a token (docs/security.md).
@@ -36,6 +38,16 @@ class LovelyyApplication : Application() {
         com.lovelyy.app.data.CoupleClock.init(this)
         // Partner signals: listen from process start, not only once Home is shown (see SignalCenter).
         if (isFirebaseConfigured) runCatching { signalCenter.resumeIfSignedIn() }.onFailure { timber.log.Timber.w(it, "Resuming signal updates failed") }
+    }
+
+    /** A language change swaps the resources; re-read the questions (same order and size in every language). */
+    override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
+        super.onConfigurationChanged(newConfig)
+        loadQuestions()
+    }
+
+    private fun loadQuestions() {
+        com.lovelyy.app.data.QuestionBank.init(resources.getStringArray(R.array.daily_questions).toList())
     }
 
     /** False until app/google-services.json is added (see README). */
