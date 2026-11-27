@@ -2,6 +2,7 @@ package com.lovelyy.app.ui.cat
 
 import com.lovelyy.app.data.CatItem
 import com.lovelyy.app.data.CatItems
+import com.lovelyy.app.data.CareSlot
 import com.lovelyy.app.ui.plus.LocalPlus
 import android.os.Build
 import androidx.compose.animation.AnimatedContent
@@ -228,7 +229,8 @@ fun CatSection(me: UserProfile, couple: Couple?, partner: UserProfile?, modifier
         val item = vm.pendingItemReaction(d) ?: return@LaunchedEffect
         vm.markItemReactionSeen(d)
         popItem = item
-        animator.play(CatClip.Happy)
+        // Asleep: no Happy clip (it would wake the cat mid-sleep and jump between bed clips); the bubble is enough.
+        if (ui?.levels?.sleeping != true) animator.play(CatClip.Happy)
         view.performHapticFeedback(confirmHaptic())
         reaction = context.getString(item.reactionRes)
         delay(REACTION_MS)
@@ -274,7 +276,7 @@ fun CatSection(me: UserProfile, couple: Couple?, partner: UserProfile?, modifier
                 },
             )
             val itemsOverlay: @Composable () -> Unit = {
-                CatItemsLayer(items, Modifier.fillMaxSize(), hidden = animator.currentClip?.slot, pop = popItem)
+                CatItemsLayer(items, Modifier.fillMaxSize(), hidden = hiddenSlots(animator.currentClip, items), pop = popItem)
             }
             BoxWithConstraints(Modifier.fillMaxWidth()) {
                 CatStage(
@@ -866,3 +868,12 @@ private val STRIP_HEIGHT = CatCardGeometry.STRIP_DP.dp
 private val SPEECH_HEIGHT = CatCardGeometry.SPEECH_DP.dp
 private val TOUCH_TARGET = 48.dp
 private val TOUCH_REACH = TOUCH_TARGET - STRIP_HEIGHT
+
+/**
+ * Items hidden over the clip playing now: the one inside the clip (it would be doubled). The box and basket bed
+ * clips draw a bigger bed that reaches behind the toy, so the toy steps aside while they play.
+ */
+private fun hiddenSlots(clip: CatClip?, items: CatItems): Set<CareSlot> {
+    val slot = clip?.slot ?: return emptySet()
+    return if (slot == CareSlot.Sleep && Bed.of(items.sleep) != Bed.Minder) setOf(CareSlot.Sleep, CareSlot.Play) else setOf(slot)
+}
