@@ -46,3 +46,26 @@ python make_items.py generate food_drink out/ out/bowls.png   # extra refs pin s
 - Nothing in an item picture may be couple-specific (no initials or names).
 - The committed set was picked from four sheets (bowls, toys and beds, food and drink alternatives,
   scratching posts); `sheets.json` lists the prompts of the items that were kept.
+
+### Item clips (`make_clips.py`)
+
+Needs ffmpeg too. Output: `assets/item-clips/*.mp4` (720², H.264, no audio), one clip per Plus item for
+its care action, three per bed (`_lie_down`, `_sleeping`, `_wake_up`). Not wired into the app yet.
+
+```bash
+cd tools/item-art
+python make_clips.py out/                    # every clip in clips.json
+python make_clips.py out/ su_cesme           # or just one
+```
+
+- Model: `minimax/h3-max/reference-to-video`, $0.08 per second at 768p ($0.40 per 5 s clip). Chosen over
+  Kling because it takes **reference images** (the cat's base pose and the item picture) next to a fixed
+  first and last frame; without references the item drifts away from its picture.
+- Floor items start and end on the base pose with the item picture composited on the rug (`place` in
+  `clips.json`). The feather wand enters and leaves the frame, so it starts and ends on the plain base pose.
+- Beds use stored stills in `keys/` (cat sitting in the bed, cat asleep in the bed; Seedream edits). Letting
+  the model move the cat into the bed in one clip made the bed grow and the framing drift.
+- The model has **no negative prompt and draws what you name**: "no night, no stars" produced a starry
+  night. Describe only what should be visible ("sunny daytime room"). A zooming camera was fixed the
+  same way ("wide shot, the whole cat and rug stay visible at the same size").
+- The raw clips carry generated audio; encoding drops it.

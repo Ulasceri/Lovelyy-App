@@ -15,4 +15,5 @@
 - [ ] Eşleşme ekranındaki hesap penceresini ve hesap silmeyi Google ile giriş yapan bir hesapla da dene.
 - [ ] Kod girme ekranı açılır açılmaz yapılan ilk tuş dokunuşunun bazen algılanmamasını incele.
 - [ ] `assets/items/` içindeki 12 eşya görselini Plus'ın eşya aşamasında uygulamaya bağla (seçim ekranı, anasayfa, widget).
+- [ ] `assets/item-clips/` içindeki 12 eşya klibini seçili eşyaya göre bakım animasyonu olarak uygulamaya bağla.
 - [ ] Eşyaya özel kedi animasyonlarını üret; pilot olarak tüy ile oyun klibinden başla.
