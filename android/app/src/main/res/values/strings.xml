@@ -1323,8 +1323,8 @@
         <item quantity="other">%1$d günlük seriniz dün bitti</item>
     </plurals>
     <plurals name="streak_repair_body">
-        <item quantity="one">Dün %2$s ikiniz birden bakamadınız, olur böyle şeyler. Dünü telafi ederseniz seri %1$d. günden devam eder; etmezseniz bugün 1. gün olur.</item>
-        <item quantity="other">Dün %2$s ikiniz birden bakamadınız, olur böyle şeyler. Dünü telafi ederseniz seri %1$d. günden devam eder; etmezseniz bugün 1. gün olur.</item>
+        <item quantity="one">Dün %2$s ikiniz birden bakamadınız, olur böyle şeyler. Dünü telafi ederseniz %1$d günlük seriniz kaldığı yerden devam eder; etmezseniz bugün 1. gün olur.</item>
+        <item quantity="other">Dün %2$s ikiniz birden bakamadınız, olur böyle şeyler. Dünü telafi ederseniz %1$d günlük seriniz kaldığı yerden devam eder; etmezseniz bugün 1. gün olur.</item>
     </plurals>
     <plurals name="streak_repair_card_title">
         <item quantity="one">Dünü telafi et, %1$d gün geri gelsin</item>
@@ -1373,7 +1373,7 @@
         <item quantity="other">%1$d / %2$d hayal</item>
     </plurals>
     <string name="limit_dreams_add">Yeni hayal · Plus ile</string>
-    <string name="limit_capsules_title">Mektubunuz yolda; yeni mektup için Plus</string>
+    <string name="limit_capsules_title">Mektuplarınız yolda; yeni mektup için Plus</string>
     <plurals name="limit_capsules_body">
         <item quantity="one">Mühürlü %1$d mektubunuz açılış gününü bekliyor. Ücretsizde aynı anda %2$d mühürlü mektup olur.</item>
         <item quantity="other">Mühürlü %1$d mektubunuz açılış gününü bekliyor. Ücretsizde aynı anda %2$d mühürlü mektup olur.</item>

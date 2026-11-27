@@ -153,8 +153,9 @@ fun StreakDangerSection(
         millisLeft = StreakProtection.millisToMidnight(now, zone),
         // Nudging only helps while the partner still has to care.
         onNudge = partner?.takeIf { !partnerDone }?.let { p -> { vm.nudge(me, p.uid) } },
-        onDayOff = {
-            if (plus.isPlus) dayOffOpen = true else plus.openPlans(PaywallSource.STREAK_DAY_OFF)
+        // A Plus couple with no day off left this month gets no İzin günü button (free couples keep it as the way to Plus).
+        onDayOff = if (plus.isPlus && StreakProtection.freezesLeft(streak, today) == 0) null else {
+            { if (plus.isPlus) dayOffOpen = true else plus.openPlans(PaywallSource.STREAK_DAY_OFF) }
         },
         modifier = modifier,
     )
@@ -179,7 +180,7 @@ private fun StreakDangerCard(
     partnerDone: Boolean,
     millisLeft: Long,
     onNudge: (() -> Unit)?,
-    onDayOff: () -> Unit,
+    onDayOff: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     val catTo = TurkishSuffix.dative(catName)
@@ -208,7 +209,9 @@ private fun StreakDangerCard(
             if (onNudge != null) {
                 SmallAction(stringResource(R.string.streak_danger_nudge, TurkishSuffix.accusative(partnerName)), Peach, null, onNudge, Modifier.weight(1f))
             }
-            SmallAction(stringResource(R.string.streak_danger_day_off), CreamCard, CALENDAR_D, onDayOff, Modifier.weight(1f))
+            if (onDayOff != null) {
+                SmallAction(stringResource(R.string.streak_danger_day_off), CreamCard, CALENDAR_D, onDayOff, Modifier.weight(1f))
+            }
         }
     }
 }

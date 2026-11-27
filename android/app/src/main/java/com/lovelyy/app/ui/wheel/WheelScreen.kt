@@ -344,7 +344,7 @@ fun WheelScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onHi
                     }
                 }
             }
-            DashedCircleButton(stringResource(R.string.wh_new)) { gate.tryAdd { creating = true } }
+            DashedCircleButton(stringResource(R.string.wh_new), locked = gate.blocked) { gate.tryAdd { creating = true } }
         }
         com.lovelyy.app.ui.plus.PlusLimitBanner(gate)
 
@@ -521,7 +521,7 @@ private fun DashedPill(text: String, onClick: () -> Unit) {
 }
 
 @Composable
-private fun DashedCircleButton(label: String, onClick: () -> Unit) {
+private fun DashedCircleButton(label: String, locked: Boolean = false, onClick: () -> Unit) {
     Box(
         Modifier.size(44.dp).semantics { role = Role.Button; contentDescription = label }.bounceClick(onClick = onClick),
         contentAlignment = Alignment.Center,
@@ -530,7 +530,8 @@ private fun DashedCircleButton(label: String, onClick: () -> Unit) {
             val w = 2.dp.toPx()
             drawCircle(Kit.Dashed, radius = size.minDimension / 2 - w / 2, style = Stroke(w, pathEffect = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 4.dp.toPx()))))
         }
-        SvgStrokeIcon(Kit.PLUS_D, Brown, Modifier.size(18.dp), strokeWidth = 2.4f)
+        // P9: at the free limit the plus turns into a lock, like the other screens' locked add buttons.
+        SvgStrokeIcon(if (locked) Kit.LOCK_D else Kit.PLUS_D, Brown, Modifier.size(18.dp), strokeWidth = if (locked) 2.2f else 2.4f)
     }
 }
 

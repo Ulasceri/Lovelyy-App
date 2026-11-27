@@ -197,11 +197,16 @@ fun LegalLinks(onRestore: () -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
         verticalArrangement = Arrangement.Center,
     ) {
+        // Each dot travels with the link after it, so a wrapped line never ends with a lone "·".
         LinkText(stringResource(R.string.plus_restore), onRestore)
-        Dot()
-        LinkText(stringResource(R.string.plus_terms)) { open(terms) }
-        Dot()
-        LinkText(stringResource(R.string.plus_privacy)) { open(privacy) }
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Dot()
+            LinkText(stringResource(R.string.plus_terms)) { open(terms) }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Dot()
+            LinkText(stringResource(R.string.plus_privacy)) { open(privacy) }
+        }
     }
 }
 
