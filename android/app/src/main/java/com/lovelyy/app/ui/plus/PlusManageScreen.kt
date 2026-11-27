@@ -236,7 +236,8 @@ private fun PaidCard(
                     fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Brown,
                 )
                 Text(
-                    if (status.boughtByMe) stringResource(R.string.plus_bought_by_me_sub, TurkishSuffix.locative(partnerName))
+                    if (status.boughtByMe && status.isGift) stringResource(R.string.plus_gifted_by_me_sub, TurkishSuffix.locative(partnerName))
+                    else if (status.boughtByMe) stringResource(R.string.plus_bought_by_me_sub, TurkishSuffix.locative(partnerName))
                     else stringResource(R.string.plus_managed_by, partnerName),
                     fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, color = Kit.CellLabel,
                 )

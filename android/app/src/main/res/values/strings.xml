@@ -1231,6 +1231,7 @@
     <string name="plus_bought_by_me_sub">Tek abonelik, %1$s açık</string>
     <string name="plus_bought_by">%1$s satın aldı</string>
     <string name="plus_gifted_by_me">Sen hediye ettin</string>
+    <string name="plus_gifted_by_me_sub">1 yıllık hediye, %1$s da açık</string>
     <string name="plus_gifted_by">%1$s hediye etti</string>
     <string name="plus_managed_by">Aboneliği %1$s yönetiyor</string>
     <string name="plus_price_year">Yılda %1$s · Google Play</string>

@@ -101,17 +101,18 @@ fun PlusLockSheet(feature: PlusFeature, preview: LockPreviewData, prices: PlusPr
             Modifier.fillMaxWidth().navigationBarsPadding().padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Box(Modifier.fillMaxWidth()) {
-                when (feature) {
-                    PlusFeature.WideWidget -> WidePreview(preview)
-                    PlusFeature.HeartWidget -> HeartPreview(preview)
-                }
-                Row(Modifier.align(Alignment.TopEnd).padding(8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            // The pills sit above the preview, not on it, so they never cover the cat's name on narrow phones.
+            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(Modifier.align(Alignment.End), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     PlusPill(stringResource(R.string.plus_pill), fontSize = 11)
                     Text(
                         stringResource(R.string.plus_lock_preview), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 11.sp, color = Brown,
                         modifier = Modifier.clip(RoundedCornerShape(50)).background(CreamCard).padding(horizontal = 8.dp, vertical = 5.dp),
                     )
+                }
+                when (feature) {
+                    PlusFeature.WideWidget -> WidePreview(preview)
+                    PlusFeature.HeartWidget -> HeartPreview(preview)
                 }
             }
             Text(

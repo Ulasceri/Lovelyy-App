@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -70,7 +71,8 @@ fun PlusGiftScreen(vm: PlusViewModel, partnerName: String, onBack: () -> Unit) {
     val prices = plusPrices(catalog)
     var note by rememberSaveable { mutableStateOf("") }
 
-    Column(Modifier.fillMaxSize().imePadding().padding(horizontal = 20.dp).padding(top = 8.dp)) {
+    // navigationBarsPadding + 140dp keep the footnote clear of the bottom menu and its heart (like Kedi bakımı).
+    Column(Modifier.fillMaxSize().imePadding().navigationBarsPadding().padding(horizontal = 20.dp).padding(top = 8.dp)) {
         CenteredTopBar(stringResource(R.string.plus_gift_top), onBack)
         Column(
             Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(top = 16.dp, bottom = 12.dp),
@@ -150,7 +152,7 @@ fun PlusGiftScreen(vm: PlusViewModel, partnerName: String, onBack: () -> Unit) {
         )
         Text(
             stringResource(R.string.plus_gift_disc), fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, lineHeight = 16.sp,
-            color = BrownSoft, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 120.dp),
+            color = BrownSoft, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 140.dp),
         )
         Spacer(Modifier.height(0.dp))
     }

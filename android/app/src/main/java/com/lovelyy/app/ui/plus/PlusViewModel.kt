@@ -118,7 +118,7 @@ class PlusViewModel(
         viewModelScope.launch {
             if (fakeBilling) {
                 delay(700)
-                record(StorePurchase(plan, "debug-${UUID.randomUUID()}", System.currentTimeMillis(), plan.isSubscription, acknowledged = true), restore = false)
+                record(StorePurchase(plan, "debug-${UUID.randomUUID()}", PlusClock.now(app), plan.isSubscription, acknowledged = true), restore = false)
                 return@launch
             }
             val offer = plan == PlusPlan.Yearly && PlusRules.firstYearOfferActive(current, now)
