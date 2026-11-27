@@ -519,6 +519,75 @@ test("plus: only the buyer records a purchase; shape and sizes are checked", asy
   await assertSucceeds(updateDoc(couple("bob"), { startDate: Timestamp.now() }));
 });
 
+// ---------- streak protection (StreakProtection.freeze / repair inside cat/main) ----------
+const need = () => ({ level: 80.0, at: Timestamp.now() });
+const catDoc = (streak) => ({
+  name: "Mırmır", hunger: need(), thirst: need(), energy: need(), love: need(), sleepingSince: null,
+  lastAction: null, recent: [], wearing: null,
+  streak: { count: 12, best: 12, lastCompleteDay: "2026-11-26", careDay: "2026-11-26", careBy: ["alice", "bob"],
+    freezeMonth: null, freezeUsed: 0, freezeDays: [], repairDays: [], brokenCount: 0, brokenLast: null, ...streak },
+});
+const pad = (n) => String(n).padStart(2, "0");
+const thisMonth = () => { const d = new Date(); return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}`; };
+const today = () => new Date().toISOString().slice(0, 10);
+
+test("streak: care writes keep the protection fields as they are", async () => {
+  await pairAB();
+  await assertSucceeds(setDoc(sub("alice", "cat", "main"), catDoc({})));
+  await assertSucceeds(setDoc(sub("bob", "cat", "main"), catDoc({ careDay: today(), careBy: ["bob"] })));
+  await assertFails(setDoc(sub("bob", "cat", "main"), catDoc({ hacked: 1 })));
+  await assertFails(setDoc(sub("bob", "cat", "main"), catDoc({ count: "12" })));
+  await assertFails(setDoc(sub("bob", "cat", "main"), catDoc({ careBy: ["a", "b", "c"] })));
+  await assertFails(setDoc(sub("bob", "cat", "main"), catDoc({ lastCompleteDay: "yesterday" })));
+  // Without Plus there are no days off and no make-up days.
+  await assertFails(setDoc(sub("alice", "cat", "main"), catDoc({ freezeMonth: thisMonth(), freezeUsed: 1, freezeDays: [today()] })));
+  await assertFails(setDoc(sub("alice", "cat", "main"), catDoc({ repairDays: ["2026-11-25"] })));
+});
+
+test("streak: days off need Plus, count up by one a month, at most two", async () => {
+  await pairAB();
+  await assertSucceeds(updateDoc(couple("alice"), { plus: plusTrial() }));
+  await assertSucceeds(setDoc(sub("alice", "cat", "main"), catDoc({})));
+  const m = thisMonth();
+  // A day off must be in the current month and start at 1.
+  await assertFails(setDoc(sub("alice", "cat", "main"), catDoc({ freezeMonth: "2020-01", freezeUsed: 1, freezeDays: [today()] })));
+  await assertFails(setDoc(sub("alice", "cat", "main"), catDoc({ freezeMonth: m, freezeUsed: 2, freezeDays: [today()] })));
+  await assertSucceeds(setDoc(sub("alice", "cat", "main"), catDoc({ freezeMonth: m, freezeUsed: 1, freezeDays: ["2026-11-08"] })));
+  // The count can't go back down or be reset in the same month, and days can't be changed without counting.
+  await assertFails(setDoc(sub("bob", "cat", "main"), catDoc({ freezeMonth: m, freezeUsed: 0, freezeDays: ["2026-11-08"] })));
+  await assertFails(setDoc(sub("bob", "cat", "main"), catDoc({ freezeMonth: m, freezeUsed: 1, freezeDays: [] })));
+  await assertFails(setDoc(sub("bob", "cat", "main"), catDoc({ freezeMonth: null, freezeUsed: 0, freezeDays: [] })));
+  // The second one (by the partner: shared by the couple).
+  await assertSucceeds(setDoc(sub("bob", "cat", "main"), catDoc({ freezeMonth: m, freezeUsed: 2, freezeDays: ["2026-11-08", today()] })));
+  // No third one.
+  await assertFails(setDoc(sub("alice", "cat", "main"), catDoc({ freezeMonth: m, freezeUsed: 3, freezeDays: ["2026-11-08", today(), "2026-11-30"] })));
+  // Care writes after that keep them.
+  await assertSucceeds(setDoc(sub("alice", "cat", "main"), catDoc({ count: 13, freezeMonth: m, freezeUsed: 2, freezeDays: ["2026-11-08", today()] })));
+  // A make-up day with Plus.
+  await assertSucceeds(setDoc(sub("alice", "cat", "main"), catDoc({ freezeMonth: m, freezeUsed: 2, freezeDays: ["2026-11-08", today()], repairDays: ["2026-11-25"] })));
+});
+
+test("streak: an expired Plus can't add protection", async () => {
+  await pairAB();
+  await assertSucceeds(updateDoc(couple("alice"), { plus: plusTrial() }));
+  await assertSucceeds(setDoc(sub("alice", "cat", "main"), catDoc({})));
+  // Trial over (written by the test admin, as the app would only read it).
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await updateDoc(doc(ctx.firestore(), "couples", CODE), { "plus.trialStart": Date.now() - 15 * DAY });
+  });
+  await assertFails(setDoc(sub("alice", "cat", "main"), catDoc({ freezeMonth: thisMonth(), freezeUsed: 1, freezeDays: [today()] })));
+  await assertFails(setDoc(sub("alice", "cat", "main"), catDoc({ repairDays: ["2026-11-25"] })));
+  // Basic care is never locked.
+  await assertSucceeds(setDoc(sub("alice", "cat", "main"), catDoc({ careDay: today(), careBy: ["alice"] })));
+  // A paid period counts again (renewing: 3 days of grace past the end).
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await updateDoc(doc(ctx.firestore(), "couples", CODE), {
+      plus: { ...plusSub(Date.now() - 20 * DAY, "alice"), until: Date.now() - DAY, autoRenew: true },
+    });
+  });
+  await assertSucceeds(setDoc(sub("alice", "cat", "main"), catDoc({ repairDays: ["2026-11-25"] })));
+});
+
 test("plus: an ended couple takes no plus writes", async () => {
   await pairAB();
   await assertSucceeds(endAsAlice());

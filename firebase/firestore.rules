@@ -76,6 +76,44 @@ service cloud.firestore {
         && (d.get('lastAction', null) == null || d.lastAction is map)
         && d.get('recent', []) is list && d.get('recent', []).size() <= 10;
     }
+    // "2026-11" for a timestamp (UTC), to check a day-off month against the server clock.
+    function monthOf(t) {
+      return string(t.year()) + '-' + (t.month() < 10 ? '0' : '') + string(t.month());
+    }
+    function monthNearNow(m) {
+      return m == monthOf(request.time) || m == monthOf(request.time + duration.value(1, 'd'))
+        || m == monthOf(request.time - duration.value(1, 'd'));
+    }
+    // The care streak inside cat/main (CareStreak / StreakProtection). Exact keys; Lovelyy Plus streak
+    // protection is checked here: days off (freezeDays) only change together with freezeUsed counting up
+    // by one in the current month (or starting at 1 in a new month), at most 2 a month; made-up days
+    // (repairDays) and days off need an active Plus on the couple (plusActive). s = new map, o = old map.
+    function validStreak(s, o, plus) {
+      return s.keys().hasOnly(['count', 'best', 'lastCompleteDay', 'careDay', 'careBy', 'freezeMonth', 'freezeUsed',
+                               'freezeDays', 'repairDays', 'brokenCount', 'brokenLast'])
+        && s.get('count', 0) is int && s.get('count', 0) >= 0
+        && s.get('best', 0) is int && s.get('best', 0) >= 0
+        && (s.get('lastCompleteDay', null) == null || isDay(s.lastCompleteDay))
+        && (s.get('careDay', null) == null || isDay(s.careDay))
+        && s.get('careBy', []) is list && s.get('careBy', []).size() <= 2
+        && s.get('freezeUsed', 0) is int && s.get('freezeUsed', 0) >= 0 && s.get('freezeUsed', 0) <= 2
+        && s.get('freezeDays', []) is list && s.get('freezeDays', []).size() <= 6
+        && s.get('repairDays', []) is list && s.get('repairDays', []).size() <= 6
+        && s.get('brokenCount', 0) is int && s.get('brokenCount', 0) >= 0
+        && (s.get('brokenLast', null) == null || isDay(s.brokenLast))
+        && (s.get('freezeMonth', null) == null || (s.freezeMonth is string && s.freezeMonth.matches('^[0-9]{4}-[0-9]{2}$')))
+        && (
+          // No new day off: month and count stay as they were.
+          (s.get('freezeDays', []) == o.get('freezeDays', [])
+            && s.get('freezeMonth', null) == o.get('freezeMonth', null)
+            && s.get('freezeUsed', 0) == o.get('freezeUsed', 0))
+          // A new day off: Plus, this month, one more (or the first of a new month).
+          || (plus && s.get('freezeDays', []) != o.get('freezeDays', []) && monthNearNow(s.get('freezeMonth', ''))
+            && ((s.freezeMonth == o.get('freezeMonth', null) && s.freezeUsed == o.get('freezeUsed', 0) + 1)
+                || (s.freezeMonth != o.get('freezeMonth', null) && s.freezeUsed == 1)))
+        )
+        && (s.get('repairDays', []) == o.get('repairDays', []) || plus);
+    }
     function validSignal(d, members) {
       return d.keys().hasOnly(['kind', 'emotion', 'mood', 'from', 'fromName', 'to', 'text', 'at', 'createdAt'])
         && d.kind in ['heartbeat', 'nudge', 'mood', 'question', 'note', 'event', 'wheel']
@@ -354,9 +392,25 @@ service cloud.firestore {
         allow read, delete: if isMemberHere();
       }
 
+      // The couple has Lovelyy Plus right now (same rules as PlusRules.isPlus: the 14-day trial, or a paid
+      // period with 3 days of grace while it auto-renews). Server time, so a phone's clock can't extend it.
+      function plusActive() {
+        let p = coupleData().get('plus', null);
+        let now = request.time.toMillis();
+        return p != null && (
+          (p.get('trialStart', null) is int && now < p.trialStart + 14 * 86400000)
+          || (p.get('source', 'trial') != 'trial' && p.get('until', null) is int
+              && (now < p.until || (p.get('autoRenew', false) == true && now < p.until + 3 * 86400000)))
+        );
+      }
+
       // cat/main (CatRepository). Written as a whole doc in a transaction, or merged for "wearing".
+      // The streak map is checked against the stored one (days off / make-up need Plus, see validStreak).
       match /cat/{docId} {
-        allow create, update: if openCouple() && docId == 'main' && validCat(request.resource.data);
+        allow create, update: if openCouple() && docId == 'main' && validCat(request.resource.data)
+          && validStreak(request.resource.data.get('streak', {}),
+                         resource == null ? {} : resource.data.get('streak', {}),
+                         plusActive());
       }
 
       // signals/{auto} (SignalRepository.send): heartbeat, nudge and "I did something" notices.
