@@ -79,6 +79,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
@@ -547,11 +548,16 @@ internal fun CatSpeech(bubble: String?, banner: String?) {
             when {
                 speech == null -> Spacer(Modifier.fillMaxWidth())
                 speech.isBanner -> Box(Modifier.fillMaxWidth().height(SPEECH_HEIGHT), contentAlignment = Alignment.Center) {
+                    // The strip is two lines high. A long message (refuse_tired with a 20-letter name, a narrow
+                    // screen, a big system font, a longer translation) steps the size down until it fits, and only
+                    // at 10sp falls back to the ellipsis.
+                    var size by remember(speech.text) { mutableIntStateOf(13) }
                     Text(
                         speech.text,
-                        fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 13.sp, lineHeight = 15.sp, color = Brown,
+                        fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = size.sp, lineHeight = (size + 2).sp, color = Brown,
                         textAlign = TextAlign.Center,
                         maxLines = 2,
+                        onTextLayout = { if (it.hasVisualOverflow && size > 10) size-- },
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier
                             .clip(RoundedCornerShape(50))

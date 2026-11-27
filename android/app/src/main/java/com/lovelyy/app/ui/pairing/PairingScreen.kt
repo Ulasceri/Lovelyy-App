@@ -15,8 +15,6 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -131,10 +129,9 @@ fun PairingScreen(me: UserProfile) {
 
     AnimatedContent(
         targetState = vm.tab,
-        transitionSpec = {
-            if (targetState == PairingViewModel.Tab.Enter) (slideInHorizontally { it / 4 } + fadeIn()) togetherWith (slideOutHorizontally { -it / 4 } + fadeOut())
-            else (slideInHorizontally { -it / 4 } + fadeIn()) togetherWith (slideOutHorizontally { it / 4 } + fadeOut())
-        },
+        // Fade only: a slide moves the number pad under the finger while it is arriving, and a tap whose key has
+        // moved away between down and up is dropped by clickable - the "first tap sometimes ignored" bug.
+        transitionSpec = { fadeIn(tween(160)) togetherWith fadeOut(tween(120)) },
         label = "pairTab",
     ) { tab ->
         when (tab) {
