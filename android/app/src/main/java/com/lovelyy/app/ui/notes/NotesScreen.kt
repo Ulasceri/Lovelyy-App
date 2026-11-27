@@ -108,14 +108,20 @@ class NotesViewModel(private val app: LovelyyApplication, private val coupleId: 
     /** How many of the newest notes are loaded; "load more" raises it by a page. */
     private val limit = kotlinx.coroutines.flow.MutableStateFlow(ListLimits.NOTES_PAGE)
 
+    /** The Benim/partner chips must cover older notes too, so they listen to every note (same as Arama). */
+    private val everything = kotlinx.coroutines.flow.MutableStateFlow(false)
+
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-    val notes: StateFlow<List<Note>?> = limit
-        .flatMapLatest { app.noteRepository.observe(coupleId, it) }
+    val notes: StateFlow<List<Note>?> = kotlinx.coroutines.flow.combine(limit, everything) { l, all -> if (all) null else l }
+        .flatMapLatest { l -> if (l == null) app.noteRepository.observeAll(coupleId) else app.noteRepository.observe(coupleId, l) }
         .catch { Timber.w(it, "Notes unavailable") }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     /** A full window means older notes may exist. */
-    fun canLoadMore(): Boolean = ListLimits.hasMore(notes.value?.size ?: 0, limit.value)
+    fun canLoadMore(): Boolean = !everything.value && ListLimits.hasMore(notes.value?.size ?: 0, limit.value)
+
+    /** True while a person filter (mine / theirs) is on: then every note is loaded, not just the newest pages. */
+    fun listenToEverything(on: Boolean) { everything.value = on }
 
     fun loadMore() { limit.value = ListLimits.nextLimit(limit.value) }
 
@@ -172,6 +178,7 @@ fun NotesScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onSe
     val partnerName = partner?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.home_partner_fallback)
     var tabSel by rememberSaveable { mutableIntStateOf(0) } // 0 all, 1 mine, 2 theirs
     var editing by remember { mutableStateOf<Note?>(null) }
+    androidx.compose.runtime.LaunchedEffect(tabSel) { vm.listenToEverything(tabSel != 0) }
     // Opened from Arama on one note: open it once the notes have loaded.
     var opened by rememberSaveable { mutableStateOf(false) }
     androidx.compose.runtime.LaunchedEffect(notes, openId) {

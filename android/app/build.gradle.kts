@@ -58,7 +58,10 @@ android {
             buildConfigField("boolean", "PLUS_FAKE_BILLING", fakeBilling.toString())
         }
         release {
-            isMinifyEnabled = false
+            // R8: shrinks and obfuscates code and drops unused resources. Libraries bring their own keep rules;
+            // the app's few extra ones are in proguard-rules.pro. Crashlytics uploads the mapping file on build.
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }

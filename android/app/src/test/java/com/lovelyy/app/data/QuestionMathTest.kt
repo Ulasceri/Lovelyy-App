@@ -66,4 +66,11 @@ class QuestionMathTest {
         val year = (0L until 365L).map { QuestionBank.forDay(today.plusDays(it)) }
         assertEquals(365, year.toSet().size)
     }
+
+    @Test
+    fun storedQuestionWinsOverThePickedOne() {
+        assertEquals("stored", QuestionMath.questionToWrite("stored", "picked"))
+        assertEquals("picked", QuestionMath.questionToWrite(null, "picked"))
+        assertEquals("picked", QuestionMath.questionToWrite("  ", "picked"))
+    }
 }
