@@ -7,7 +7,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -182,7 +181,6 @@ fun PaywallScreen(
 }
 
 /** "Satın alımları geri yükle · Kullanım şartları · Gizlilik" (44dp touch targets). */
-@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun LegalLinks(onRestore: () -> Unit) {
     val context = LocalContext.current
@@ -192,18 +190,11 @@ fun LegalLinks(onRestore: () -> Unit) {
         runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
             .onFailure { Toast.makeText(context, url, Toast.LENGTH_SHORT).show() }
     }
-    FlowRow(
-        Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
-        verticalArrangement = Arrangement.Center,
-    ) {
-        // Each dot travels with the link after it, so a wrapped line never ends with a lone "·".
+    // Restore on its own line, terms and privacy together below: no wrap can leave a lone "·".
+    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
         LinkText(stringResource(R.string.plus_restore), onRestore)
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            Dot()
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
             LinkText(stringResource(R.string.plus_terms)) { open(terms) }
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Dot()
             LinkText(stringResource(R.string.plus_privacy)) { open(privacy) }
         }

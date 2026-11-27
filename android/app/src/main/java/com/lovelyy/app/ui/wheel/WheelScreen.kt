@@ -344,7 +344,7 @@ fun WheelScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onHi
                     }
                 }
             }
-            DashedCircleButton(stringResource(R.string.wh_new), locked = gate.blocked) { gate.tryAdd { creating = true } }
+            DashedCircleButton(if (gate.blocked) stringResource(R.string.wh_new_locked) else stringResource(R.string.wh_new), locked = gate.blocked) { gate.tryAdd { creating = true } }
         }
         com.lovelyy.app.ui.plus.PlusLimitBanner(gate)
 

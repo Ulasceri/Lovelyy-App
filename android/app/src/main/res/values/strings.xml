@@ -684,6 +684,7 @@
     <string name="wh_gezi">Nereye gitsek?</string>
     <string name="wh_izle">Ne izlesek?</string>
     <string name="wh_new">Yeni çark oluştur</string>
+    <string name="wh_new_locked">Yeni çark: Plus ile</string>
     <string name="wh_spinning">Çark dönüyor</string>
     <string name="wh_result">Çarkın kararı</string>
     <string name="wh_spin">Çarkı çevir</string>
