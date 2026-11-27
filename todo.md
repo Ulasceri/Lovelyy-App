@@ -16,3 +16,11 @@
 - [ ] Kod girme ekranı açılır açılmaz yapılan ilk tuş dokunuşunun bazen algılanmamasını incele.
 - [ ] `assets/items/` içindeki 12 eşya görselini Plus'ın eşya aşamasında uygulamaya bağla (seçim ekranı, anasayfa, widget).
 - [ ] Eşyaya özel kedi animasyonlarını üret; pilot olarak tüy ile oyun klibinden başla.
+- [ ] Günün sorusunda çevrimdışı yedek yazımın da kayıtlı soruyu koruması gerekiyor (şimdilik forDay yazıyor).
+- [ ] Notlar ekranındaki kendi aramasının da yüklenmemiş eski notları kapsaması gerekiyor (genel arama kapsıyor).
+- [ ] Saati ileri bir telefonun yarım kalmış günün bakım kaydını silmesi sunucu saati olmadan tam çözülemiyor, sonra ele al.
+- [ ] Saati ileri bir telefon kediyi uyutunca kedi yaklaşık 25 saat uyuyor görünüyor, sleepingSince geleceğe kaydedilmemeli.
+- [ ] Ruh hali geçmişi yalnızca son 30 günü gösteriyor, daha eski aylara geçiş eklenmeli mi karar ver.
+- [ ] Kaydırma takılmasını (jank) emülatör yerine gerçek bir telefonda ölç.
+- [ ] Zayıf ağ (yavaş/gecikmeli bağlantı) testini emülatör konsol izni ayarlanınca tekrar yap.
+- [ ] Kedi kartındaki uzun ret mesajlarının (refuse_tired) dar ekranlarda kesilip kesilmediğini kontrol et.
