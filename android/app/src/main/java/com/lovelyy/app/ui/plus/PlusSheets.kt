@@ -143,11 +143,18 @@ private fun WidePreview(d: LockPreviewData) {
             )
         }
         Column(Modifier.weight(1f).fillMaxHeight().padding(horizontal = 12.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(5.dp, Alignment.CenterVertically)) {
-            Text(d.catName, fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Brown, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(
-                pluralStringResource(R.plurals.widget_streak, d.streak, d.streak), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 11.sp, color = Brown,
-                modifier = Modifier.clip(CircleShape).background(PeachSoft).padding(horizontal = 8.dp, vertical = 2.dp),
-            )
+            // Name and streak share one row so all four need bars fit in the 160dp card.
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(
+                    d.catName, fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Brown,
+                    maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false),
+                )
+                Text(
+                    pluralStringResource(R.plurals.widget_streak, d.streak, d.streak), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 11.sp, color = Brown,
+                    maxLines = 1, softWrap = false,
+                    modifier = Modifier.clip(CircleShape).background(PeachSoft).padding(horizontal = 8.dp, vertical = 2.dp),
+                )
+            }
             MiniBar(stringResource(R.string.need_hunger), d.levels?.hunger)
             MiniBar(stringResource(R.string.need_thirst), d.levels?.thirst)
             MiniBar(stringResource(R.string.need_energy), d.levels?.energy)
