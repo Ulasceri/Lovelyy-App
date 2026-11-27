@@ -222,9 +222,6 @@ fun QuestionHistoryScreen(me: UserProfile, partner: UserProfile?, onBack: () -> 
                 )
             }
         }
-        if (paged.canLoadMore) {
-            com.lovelyy.app.ui.components.LoadMoreButton(paged.loadMore, Modifier.align(Alignment.CenterHorizontally).padding(top = 4.dp))
-        }
     }
 }
 
@@ -341,6 +338,9 @@ fun WheelHistoryScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Uni
                     },
                 )
             }
+        }
+        if (paged.canLoadMore) {
+            com.lovelyy.app.ui.components.LoadMoreButton(paged.loadMore, Modifier.align(Alignment.CenterHorizontally).padding(top = 4.dp))
         }
     }
 }
