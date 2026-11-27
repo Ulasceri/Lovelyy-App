@@ -4,6 +4,7 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.SetOptions
+import com.google.firebase.firestore.Source
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -68,6 +69,12 @@ object QuestionMath {
         while (d.toString() in complete) { n++; d = d.minusDays(1) }
         return n
     }
+
+    /**
+     * The question to write with an answer: the day's [stored] question when there is one (the first answerer
+     * fixed it), else [picked].
+     */
+    fun questionToWrite(stored: String?, picked: String): String = stored?.takeIf { it.isNotBlank() } ?: picked
 }
 
 class QuestionRepository(private val db: FirebaseFirestore) {
@@ -79,7 +86,10 @@ class QuestionRepository(private val db: FirebaseFirestore) {
      * Saves my answer for [day]. Throws [AnswersLockedException] if I already answered and the partner has
      * answered too (see [QuestionMath.isLocked]); checked in a transaction because both phones may race.
      * Offline, a transaction can't run; then the answer is written as before, and the screen's own lock
-     * (it hides editing once both answers are visible) is the only guard.
+     * (it hides editing once both answers are visible) is the only guard. The offline write keeps the day's
+     * stored question too: it takes it from the local cache (the screen listens to this document, so it is
+     * there whenever the phone has seen the day's question), and only without one falls back to [QuestionBank.forDay]
+     * (the rules need a question when the document is created).
      */
     suspend fun answer(coupleId: String, day: LocalDate, me: UserProfile, text: String) {
         val ref = questions(coupleId).document(day.toString())
@@ -94,7 +104,6 @@ class QuestionRepository(private val db: FirebaseFirestore) {
             ),
             "updatedAt" to FieldValue.serverTimestamp(),
         )
-        val data = data(QuestionBank.forDay(day))
         try {
             db.runTransaction { tx ->
                 val snap = tx.get(ref)
@@ -102,8 +111,7 @@ class QuestionRepository(private val db: FirebaseFirestore) {
                 if (QuestionMath.isLocked(answered, me.uid)) throw AnswersLockedException()
                 // The first answerer fixes the day's question; a partner on another app version (other list
                 // size) must not overwrite it, or the two phones would show different questions.
-                val stored = snap.getString("question")?.takeIf { it.isNotBlank() }
-                tx.set(ref, if (stored != null) data(stored) else data, SetOptions.merge())
+                tx.set(ref, data(QuestionMath.questionToWrite(snap.getString("question"), QuestionBank.forDay(day))), SetOptions.merge())
                 null
             }.await()
         } catch (e: CancellationException) {
@@ -111,7 +119,15 @@ class QuestionRepository(private val db: FirebaseFirestore) {
         } catch (e: Exception) {
             e.causeOf<AnswersLockedException>()?.let { throw it }
             if (!e.isOffline()) throw e
-            ref.set(data, SetOptions.merge()).await()
+            // No server to ask: keep the question this phone last saw stored for the day, not the date's pick.
+            val cached = try {
+                ref.get(Source.CACHE).await().getString("question")
+            } catch (c: CancellationException) {
+                throw c
+            } catch (notCached: Exception) {
+                null
+            }
+            ref.set(data(QuestionMath.questionToWrite(cached, QuestionBank.forDay(day))), SetOptions.merge()).await()
         }
     }
 

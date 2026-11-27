@@ -5,7 +5,6 @@
 - [ ] App Check'i, Play internal testing sürümü doğrulanmış istek gösterene kadar zorunlu (enforce) yapma.
 - [ ] Google Cloud Console'da Android API anahtarını com.lovelyy.app + SHA-1'lerle ve Firebase API'leriyle sınırla.
 - [ ] Firebase Console > Authentication > Settings'te Email enumeration protection'ı aç.
-- [ ] Play yayınından önce release build'de R8'i (isMinifyEnabled) açıp test et.
 - [ ] Sinyal sınırlarını değiştirmek için Firestore'da config/limits dokümanındaki signalsPerHour / signalsPerDay / minGapSeconds alanlarını düzenle (yoksa oluştur; varsayılan 15 / 60 / 2).
 - [ ] Herkese açık iletişim e-postasını `web/CONTACT_EMAIL` içine yaz ve `python3 web/tools/build.py` çalıştır (şimdilik yer tutucu).
 - [ ] Web sitesini `npx firebase-tools deploy --only hosting --project lovelyy-native` ile yayınla.
@@ -16,7 +15,6 @@
 - [ ] `assets/items/` içindeki 12 eşya görselini Plus'ın eşya aşamasında uygulamaya bağla (seçim ekranı, anasayfa, widget).
 - [ ] `assets/item-clips/` içindeki 12 eşya klibini seçili eşyaya göre bakım animasyonu olarak uygulamaya bağla.
 - [ ] Eşyaya özel kedi animasyonlarını üret; pilot olarak tüy ile oyun klibinden başla.
-- [ ] Günün sorusunda çevrimdışı yedek yazımın da kayıtlı soruyu koruması gerekiyor (şimdilik forDay yazıyor).
 - [ ] Notlar ekranındaki kendi aramasının da yüklenmemiş eski notları kapsaması gerekiyor (genel arama kapsıyor).
 - [ ] Saati ileri bir telefonun yarım kalmış günün bakım kaydını silmesi sunucu saati olmadan tam çözülemiyor, sonra ele al.
 - [ ] Saati ileri bir telefon kediyi uyutunca kedi yaklaşık 25 saat uyuyor görünüyor, sleepingSince geleceğe kaydedilmemeli.
