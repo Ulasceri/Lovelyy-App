@@ -77,6 +77,26 @@ refills it), love 8h. The streak grows by one for each day on which both partner
   Actions play eating / drinking / playing; tap = surprised; stroking = petted + hearts + haptics.
 - The partner's actions arrive through the Firestore listener and play the same animation.
 
+## Cat card v2 (Yuva) and Kedi bakımı v2
+
+Nothing is drawn over the video any more (boards "V2 · Anasayfa kedi kartı v2" and "14 · Kedi bakımı v2"); only
+the petting hearts rise from the finger. Yuva's card (`CatSection`) is, top to bottom: a 36dp strip with the
+name (pencil = rename) and the streak chip, the video (`CatStage`), a 36dp slot below it with the speech bubble
+(tail pointing up) where banners ("Deniz besledi", refusals, errors) briefly take the bubble's place, then the need
+bars. The card keeps its old height (a 1.12 : 1 stage plus the need bars): the video gives up the strip and the
+slot, see `CatCardGeometry` (pure, `CatCardGeometryTest` checks the height and that the cat, ears to paws, stays
+in the crop from a 320dp card up). The strip's buttons have 48dp touch targets that reach 12dp above the card,
+so the strip stays 36dp and never steals touches from the cat (the card is not clipped; the video clips itself).
+Kedi bakımı uses the same video size and bubble slot without the strip; the "Bugün: ..." line moved into the
+streak card ("N gün bakım serisi", "En uzun seri", each partner's latest care today with a check once they count).
+
+"Seri nedir?" (`StreakExplainerSheet`, board S1) explains a streak day (both partners cared that day), the streak
+and a missed day (it restarts from day 1 after midnight). `CatViewModel` opens it by itself once per couple on this
+phone, the first time the shown streak is at least 1 (`StreakExplainer.shouldAutoShow`, seen flag
+`streak_explainer_seen_{coupleId}` in the `lovelyy_onboarding` prefs); the Yuva streak chip and the Kedi bakımı
+streak card open it again and also mark it seen. The board's Plus line (days off, make-up within 24h) is shown as
+text only and links nowhere yet.
+
 ## Widget (`widget/CatWidget.kt`)
 
 RemoteViews widget with one picture per mood. The app saves the cat whenever it changes; the
@@ -91,7 +111,7 @@ heartbeat with the signed-in user. The drawing widget shows a 420 px PNG rendere
 Taps open their screen: widgets and notifications pass a `DeepLink` route (`MainActivity.kt`) that Home pushes.
 Cat accessories were removed on 2026-11-26 (Ulaş): drawn over the video they stayed still while the cat moved.
 If they come back they will be designed first and baked into the video clips (tools/cat-animation). The care streak
-stays (Kedi bakımı shows the current and best streak). `firestore.rules` still accepts the old `wearing` field on
+stays (Kedi bakımı shows the current and best streak; "Seri nedir?" explains it, see "Cat card v2" above). `firestore.rules` still accepts the old `wearing` field on
 `cat/main` so older installs keep working; the app no longer writes it. Unsealed capsule letters are kept as a draft on the phone.
 
 # Step 3: redesigned screens + first three features

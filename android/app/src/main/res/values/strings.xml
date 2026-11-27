@@ -190,6 +190,12 @@
         <item quantity="one">%1$d gün seri</item>
         <item quantity="other">%1$d gün seri</item>
     </plurals>
+    <plurals name="cat_streak_chip_label">
+        <item quantity="one">%1$d gün seri. Seri nedir?</item>
+        <item quantity="other">%1$d gün seri. Seri nedir?</item>
+    </plurals>
+    <string name="cat_rename_label">Kedinin adını değiştir</string>
+    <string name="cat_video_label">%1$s, ortak kediniz</string>
     <string name="cat_both_cared">Bugün ikiniz de ilgilendiniz, seri büyüdü ✓</string>
     <string name="cat_waiting_partner">Sen bugün ilgilendin, %1$s bekleniyor</string>
     <string name="cat_your_turn">Bugün henüz ilgilenmedin</string>
@@ -536,8 +542,6 @@
     <string name="p_pick_date">Tarih seç</string>
 
     <!-- Kedi bakımı (approved design 14) -->
-    <string name="cc_today">Bugün: %1$s</string>
-    <string name="cc_today_none">Bugün henüz kimse ilgilenmedi</string>
     <string name="cc_me_feed">sen besledin</string>
     <string name="cc_me_water">sen su verdin</string>
     <string name="cc_me_play">sen oynadın</string>
@@ -559,6 +563,27 @@
         <item quantity="one">En uzun seri: %1$d gün</item>
         <item quantity="other">En uzun seri: %1$d gün</item>
     </plurals>
+    <plurals name="cc_streak_card_label">
+        <item quantity="one">%1$d gün bakım serisi. Seri nedir?</item>
+        <item quantity="other">%1$d gün bakım serisi. Seri nedir?</item>
+    </plurals>
+    <string name="cc_me_none">Sen henüz bakmadın</string>
+    <string name="cc_partner_none">%1$s henüz bakmadı</string>
+
+    <!-- Seri nedir? sheet (approved board S1). %1$s = the cat's name with its case ending ("Mırmır'a"). -->
+    <string name="streak_sheet_title_intro">Seri nedir?</string>
+    <string name="streak_sheet_title_started">Seriniz başladı: 1. gün</string>
+    <string name="streak_sheet_title_running">Seriniz: %1$d. gün</string>
+    <string name="streak_sheet_both_today">Bugün ikiniz de %1$s baktınız.</string>
+    <string name="streak_sheet_count_title">Gün nasıl sayılır?</string>
+    <string name="streak_sheet_count_body">Aynı gün ikiniz de %1$s en az bir kez bakarsanız: besle, su ver, oyna ya da uyut.</string>
+    <string name="streak_sheet_meaning_title">Seri ne demek?</string>
+    <string name="streak_sheet_meaning_body">Böyle geçen günlerin art arda sayısı. Her gün bir artar, kedinin adının yanında görünür.</string>
+    <string name="streak_sheet_missed_title">Bir gün kaçarsa</string>
+    <string name="streak_sheet_missed_body">Gün gece yarısı biter. Biriniz bakamadıysa seri yeniden 1. günden başlar.</string>
+    <string name="streak_sheet_plus_badge">Plus</string>
+    <string name="streak_sheet_plus_body">Ayda 2 izin günü ve kaçan günü 24 saat içinde telafi. Denemenizde açık.</string>
+    <string name="streak_sheet_ok">Anladım</string>
 
     <!-- Biz: profil ve ayarlar (approved design 10) -->
     <string name="pf_title">Biz</string>

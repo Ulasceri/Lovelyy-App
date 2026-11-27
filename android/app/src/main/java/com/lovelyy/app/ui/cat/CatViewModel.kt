@@ -9,6 +9,10 @@ import com.lovelyy.app.data.CatActionType
 import com.lovelyy.app.data.CatDoc
 import com.lovelyy.app.data.CatLevels
 import com.lovelyy.app.data.CatRules
+import com.lovelyy.app.data.CoupleClock
+import com.lovelyy.app.data.OnboardingPrefs
+import com.lovelyy.app.data.StreakExplainer
+import com.lovelyy.app.data.StreakExplainerSource
 import com.lovelyy.app.data.UserProfile
 import com.lovelyy.app.telemetry.Telemetry
 import com.lovelyy.app.widget.CatWidget
@@ -31,6 +35,9 @@ sealed interface CatEvent {
     data class PartnerAction(val action: CatAction) : CatEvent
     data class Refused(val reason: CatRules.Refusal) : CatEvent
     data object Failed : CatEvent
+
+    /** The couple's streak just reached 1 for the first time on this phone: open "Seri nedir?" by itself, once. */
+    data object FirstStreak : CatEvent
 }
 
 data class CatUi(val doc: CatDoc, val levels: CatLevels)
@@ -67,6 +74,7 @@ class CatViewModel(private val app: LovelyyApplication, private val coupleId: St
                     previous = last
                     first = false
                     CatWidget.save(app, coupleId, d)
+                    maybeExplainStreak(d)
                 }
         }
         // Needs decay with time: refresh the computed levels regularly.
@@ -76,6 +84,25 @@ class CatViewModel(private val app: LovelyyApplication, private val coupleId: St
                 clock.value = System.currentTimeMillis()
             }
         }
+    }
+
+    /**
+     * Opens "Seri nedir?" (board S1) by itself the first time the shown streak is at least 1. Marked seen before the
+     * event is sent so a second screen or a quick re-emit can't show it twice. The screens collect one shared
+     * event channel, so only one of them gets it.
+     */
+    private suspend fun maybeExplainStreak(d: CatDoc) {
+        val current = d.streak.current(CoupleClock.today())
+        if (!StreakExplainer.shouldAutoShow(current, OnboardingPrefs.streakExplainerSeen(app, coupleId))) return
+        OnboardingPrefs.markStreakExplainerSeen(app, coupleId)
+        Telemetry.track(AnalyticsEvent.StreakExplainerShown(StreakExplainerSource.Auto.key))
+        events.send(CatEvent.FirstStreak)
+    }
+
+    /** The streak chip (Yuva) or card (Kedi bakımı) opened "Seri nedir?". After that it never opens by itself. */
+    fun streakExplainerOpened(source: StreakExplainerSource) {
+        OnboardingPrefs.markStreakExplainerSeen(app, coupleId)
+        Telemetry.track(AnalyticsEvent.StreakExplainerShown(source.key))
     }
 
     /** Checks locally first so the UI can answer instantly (e.g. "it's asleep"). */

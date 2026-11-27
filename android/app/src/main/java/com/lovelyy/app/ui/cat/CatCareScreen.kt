@@ -1,11 +1,21 @@
 package com.lovelyy.app.ui.cat
 
 import android.view.HapticFeedbackConstants
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Spacer
+import com.lovelyy.app.data.CoupleClock
+import com.lovelyy.app.data.StreakExplainerSource
+import com.lovelyy.app.text.AppLocale
+import com.lovelyy.app.ui.components.InitialAvatar
+import com.lovelyy.app.ui.components.Kit
+import com.lovelyy.app.ui.profile.CHEVRON_D
+import com.lovelyy.app.ui.theme.CheckInk
+import com.lovelyy.app.ui.theme.Cream
+import com.lovelyy.app.ui.theme.Mint
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -64,9 +74,7 @@ import com.lovelyy.app.ui.components.CenteredTopBar
 import com.lovelyy.app.ui.components.HEART_D
 import com.lovelyy.app.ui.components.SvgStrokeIcon
 import com.lovelyy.app.ui.components.bounceClick
-import com.lovelyy.app.ui.components.drawSvg
 import com.lovelyy.app.ui.components.softShadow
-import com.lovelyy.app.ui.components.svgPath
 import com.lovelyy.app.ui.lovelyyApp
 import com.lovelyy.app.ui.theme.Brown
 import com.lovelyy.app.ui.theme.BrownSoft
@@ -86,9 +94,11 @@ private val ButtonIdle = Color(0xFFF6EEE8)
 private const val BOWL_D = "M3 12h18a9 6 0 0 1-18 0z M8.5 9.5c0-1 .8-2 2-2M13 9c0-1 .8-2 2-2"
 private const val DROP_D = "M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"
 private const val MOON_D = "M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"
-private const val FLAME_D = "M12 21c-4 0-6-2.7-6-6 0-4 4-6 4-10 3 2 4 4 4 6 1-1 1.5-2 1.5-3 2 2 2.5 4.5 2.5 7 0 3.3-2 6-6 6z"
 
-/** Kedi bakımı (approved design 14): the cat up close, its four needs with a button each, and the care streak. */
+/**
+ * Kedi bakımı (approved board "14 · Kedi bakımı v2"): the cat up close with its speech bubble below the video,
+ * its four needs with a button each, and the care streak card (who cared today; tap = "Seri nedir?").
+ */
 @Composable
 fun CatCareScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBack: () -> Unit) {
     val coupleId = me.coupleId ?: return
@@ -103,7 +113,7 @@ fun CatCareScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBac
     val animator = remember { CatAnimator(context, scope) }
     val view = LocalView.current
     var banner by remember { mutableStateOf<String?>(null) }
-    var naming by remember { mutableStateOf(false) }
+    var explainer by remember { mutableStateOf<StreakExplainerSource?>(null) }
 
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     DisposableEffect(lifecycle) {
@@ -140,6 +150,7 @@ fun CatCareScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBac
                 }
                 is CatEvent.Refused -> banner = refusalTexts(e.reason)
                 CatEvent.Failed -> banner = context.getString(R.string.cat_error)
+                CatEvent.FirstStreak -> explainer = StreakExplainerSource.Auto
             }
         }
     }
@@ -164,7 +175,11 @@ fun CatCareScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBac
 
     val catName = displayCatName(ui?.doc?.name)
     val today = com.lovelyy.app.ui.coupleToday()
-    val todayLine = ui?.doc?.recent?.let { todayLineText(it, me.uid, partnerName) }
+    val zone by CoupleClock.zone.collectAsStateWithLifecycle()
+    val latestToday = ui?.doc?.recent?.let { CareRewards.todayLatest(it, me.uid, today, zone) }.orEmpty()
+    val streak = ui?.doc?.streak
+    val currentStreak = streak?.current(today) ?: 0
+    val myName = me.displayName.ifBlank { stringResource(R.string.cat_you) }
 
     Column(
         Modifier
@@ -177,40 +192,37 @@ fun CatCareScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBac
     ) {
         CenteredTopBar(catName, onBack)
 
-        // Hero: the living cat. The stage is short, so keep the head and ears in view.
+        // Hero: the living cat, nothing drawn over it; the bubble (or a banner) sits below the video.
         val heroShape = RoundedCornerShape(28.dp)
-        Box(
+        Column(
             Modifier
                 .fillMaxWidth()
                 .softShadow(heroShape, 14.dp)
                 .clip(heroShape)
                 .background(CatBg),
         ) {
-            CatStage(
-                animator = animator,
-                sleepingPoster = levels?.sleeping == true,
-                name = ui?.doc?.name,
-                streak = 0,
-                bubble = mood?.let { stringResource(it.bubbleRes()) },
-                banner = banner,
-                onNameClick = { naming = true },
-                onTap = {
-                    val clip = animator.currentClip
-                    if (levels?.sleeping != true && clip?.isBridge != true) {
-                        animator.play(CatClip.Surprised)
-                        view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
-                    }
-                },
-                onPetting = { animator.setPetting(it) },
-                onStroke = { view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK) },
-                onPetDone = { strokes -> if (strokes > 0) vm.act(me, members, CatActionType.Pet, strokes) },
-                stageModifier = Modifier.height(196.dp),
-                cropBias = 0.3f,
-                showChips = false,
-                bubbleTop = 16.dp,
-                bubbleEnd = 16.dp,
-                footer = todayLine,
-            )
+            BoxWithConstraints(Modifier.fillMaxWidth()) {
+                CatStage(
+                    animator = animator,
+                    sleepingPoster = levels?.sleeping == true,
+                    catName = catName,
+                    onTap = {
+                        val clip = animator.currentClip
+                        if (levels?.sleeping != true && clip?.isBridge != true) {
+                            animator.play(CatClip.Surprised)
+                            view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                        }
+                    },
+                    onPetting = { animator.setPetting(it) },
+                    onStroke = { view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK) },
+                    onPetDone = { strokes -> if (strokes > 0) vm.act(me, members, CatActionType.Pet, strokes) },
+                    // Same video size and crop as the Yuva card, so the whole cat stays in view.
+                    modifier = Modifier.height(CatCardGeometry.videoHeightDp(maxWidth.value).dp),
+                    shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+                )
+            }
+            CatSpeech(bubble = mood?.let { stringResource(it.bubbleRes()) }, banner = banner)
+            Spacer(Modifier.height(10.dp))
         }
 
         // 2×2 needs: each with its own button; the most needed one is peach.
@@ -231,41 +243,42 @@ fun CatCareScreen(me: UserProfile, couple: Couple?, partner: UserProfile?, onBac
                 enabled, highlight == CatActionType.Play, Modifier.weight(1f), dimmed = sleeping) { act(CatActionType.Play) }
         }
 
-        val streak = ui?.doc?.streak
         StreakCard(
-            current = streak?.current(today) ?: 0,
+            current = currentStreak,
             best = streak?.best ?: 0,
-        )
-    }
-
-    if (naming) {
-        NameCatDialog(
-            initial = ui?.doc?.name.orEmpty(),
-            canDismiss = true,
-            onDismiss = { naming = false },
-            onSave = { n ->
-                naming = false
-                vm.act(me, members, CatActionType.Name, name = n)
-                animator.play(CatClip.Happy)
+            myName = myName,
+            partnerName = partnerName,
+            myText = latestToday.firstOrNull { it.uid == me.uid }?.let { todayText(it, me.uid, partnerName) }
+                ?: stringResource(R.string.cc_me_none),
+            partnerText = latestToday.firstOrNull { it.uid != me.uid }?.let { todayText(it, me.uid, partnerName) }
+                ?: stringResource(R.string.cc_partner_none, partnerName),
+            meDone = streak?.caredToday(me.uid, today) == true,
+            partnerDone = partner?.uid?.let { streak?.caredToday(it, today) } == true,
+            onClick = {
+                vm.streakExplainerOpened(StreakExplainerSource.Card)
+                explainer = StreakExplainerSource.Card
             },
         )
     }
+
+    explainer?.let {
+        StreakExplainerSheet(
+            catName = catName,
+            myName = myName,
+            partnerName = partnerName,
+            streak = currentStreak,
+            bothCaredToday = streak?.lastCompleteDay == today.toString(),
+            onDismiss = { explainer = null },
+        )
+    }
 }
 
-/** "Bugün: sen sevdin · Elif su verdi" — shared by Yuva and Kedi bakımı so both show the same line. */
-@Composable
-internal fun todayLineText(recent: List<CatAction>, myUid: String, partnerName: String): String {
-    val zone by com.lovelyy.app.data.CoupleClock.zone.collectAsStateWithLifecycle()
-    val latest = CareRewards.todayLatest(recent, myUid, com.lovelyy.app.data.CoupleDay.today(zone, System.currentTimeMillis()), zone)
-    return if (latest.isEmpty()) stringResource(R.string.cc_today_none)
-    else stringResource(R.string.cc_today, latest.map { todayText(it, myUid, partnerName) }.joinToString(" · "))
-}
-
+/** One person's latest care today, as on the streak card: "Sen sevdin", "Elif su verdi". */
 @Composable
 private fun todayText(a: CatAction, myUid: String, partnerName: String): String {
     val mine = a.uid == myUid
     val who = a.name.ifBlank { partnerName }
-    return when (a.type) {
+    val text = when (a.type) {
         CatActionType.Feed -> if (mine) stringResource(R.string.cc_me_feed) else stringResource(R.string.cc_feed, who)
         CatActionType.Water -> if (mine) stringResource(R.string.cc_me_water) else stringResource(R.string.cc_water, who)
         CatActionType.Play -> if (mine) stringResource(R.string.cc_me_play) else stringResource(R.string.cc_play, who)
@@ -274,6 +287,7 @@ private fun todayText(a: CatAction, myUid: String, partnerName: String): String 
         CatActionType.Wake -> if (mine) stringResource(R.string.cc_me_wake) else stringResource(R.string.cc_wake, who)
         CatActionType.Name -> ""
     }
+    return text.replaceFirstChar { it.titlecase(AppLocale.current()) }
 }
 
 @Composable
@@ -335,26 +349,72 @@ private fun NeedCard(
     }
 }
 
+/**
+ * "N gün bakım serisi" with the best streak and, below, who cared today (board 14 v2: this line used to sit on the
+ * video). The whole card opens "Seri nedir?".
+ */
 @Composable
-private fun StreakCard(current: Int, best: Int) {
+private fun StreakCard(
+    current: Int,
+    best: Int,
+    myName: String,
+    partnerName: String,
+    myText: String,
+    partnerText: String,
+    meDone: Boolean,
+    partnerDone: Boolean,
+    onClick: () -> Unit,
+) {
     val shape = RoundedCornerShape(24.dp)
-    Row(
-        Modifier.fillMaxWidth().softShadow(shape, 6.dp).clip(shape).background(CreamCard).padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    val label = pluralStringResource(R.plurals.cc_streak_card_label, current, current)
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .softShadow(shape, 6.dp)
+            .clip(shape)
+            .background(CreamCard)
+            .bounceClick(pressedScale = 0.98f, onClick = onClick)
+            .clearAndSetSemantics {
+                contentDescription = "$label $myText, $partnerText"
+                role = Role.Button
+            }
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        val flame = remember { svgPath(FLAME_D) }
-        Canvas(Modifier.size(24.dp)) {
-            drawSvg(flame, 24f, Peach)
-            drawSvg(flame, 24f, Color(0xFFE07A45), strokeWidth = 1.6f)
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            StreakFlame(24.dp)
+            Column(Modifier.weight(1f)) {
+                Text(pluralStringResource(R.plurals.cc_streak_title, current, current), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Brown)
+                Text(
+                    pluralStringResource(R.plurals.cc_streak_best, best, best),
+                    fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, color = BrownSoft,
+                    maxLines = 1, overflow = TextOverflow.Ellipsis,
+                )
+            }
+            SvgStrokeIcon(CHEVRON_D, BrownSoft, Modifier.size(16.dp))
         }
-        Column(Modifier.weight(1f)) {
-            Text(pluralStringResource(R.plurals.cc_streak_title, current.toInt(), current), fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Brown)
-            Text(
-                pluralStringResource(R.plurals.cc_streak_best, best.toInt(), best),
-                fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, color = BrownSoft,
-                maxLines = 1, overflow = TextOverflow.Ellipsis,
-            )
+        Row(
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Cream).padding(horizontal = 10.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            CaredToday(myName, Peach, myText, meDone, Modifier.weight(1f))
+            CaredToday(partnerName, Mint, partnerText, partnerDone, Modifier.weight(1f))
         }
+    }
+}
+
+/** One half of the "today" row: avatar, what they did, a check once they count for today's streak. */
+@Composable
+private fun CaredToday(name: String, color: Color, text: String, done: Boolean, modifier: Modifier) {
+    Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        InitialAvatar(name, color, 26.dp, 11.sp)
+        Text(
+            text, fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Brown,
+            lineHeight = 15.sp,
+            // Two lines so "Sen henüz bakmadın" fits on 360dp phones instead of being cut off.
+            maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false),
+        )
+        if (done) SvgStrokeIcon(Kit.CHECK_D, CheckInk, Modifier.size(14.dp), strokeWidth = 2.6f)
     }
 }

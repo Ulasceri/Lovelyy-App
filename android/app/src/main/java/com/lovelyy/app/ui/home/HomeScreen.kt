@@ -482,7 +482,7 @@ private fun YuvaTab(
     ) {
         Header(me, partnerName, startMillis, onDays = { open(Routes.COUNTER) }, onBell = { open(Routes.INBOX) })
 
-        CatSection(me, couple, partner, Modifier.padding(top = 16.dp), onOpenCare = { open(Routes.CAT) })
+        CatSection(me, couple, partner, Modifier.padding(top = 16.dp))
 
         TogetherCard(startMillis, Modifier.padding(top = 18.dp)) { open(Routes.COUNTER) }
 
