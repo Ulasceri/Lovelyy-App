@@ -1,6 +1,8 @@
 package com.lovelyy.app.ui
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewModelScope
 import com.lovelyy.app.LovelyyApplication
 import com.lovelyy.app.analytics.AnalyticsEvent
@@ -49,6 +51,44 @@ class AppViewModel(private val app: LovelyyApplication) : ViewModel() {
     // Screen tracking: the app navigates by state, so a new screen = a new state type.
     private var lastScreen: String? = null
     private var lastState: AppState? = null
+
+    /**
+     * Screen ViewModels (cat, notes, ...) live in a store per signed-in account instead of the activity's store.
+     * They are keyed by couple id only and their Firestore listeners die on sign-out (permission denied), so with
+     * the activity store a sign-in to the same couple (e.g. the partner's account) reused them: stale doc, old uid.
+     * A new store starts when the signed-in uid changes away from an account; the old one is cleared at the next
+     * sign-in (not at once, so work started before signing out, like clearing the widgets, can finish).
+     * Declared before [state]; starts with the cached user so the cold-start Home keeps its ViewModels.
+     */
+    private var sessionUid: String? =
+        if (app.isFirebaseConfigured) runCatching { app.authRepository.currentUser?.uid }.getOrNull() else null
+    private var sessionStore = ViewModelStore()
+    private var retiredStore: ViewModelStore? = null
+
+    /** The owner for screen ViewModels of the current account (LovelyyRoot provides it to each big screen). */
+    fun sessionOwner(): ViewModelStoreOwner {
+        val store = sessionStore
+        return object : ViewModelStoreOwner {
+            override val viewModelStore: ViewModelStore = store
+        }
+    }
+
+    private fun onSignedInUid(uid: String?) {
+        if (uid == sessionUid) return
+        val previous = sessionUid
+        sessionUid = uid
+        retiredStore?.clear()
+        retiredStore = null
+        if (previous != null) {
+            retiredStore = sessionStore
+            sessionStore = ViewModelStore()
+        }
+    }
+
+    override fun onCleared() {
+        retiredStore?.clear()
+        sessionStore.clear()
+    }
 
     /** Bumped when the post-pairing flow ends, so the state is recomputed and Home shows. Declared before [state]. */
     private val pairedFlowTick = MutableStateFlow(0)
@@ -100,6 +140,7 @@ class AppViewModel(private val app: LovelyyApplication) : ViewModel() {
         val users = app.userRepository
 
         return auth.authState.flatMapLatest { firebaseUser ->
+            onSignedInUid(firebaseUser?.uid)
             if (firebaseUser == null) {
                 app.signalCenter.reset()
                 com.lovelyy.app.data.CoupleClock.reset()
