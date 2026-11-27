@@ -573,7 +573,8 @@ fun HomeScreen(me: UserProfile, couple: Couple?, partner: UserProfile?) {
             PlusLockSheet(
                 feature,
                 LockPreviewData(catName, streak, catUi?.levels, line, me.displayName, partnerName),
-                plusPrices(catalog),
+                // While the first-year offer runs, quote the offer price so the sheet matches the paywall it opens.
+                plusPrices(catalog).let { if (PlusRules.firstYearOfferActive(plus, plusNow)) it.copy(yearly = it.firstYear) else it },
                 onPlans = { lockFeature = null; paywallSource = PaywallSource.lock(feature) },
                 onDismiss = { lockFeature = null },
             )

@@ -54,7 +54,6 @@ import com.lovelyy.app.ui.theme.BrownSoft
 import com.lovelyy.app.ui.theme.PeachSoft
 import com.lovelyy.app.ui.theme.Quicksand
 import com.lovelyy.app.ui.theme.Sand
-import kotlin.math.ceil
 
 /**
  * P8 "Plus yönetimi" (board PlusYonetim) and P8b for the partner who did not buy (board PlusYonetimPartner).
@@ -212,7 +211,10 @@ private fun PaidCard(
             stringResource(if (status.autoRenew) R.string.plus_renews_on else R.string.plus_ends_on, TurkishSuffix.locative(formatDate(status.until))),
             fontFamily = Quicksand, fontWeight = FontWeight.Bold, fontSize = 22.sp, lineHeight = 28.sp, color = Brown,
         )
-        val daysLeft = ceil((status.until - now).toDouble() / PlusRules.DAY_MS).toInt().coerceAtLeast(1)
+        // Calendar days between today and the end date, so a gift bought today for a year says 365, not 366.
+        val daysLeft = java.time.temporal.ChronoUnit.DAYS.between(
+            com.lovelyy.app.data.DayCounter.dateOf(now), com.lovelyy.app.data.DayCounter.dateOf(status.until),
+        ).toInt().coerceAtLeast(1)
         Text(
             when {
                 !status.autoRenew -> pluralStringResource(R.plurals.plus_ends_left, daysLeft, daysLeft)
