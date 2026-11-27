@@ -46,7 +46,8 @@ enum class CatActionType { Feed, Water, Play, Pet, Sleep, Wake, Name }
 
 /**
  * Shared daily care streak: the streak grows by one for every day on which BOTH partners
- * took care of the cat.
+ * took care of the cat. Lovelyy Plus can protect it (see [StreakProtection]): an "izin günü" (day off) or a
+ * "telafi" (make-up) day bridges a missed day, so the streak neither grows nor breaks on it.
  */
 data class CareStreak(
     val count: Int = 0,
@@ -57,11 +58,26 @@ data class CareStreak(
     val careDay: String? = null,
     /** Who has cared on [careDay]. */
     val careBy: List<String> = emptyList(),
+    /** Month (yyyy-MM) that [freezeUsed] counts in. Days off are shared by the couple and renew on the 1st. */
+    val freezeMonth: String? = null,
+    /** Days off used in [freezeMonth] (0..[StreakProtection.FREEZES_PER_MONTH]). */
+    val freezeUsed: Int = 0,
+    /** Days (yyyy-MM-dd) taken off. The latest few are kept. */
+    val freezeDays: List<String> = emptyList(),
+    /** Missed days that were made up within 24 hours (telafi). The latest few are kept. */
+    val repairDays: List<String> = emptyList(),
+    /** The streak that ended when a new one started (kept so it can still be made up after both cared again). */
+    val brokenCount: Int = 0,
+    /** [lastCompleteDay] of that ended streak. */
+    val brokenLast: String? = null,
 ) {
-    /** The streak as it should be shown today (it breaks if a whole day was missed). */
+    /** Days that keep the streak alive without counting: days off and made-up days. */
+    val protectedDays: Set<String> get() = (freezeDays + repairDays).toSet()
+
+    /** The streak as it should be shown today (it breaks if a whole unprotected day was missed). */
     fun current(today: LocalDate): Int {
         val last = lastCompleteDay?.let(LocalDate::parse) ?: return 0
-        return if (last == today || last == today.minusDays(1)) count else 0
+        return if (StreakProtection.alive(last, today, protectedDays)) count else 0
     }
 
     fun caredToday(uid: String, today: LocalDate) = careDay == today.toString() && uid in careBy
@@ -72,13 +88,18 @@ data class CareStreak(
         val by = if (careDay == day) (careBy + uid).distinct() else listOf(uid)
         val bothCared = members.size == 2 && by.containsAll(members)
         if (!bothCared || lastCompleteDay == day) return copy(careDay = day, careBy = by)
-        val newCount = if (lastCompleteDay == today.minusDays(1).toString()) count + 1 else 1
-        return CareStreak(
+        val last = lastCompleteDay?.let(LocalDate::parse)
+        val continues = last != null && last.isBefore(today) && StreakProtection.alive(last, today, protectedDays)
+        val newCount = if (continues) count + 1 else 1
+        return copy(
             count = newCount,
             best = max(best, newCount),
             lastCompleteDay = day,
             careDay = day,
             careBy = by,
+            // A new streak starts: remember the old one, it may still be made up today (StreakProtection.repair).
+            brokenCount = if (!continues && last != null && count > 0) count else brokenCount,
+            brokenLast = if (!continues && last != null && count > 0) lastCompleteDay else brokenLast,
         )
     }
 }
