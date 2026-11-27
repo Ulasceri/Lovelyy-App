@@ -46,8 +46,10 @@ class MainActivity : ComponentActivity() {
         intent.removeExtra(DeepLink.EXTRA)
     }
 
+    /** The app is already open (singleTask): a widget or notification tap arrives here, Home opens its route. */
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        setIntent(intent)
         readRoute(intent)
     }
 

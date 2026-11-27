@@ -30,9 +30,12 @@
         <!-- Never collect the advertising id: this app shows no ads. -->
         <meta-data android:name="google_analytics_adid_collection_enabled" android:value="false" />
 
+        <!-- singleTask: one MainActivity; a widget or notification tap while the app is open always reaches
+             onNewIntent (with standard launch mode Android may only bring the task to front and drop the route). -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:launchMode="singleTask"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

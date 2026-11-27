@@ -140,7 +140,7 @@ Firestore while the app is closed, so `WidgetData` keeps the couple (ids, names,
 SharedPreferences; sign-out clears it. The heart is a `HeartReceiver` broadcast that sends a "Sevgi"
 heartbeat with the signed-in user. The drawing widget shows a 420 px PNG rendered by the app (or by the
 30-min worker) into app storage. In-app showcase: `ui/widgets/WidgetsScreen.kt` (Biz → Ana ekran widget'ları).
-Taps open their screen: widgets and notifications pass a `DeepLink` route (`MainActivity.kt`) that Home pushes.
+Taps open their screen: widgets and notifications pass a `DeepLink` route (`MainActivity.kt`) that Home pushes. `MainActivity` is `singleTask`, so a tap while the app is open reaches `onNewIntent` and still opens the screen.
 Cat accessories were removed on 2026-11-26 (Ulaş): drawn over the video they stayed still while the cat moved.
 If they come back they will be designed first and baked into the video clips (tools/cat-animation). The care streak
 stays (Kedi bakımı shows the current and best streak; "Seri nedir?" explains it, see "Cat card v2" above). `firestore.rules` still accepts the old `wearing` field on
