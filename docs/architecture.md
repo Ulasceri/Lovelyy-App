@@ -63,8 +63,22 @@ stored snapshot and the clock (`data/Cat.kt`, `CatRules`). Actions run in a Fire
 that snapshots all needs at "now" and applies the change, so two partners acting at the same
 moment never lose an update. Rates: hunger empties in 12h, thirst 10h, energy 16h (1h of sleep
 refills it), love 8h. The streak grows by one for each day on which both partners cared.
-A phone with a wrong clock can't undo progress: stored days only move forward (a care from an earlier day
-joins the stored `careDay`), see the `CareStreak` KDoc.
+
+**Time comes from the server, not the phone** (`data/TrustedClock.kt`). On every app start (Home, and before
+the first care action) `ClockSync` writes `couples/{id}/clock/{uid}` = `{at: serverTimestamp}` and reads the stamp
+back; `ServerTime.base` turns it into a base on the phone's boot clock (`elapsedRealtime`, which the user can't
+change), so `TrustedClock.now()` = server time and keeps running correctly after the user moves the clock or the
+time zone. The base is saved with the boot count, so a cold start without a connection still uses it; after a
+restart and before the first sync the phone's own clock is used. `CatRules`, `CatRepository.act`,
+`CoupleClock.today()` (every shared "today"), `PlusClock` and the widgets use it. A large difference is only
+logged (`Phone clock is off`), there is no warning UI.
+firestore.rules back this up: in `cat/main` a need's `at`, `sleepingSince` and `lastAction.at` may only change to
+a time within ±5 minutes of `request.time`, and `streak.careDay` / `lastCompleteDay` only to a day that is
+"today" somewhere at the server's time (`dayNearNow`). So a phone set ahead can no longer wipe the partner's
+half-done day or make the cat sleep for 25 hours.
+Days a wrong clock stored before this are healed by `CareStreak.afterCare` (a day more than one day ahead is
+replaced by today, see the `CareStreak` KDoc). Durations are absolute (epoch millis) and calendar days are counted
+in the couple's shared zone, so travelling, partners in different zones and daylight saving change nothing.
 
 ## Animation (`ui/cat/`)
 
@@ -172,6 +186,7 @@ treats them as valid for 30 minutes (the rules still allow up to 24h).
 | `couples/{id}.endedAt / endedBy / endedByName` | server time, uid, name | set once when a partner unpairs; the other phone then leaves and deletes the couple doc |
 | `couples/{id}/settings/main` | zone (IANA id), setBy, at | the couple's shared time zone: written once (transaction) with the first phone's zone; every shared "today" (care streak, daily question, capsule open day, calendar, start date) is computed in it via `CoupleClock`/`CoupleDay`, falling back to the phone's zone until loaded. No UI to change it |
 | `couples/{id}/signals/{auto}` | kind (heartbeat/nudge/mood/question/note/event), emotion, mood, text, from, fromName, to, at, createdAt | heartbeats, nudges and notices for the partner |
+| `couples/{id}/clock/{uid}` | at (server time) | written and read back by `ClockSync` to learn the server time (`TrustedClock`); deleted on unpair |
 | `couples/{id}/limits/{uid}` | signalAt, hourStart, hourCount, dayStart, dayCount (server times) | signal rate limit, written in the same batch as every signal; limits from `config/limits` (default 15/hour, 60/day, 2 s gap), see docs/security.md |
 | `config/limits` | signalsPerHour, signalsPerDay, minGapSeconds | app-wide config edited in the Firebase console, read-only for the app |
 | `couples/{id}/moods/{uid}` | kind, note, at | each partner's current mood |

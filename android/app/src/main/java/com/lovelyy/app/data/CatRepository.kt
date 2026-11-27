@@ -10,7 +10,7 @@ import kotlinx.coroutines.tasks.await
 import java.util.Date
 
 /** Reads and changes the shared cat at couples/{coupleId}/cat/main. */
-class CatRepository(private val db: FirebaseFirestore) {
+class CatRepository(private val db: FirebaseFirestore, private val clockSync: ClockSync) {
 
     private fun catRef(coupleId: String) =
         db.collection(Paths.COUPLES).document(coupleId).collection(Paths.CAT).document(Paths.CAT_DOC)
@@ -25,6 +25,7 @@ class CatRepository(private val db: FirebaseFirestore) {
                 snap.exists() -> trySend(snap.toCatDoc())
                 // Both partners may race here; the transaction keeps the first one.
                 !snap.metadata.isFromCache -> db.runTransaction { tx ->
+                    // TrustedClock: firestore.rules want the new cat's times near the server clock.
                     if (!tx.get(ref).exists()) tx.set(ref, CatDoc().toMap())
                     null
                 }
@@ -47,13 +48,15 @@ class CatRepository(private val db: FirebaseFirestore) {
         type: CatActionType,
         strokes: Int = 0,
         newName: String? = null,
-        dayNow: Long = System.currentTimeMillis(),
+        dayNow: Long = TrustedClock.now(),
     ): CatDoc? {
         val ref = catRef(coupleId)
+        // Every time written here must be near the server clock (firestore.rules), so learn it first if needed.
+        clockSync.ensure(coupleId, me.uid)
         return db.runTransaction { tx ->
             val snap = tx.get(ref)
             val doc = if (snap.exists()) snap.toCatDoc() else CatDoc()
-            val now = System.currentTimeMillis()
+            val now = TrustedClock.now()
             val changed = CatRules.apply(doc, type, now, strokes) ?: return@runTransaction null
             val action = CatAction(type, me.uid, me.displayName, now)
             val result = changed.copy(

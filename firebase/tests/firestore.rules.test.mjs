@@ -520,16 +520,18 @@ test("plus: only the buyer records a purchase; shape and sizes are checked", asy
 });
 
 // ---------- streak protection (StreakProtection.freeze / repair inside cat/main) ----------
+const pad = (n) => String(n).padStart(2, "0");
+const thisMonth = () => { const d = new Date(); return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}`; };
+const dayIn = (days) => new Date(Date.now() + days * DAY).toISOString().slice(0, 10);
+const today = () => dayIn(0);
+const yesterday = () => dayIn(-1);
 const need = () => ({ level: 80.0, at: Timestamp.now() });
 const catDoc = (streak) => ({
   name: "Mırmır", hunger: need(), thirst: need(), energy: need(), love: need(), sleepingSince: null,
   lastAction: null, recent: [], wearing: null,
-  streak: { count: 12, best: 12, lastCompleteDay: "2026-11-26", careDay: "2026-11-26", careBy: ["alice", "bob"],
+  streak: { count: 12, best: 12, lastCompleteDay: yesterday(), careDay: yesterday(), careBy: ["alice", "bob"],
     freezeMonth: null, freezeUsed: 0, freezeDays: [], repairDays: [], brokenCount: 0, brokenLast: null, ...streak },
 });
-const pad = (n) => String(n).padStart(2, "0");
-const thisMonth = () => { const d = new Date(); return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}`; };
-const today = () => new Date().toISOString().slice(0, 10);
 
 test("streak: care writes keep the protection fields as they are", async () => {
   await pairAB();
@@ -592,4 +594,48 @@ test("plus: an ended couple takes no plus writes", async () => {
   await pairAB();
   await assertSucceeds(endAsAlice());
   await assertFails(updateDoc(couple("bob"), { plus: plusTrial() }));
+});
+
+// ---------- server time (TrustedClock / ClockSync, cat times near the server clock) ----------
+const at = (offsetMs) => Timestamp.fromMillis(Date.now() + offsetMs);
+
+test("clock: only my own doc, only the server time", async () => {
+  await pairAB();
+  await assertSucceeds(setDoc(sub("alice", "clock", "alice"), { at: serverTimestamp() }));
+  await assertSucceeds(getDoc(sub("alice", "clock", "alice")));
+  await assertFails(setDoc(sub("alice", "clock", "bob"), { at: serverTimestamp() }));
+  await assertFails(setDoc(sub("alice", "clock", "alice"), { at: Timestamp.now() }));
+  await assertFails(setDoc(sub("alice", "clock", "alice"), { at: serverTimestamp(), extra: 1 }));
+});
+
+test("cat: times must be near the server clock, unchanged ones may be old", async () => {
+  await pairAB();
+  await assertSucceeds(setDoc(sub("alice", "cat", "main"), catDoc({})));
+  // A phone 6 hours ahead can't stamp needs, a sleep or an action in the future.
+  const ahead = { level: 80.0, at: at(6 * HOUR) };
+  await assertFails(setDoc(sub("bob", "cat", "main"), { ...catDoc({}), hunger: ahead }));
+  await assertFails(setDoc(sub("bob", "cat", "main"), { ...catDoc({}), sleepingSince: at(6 * HOUR) }));
+  await assertFails(setDoc(sub("bob", "cat", "main"),
+    { ...catDoc({}), lastAction: { type: "Feed", uid: "bob", name: "Bob", at: at(6 * HOUR) } }));
+  // Nor far in the past.
+  await assertFails(setDoc(sub("bob", "cat", "main"), { ...catDoc({}), sleepingSince: at(-6 * HOUR) }));
+  // A minute off is fine (network delay).
+  const sleeping = { ...catDoc({}), sleepingSince: at(60_000), lastAction: { type: "Sleep", uid: "bob", name: "Bob", at: at(60_000) } };
+  await assertSucceeds(setDoc(sub("bob", "cat", "main"), sleeping));
+  // Fields that keep their stored value are not checked again later (e.g. a merge or a streak-only update).
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await updateDoc(doc(ctx.firestore(), "couples", CODE, "cat", "main"), { "hunger.at": at(-3 * DAY), sleepingSince: at(-2 * HOUR) });
+  });
+  await assertSucceeds(updateDoc(sub("alice", "cat", "main"), { name: "Pamuk" }));
+});
+
+test("cat: the care day can't jump days ahead", async () => {
+  await pairAB();
+  await assertSucceeds(setDoc(sub("alice", "cat", "main"), catDoc({})));
+  await assertFails(setDoc(sub("bob", "cat", "main"), catDoc({ careDay: dayIn(3), careBy: ["bob"] })));
+  await assertFails(setDoc(sub("bob", "cat", "main"), catDoc({ lastCompleteDay: dayIn(2), careDay: dayIn(2) })));
+  await assertFails(setDoc(sub("bob", "cat", "main"), catDoc({ careDay: dayIn(-3), careBy: ["bob"] })));
+  // Today in any zone is fine (UTC-12..UTC+14 can be a day on either side of the UTC date).
+  await assertSucceeds(setDoc(sub("bob", "cat", "main"), catDoc({ careDay: dayIn(1), careBy: ["bob"] })));
+  await assertSucceeds(setDoc(sub("alice", "cat", "main"), catDoc({ careDay: today(), careBy: ["alice", "bob"], lastCompleteDay: today(), count: 13, best: 13 })));
 });

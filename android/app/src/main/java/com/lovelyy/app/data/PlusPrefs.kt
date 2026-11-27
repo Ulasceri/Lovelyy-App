@@ -62,9 +62,9 @@ object PlusPrefs {
 }
 
 /**
- * The time Plus rules are evaluated at. Real time in release builds; debug builds can move it forward from the
+ * The time Plus rules are evaluated at. Server time ([TrustedClock]) in release builds; debug builds can move it forward from the
  * Plus management screen to test trial days, the paywall and the offer countdown without waiting two weeks.
  */
 object PlusClock {
-    fun now(context: Context): Long = System.currentTimeMillis() + PlusPrefs.debugOffset(context)
+    fun now(context: Context): Long = TrustedClock.now() + PlusPrefs.debugOffset(context)
 }

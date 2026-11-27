@@ -80,6 +80,30 @@ service cloud.firestore {
     function monthOf(t) {
       return string(t.year()) + '-' + (t.month() < 10 ? '0' : '') + string(t.month());
     }
+    // A couple day "yyyy-MM-dd" (in the couple's own zone, UTC-12..UTC+14) that can be "today" somewhere at the
+    // server's time: its UTC midnight is at most 14 hours ahead and less than 36 hours behind (with some slack).
+    // Parsed into a timestamp instead of formatting request.time, which costs too many rule expressions.
+    function dayNearNow(d) {
+      let t = timestamp.date(int(d[0:4]), int(d[5:7]), int(d[8:10]));
+      return t <= request.time + duration.value(1, 'd') && t > request.time - duration.value(2, 'd');
+    }
+    // A time the app stamped just now. The app counts time from the server clock (TrustedClock), so only a
+    // phone whose clock was tampered with (or a modified app) misses this window.
+    function nearNow(t) {
+      return t is timestamp && t > request.time - duration.value(5, 'm') && t < request.time + duration.value(5, 'm');
+    }
+    // Cat times (CatRules): a need, the sleep start and the last action may only change to "now". This stops a
+    // phone set hours ahead from stamping the cat in the future (needs that never decay, a 25-hour sleep).
+    // o = the stored cat ({} on create).
+    function catTimesOk(d, o) {
+      return needTimeOk(d.get('hunger', {}), o.get('hunger', {})) && needTimeOk(d.get('thirst', {}), o.get('thirst', {}))
+        && needTimeOk(d.get('energy', {}), o.get('energy', {})) && needTimeOk(d.get('love', {}), o.get('love', {}))
+        && (d.get('sleepingSince', null) == null || d.sleepingSince == o.get('sleepingSince', null) || nearNow(d.sleepingSince))
+        && (d.get('lastAction', null) == null || d.lastAction == o.get('lastAction', null) || nearNow(d.lastAction.get('at', null)));
+    }
+    function needTimeOk(n, o) {
+      return n.get('at', null) == o.get('at', null) || nearNow(n.get('at', null));
+    }
     function monthNearNow(m) {
       return m == monthOf(request.time) || m == monthOf(request.time + duration.value(1, 'd'))
         || m == monthOf(request.time - duration.value(1, 'd'));
@@ -112,7 +136,10 @@ service cloud.firestore {
             && ((s.freezeMonth == o.get('freezeMonth', null) && s.freezeUsed == o.get('freezeUsed', 0) + 1)
                 || (s.freezeMonth != o.get('freezeMonth', null) && s.freezeUsed == 1)))
         )
-        && (s.get('repairDays', []) == o.get('repairDays', []) || plus);
+        && (s.get('repairDays', []) == o.get('repairDays', []) || plus)
+        // A care day only moves to a day that is "today" somewhere at the server's time (no days ahead).
+        && (s.get('careDay', null) == o.get('careDay', null) || dayNearNow(s.careDay))
+        && (s.get('lastCompleteDay', null) == o.get('lastCompleteDay', null) || dayNearNow(s.lastCompleteDay));
     }
     function validSignal(d, members) {
       return d.keys().hasOnly(['kind', 'emotion', 'mood', 'from', 'fromName', 'to', 'text', 'at', 'createdAt'])
@@ -408,6 +435,7 @@ service cloud.firestore {
       // The streak map is checked against the stored one (days off / make-up need Plus, see validStreak).
       match /cat/{docId} {
         allow create, update: if openCouple() && docId == 'main' && validCat(request.resource.data)
+          && catTimesOk(request.resource.data, resource == null ? {} : resource.data)
           && validStreak(request.resource.data.get('streak', {}),
                          resource == null ? {} : resource.data.get('streak', {}),
                          plusActive());
@@ -497,6 +525,13 @@ service cloud.firestore {
       }
 
       // settings/main: the couple's shared time zone (CoupleClock).
+      // clock/{uid} (ClockSync): the app writes the server time here and reads it back to learn how far its own
+      // clock is off. Only the server time, only mine.
+      match /clock/{uid} {
+        allow create, update: if openCouple() && uid == me()
+          && request.resource.data.keys().hasOnly(['at']) && request.resource.data.at == request.time;
+      }
+
       match /settings/{docId} {
         allow create, update: if openCouple() && docId == 'main'
           && request.resource.data.keys().hasOnly(['zone', 'setBy', 'at'])

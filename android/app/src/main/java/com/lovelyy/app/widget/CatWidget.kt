@@ -66,7 +66,7 @@ object CatWidget {
     private fun load(context: Context): CatDoc? {
         val p = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         if (!p.contains("coupleId")) return null
-        fun need(key: String) = Need(p.getFloat("$key.level", 80f).toDouble(), p.getLong("$key.at", System.currentTimeMillis()))
+        fun need(key: String) = Need(p.getFloat("$key.level", 80f).toDouble(), p.getLong("$key.at", com.lovelyy.app.data.TrustedClock.now()))
         return CatDoc(
             name = p.getString("name", null),
             hunger = need("hunger"),

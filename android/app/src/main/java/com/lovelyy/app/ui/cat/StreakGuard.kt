@@ -48,6 +48,7 @@ import com.lovelyy.app.data.CoupleDay
 import com.lovelyy.app.data.PlusPrefs
 import com.lovelyy.app.data.PlusRules
 import com.lovelyy.app.data.StreakProtection
+import com.lovelyy.app.data.TrustedClock
 import com.lovelyy.app.data.UserProfile
 import com.lovelyy.app.text.AppLocale
 import com.lovelyy.app.text.TurkishSuffix
@@ -86,13 +87,13 @@ private const val REFRESH_D = "M4 12a8 8 0 1 0 2.3-5.7 M4 4v4h4"
 
 /**
  * The couple's "today" for the care streak: the Plus time from Home ([LocalPlus], the P8 debug clock in debug
- * builds, real time in release) in the couple's zone, so streak protection can be tried on an emulator with
- * "+1 gün". Outside Home it is real time.
+ * builds, server time in release) in the couple's zone, so streak protection can be tried on an emulator with
+ * "+1 gün". Outside Home it is server time ([TrustedClock]).
  */
 @Composable
 internal fun streakToday(): LocalDate {
     val zone by CoupleClock.zone.collectAsStateWithLifecycle()
-    val now = LocalPlus.current?.now ?: System.currentTimeMillis()
+    val now = LocalPlus.current?.now ?: TrustedClock.now()
     return CoupleDay.today(zone, now)
 }
 
