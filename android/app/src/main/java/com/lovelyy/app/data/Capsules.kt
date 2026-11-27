@@ -54,6 +54,14 @@ class CapsuleRepository(private val db: FirebaseFirestore) {
     fun observeSealed(coupleId: String, today: LocalDate): Flow<List<Capsule>> =
         observeQuery(capsules(coupleId).whereGreaterThan("openOn", today.toString()).limit(200))
 
+    /** Letters whose day has come (openOn <= [today]), the latest opening first, [limit] at a time. */
+    fun observeOpened(coupleId: String, today: LocalDate, limit: Long): Flow<List<Capsule>> =
+        observeQuery(capsules(coupleId).whereLessThanOrEqualTo("openOn", today.toString()).orderBy("openOn", Query.Direction.DESCENDING).limit(limit))
+
+    /** How many letters are open by [today], counted on the server; null offline. */
+    suspend fun openedCount(coupleId: String, today: LocalDate): Long? =
+        capsules(coupleId).whereLessThanOrEqualTo("openOn", today.toString()).countOrNull()
+
     private fun observeQuery(query: Query): Flow<List<Capsule>> = callbackFlow {
         val reg = query.addSnapshotListener { snap, err ->
             if (err != null) {

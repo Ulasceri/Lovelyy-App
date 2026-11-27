@@ -137,3 +137,26 @@ internal suspend fun <T : Any> DocumentReference.updateUnlessChanged(
 
 /** Base of the per-type conflict exceptions (they carry the server version). */
 open class EditConflictException(message: String) : Exception(message)
+
+
+/** Server-side count (billed ~1 read per 1000 documents); null when it can't be asked (offline). */
+suspend fun com.google.firebase.firestore.Query.countOrNull(): Long? = try {
+    count().get(com.google.firebase.firestore.AggregateSource.SERVER).await().count
+} catch (e: kotlinx.coroutines.CancellationException) {
+    throw e
+} catch (e: Exception) {
+    timber.log.Timber.w(e, "Count unavailable")
+    null
+}
+
+/**
+ * Whether the document still exists on the server. Used before telling the user "your partner deleted it" when an
+ * item simply left a paged window; true when the server can't be asked (never a false "deleted").
+ */
+suspend fun com.google.firebase.firestore.DocumentReference.existsOnServer(): Boolean = try {
+    get(com.google.firebase.firestore.Source.SERVER).await().exists()
+} catch (e: kotlinx.coroutines.CancellationException) {
+    throw e
+} catch (e: Exception) {
+    true
+}

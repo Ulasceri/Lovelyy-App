@@ -270,8 +270,12 @@ Every document a query returns is a billed read (an empty query costs one), and 
 whole project. So: background jobs ask only for what changed (signal cursor, canvas stamp); Anılar listens to small
 preview windows (5 notes/letters/drawings, 10 dreams, the sealed letters) and shows the canvas from the local cache
 unless its stamp changed; history lists load a page at a time (`ui/components/Paging.kt`: `rememberPaged` +
-`LoadMoreButton`); totals come from count aggregations (one read per 1000 docs). Lists whose counts drive the screen
-(question history streak, dreams progress, plans/letters limits) still load their capped window. A stroke no longer
+`LoadMoreButton`); totals come from count aggregations (one read per 1000 docs), so counts never need the whole
+list: question history counts "answered together" as mine + theirs - any (three counts) and reads the streak from
+the last 60 days (800 only when the streak is that long); dreams count all/done on the server; letters keep every
+sealed letter and page the opened ones; Planlar loads the yearly days, the next 20 plans and the month on screen,
+and counts all plans for the free limit. An open item that leaves a paged window is reported "deleted" only when the
+server says so (`existsOnServer`). Arama reads dreams and letters only after the first query. A stroke no longer
 writes presence; "drawing now" is written at most every 20 s.
 
 ## Partner notifications on the free Spark plan

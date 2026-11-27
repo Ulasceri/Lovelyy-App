@@ -83,6 +83,15 @@ class DreamRepository(private val db: FirebaseFirestore) {
         dreams(coupleId).document(id).delete().await()
     }
 
+    /** All dreams and the ones that came true, counted on the server (the list itself is paged); null offline. */
+    suspend fun counts(coupleId: String): Pair<Long, Long>? {
+        val all = dreams(coupleId).countOrNull() ?: return null
+        val done = dreams(coupleId).whereGreaterThan("doneAt", 0).countOrNull() ?: return null
+        return all to done
+    }
+
+    suspend fun exists(coupleId: String, id: String): Boolean = dreams(coupleId).document(id).existsOnServer()
+
     /** Newest [limit] dreams (300 by default; counts derived from that list are "at most 300", no couple gets near it). */
     fun observe(coupleId: String, limit: Long = 300): Flow<List<Dream>> = callbackFlow {
         val reg = dreams(coupleId).orderBy("at", Query.Direction.DESCENDING).limit(limit).addSnapshotListener { snap, err ->

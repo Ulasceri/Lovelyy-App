@@ -103,21 +103,6 @@ class EventRepository(private val db: FirebaseFirestore) {
     }
 
     /**
-     * Up to 500 plans, ordered by [date] (ISO string, so single-field index, no composite index) newest
-     * first: if a couple ever passes the cap, the oldest past plans are the ones that drop off.
-     */
-    fun observe(coupleId: String): Flow<List<CalEvent>> = callbackFlow {
-        val reg = events(coupleId).orderBy("date", Query.Direction.DESCENDING).limit(500).addSnapshotListener { snap, err ->
-            if (err != null) {
-                close(err)
-            } else if (snap != null) {
-                trySend(snap.documents.mapNotNull { it.toEvent() })
-            }
-        }
-        awaitClose { reg.remove() }
-    }
-
-    /**
      * Plans dated [from] or later, soonest first (for "next meeting"): a few documents instead of all 500.
      * ISO date strings sort like dates, so this is a single-field range.
      */
@@ -127,6 +112,29 @@ class EventRepository(private val db: FirebaseFirestore) {
             .addSnapshotListener { snap, err ->
                 if (err != null) close(err) else if (snap != null) trySend(snap.documents.mapNotNull { it.toEvent() })
             }
+        awaitClose { reg.remove() }
+    }
+
+    /** Every yearly special day (few per couple): countdowns and calendar dots in any month. */
+    fun observeYearly(coupleId: String): Flow<List<CalEvent>> =
+        observeQuery(events(coupleId).whereEqualTo("yearly", true).limit(200))
+
+    /** Plans dated within [from]..[to] (the month on screen). */
+    fun observeRange(coupleId: String, from: LocalDate, to: LocalDate): Flow<List<CalEvent>> =
+        observeQuery(
+            events(coupleId).whereGreaterThanOrEqualTo("date", from.toString()).whereLessThanOrEqualTo("date", to.toString())
+                .orderBy("date", Query.Direction.ASCENDING).limit(200),
+        )
+
+    /** All plans, counted on the server (for the free limit); null offline. */
+    suspend fun count(coupleId: String): Long? = events(coupleId).countOrNull()
+
+    suspend fun exists(coupleId: String, id: String): Boolean = events(coupleId).document(id).existsOnServer()
+
+    private fun observeQuery(query: Query): Flow<List<CalEvent>> = callbackFlow {
+        val reg = query.addSnapshotListener { snap, err ->
+            if (err != null) close(err) else if (snap != null) trySend(snap.documents.mapNotNull { it.toEvent() })
+        }
         awaitClose { reg.remove() }
     }
 

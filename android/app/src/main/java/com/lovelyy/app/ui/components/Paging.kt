@@ -42,7 +42,13 @@ class Paged<T>(val items: List<T>?, val canLoadMore: Boolean, val loadMore: () -
  * Listens only while the screen is at least STARTED, like collectAsStateWithLifecycle.
  */
 @Composable
-fun <T> rememberPaged(key: Any, page: Int, source: (limit: Int) -> Flow<List<T>>): Paged<T> {
+fun <T> rememberPaged(
+    key: Any,
+    page: Int,
+    /** Whether older items may exist; default: the window came back full. */
+    hasMore: (loaded: List<T>, limit: Int) -> Boolean = { loaded, limit -> ListLimits.hasMore(loaded.size, limit) },
+    source: (limit: Int) -> Flow<List<T>>,
+): Paged<T> {
     var limit by rememberSaveable(key) { mutableIntStateOf(page) }
     var items by remember(key) { mutableStateOf<List<T>?>(null) }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
@@ -54,7 +60,7 @@ fun <T> rememberPaged(key: Any, page: Int, source: (limit: Int) -> Flow<List<T>>
         }
     }
     val loaded = items
-    return Paged(loaded, loaded != null && ListLimits.hasMore(loaded.size, limit)) { limit = ListLimits.nextLimit(limit, page) }
+    return Paged(loaded, loaded != null && hasMore(loaded, limit)) { limit = ListLimits.nextLimit(limit, page) }
 }
 
 /** "Daha eskilerini göster": the same soft pill as Notlar's load-more button. */

@@ -8,6 +8,7 @@ import com.google.firebase.firestore.Source
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import java.time.LocalDate
@@ -131,6 +132,27 @@ class QuestionRepository(private val db: FirebaseFirestore) {
         }
     }
 
+    /**
+     * How many days have my answer, the partner's and any answer, counted on the server: days both answered =
+     * mine + theirs - any (a day document exists only once someone answered). Null offline.
+     */
+    suspend fun bothCount(coupleId: String, myUid: String, partnerUid: String): Pair<Long, Long>? {
+        val any = questions(coupleId).countOrNull() ?: return null
+        val mine = questions(coupleId).whereGreaterThan(com.google.firebase.firestore.FieldPath.of("answers", myUid, "at"), 0).countOrNull() ?: return null
+        val theirs = questions(coupleId).whereGreaterThan(com.google.firebase.firestore.FieldPath.of("answers", partnerUid, "at"), 0).countOrNull() ?: return null
+        return (mine + theirs - any).coerceAtLeast(0) to any
+    }
+
+    /**
+     * Enough recent days for [QuestionMath.streak]: the last 60, and the last 800 only when the streak reaches back
+     * that far (rare), instead of always loading a year.
+     */
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    fun observeStreakDays(coupleId: String): Flow<List<DayQuestion>> = observeRecent(coupleId, STREAK_WINDOW)
+        .flatMapLatest { days ->
+            if (QuestionMath.streak(days, CoupleClock.today()) >= STREAK_WINDOW - 1) observeRecent(coupleId, 800) else kotlinx.coroutines.flow.flowOf(days)
+        }
+
     /** The days of the last [limit] days that have answers, newest first. */
     fun observeRecent(coupleId: String, limit: Long = 60): Flow<List<DayQuestion>> = callbackFlow {
         // Document ids are yyyy-MM-dd, so an ascending id range from the cutoff picks the recent days.
@@ -162,5 +184,6 @@ class QuestionRepository(private val db: FirebaseFirestore) {
 
     companion object {
         const val MAX_ANSWER = 500
+        const val STREAK_WINDOW = 60L
     }
 }

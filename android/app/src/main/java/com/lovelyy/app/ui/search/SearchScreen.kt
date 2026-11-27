@@ -88,8 +88,13 @@ fun SearchScreen(
     val notes by remember(coupleId, searchedOnce) {
         if (searchedOnce) app.noteRepository.observeAll(coupleId).catch { emit(emptyList()) } else kotlinx.coroutines.flow.flowOf<List<Note>>(emptyList())
     }.collectAsStateWithLifecycle(emptyList())
-    val dreams by remember(coupleId) { app.dreamRepository.observe(coupleId).catch { emit(emptyList()) } }.collectAsStateWithLifecycle(emptyList())
-    val capsules by remember(coupleId) { app.capsuleRepository.observe(coupleId).catch { emit(emptyList()) } }.collectAsStateWithLifecycle(emptyList())
+    // Dreams and letters too: read only once something was typed (results only show for a query).
+    val dreams by remember(coupleId, searchedOnce) {
+        if (searchedOnce) app.dreamRepository.observe(coupleId).catch { emit(emptyList()) } else kotlinx.coroutines.flow.flowOf(emptyList())
+    }.collectAsStateWithLifecycle(emptyList())
+    val capsules by remember(coupleId, searchedOnce) {
+        if (searchedOnce) app.capsuleRepository.observe(coupleId).catch { emit(emptyList()) } else kotlinx.coroutines.flow.flowOf(emptyList())
+    }.collectAsStateWithLifecycle(emptyList())
     val partnerName = partner?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.home_partner_fallback)
     var scope by rememberSaveable { mutableStateOf(start) }
     val focus = remember { FocusRequester() }
