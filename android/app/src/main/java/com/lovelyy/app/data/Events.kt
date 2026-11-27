@@ -117,6 +117,19 @@ class EventRepository(private val db: FirebaseFirestore) {
         awaitClose { reg.remove() }
     }
 
+    /**
+     * Plans dated [from] or later, soonest first (for "next meeting"): a few documents instead of all 500.
+     * ISO date strings sort like dates, so this is a single-field range.
+     */
+    fun observeUpcoming(coupleId: String, from: LocalDate, limit: Long = 20): Flow<List<CalEvent>> = callbackFlow {
+        val reg = events(coupleId).whereGreaterThanOrEqualTo("date", from.toString())
+            .orderBy("date", Query.Direction.ASCENDING).limit(limit)
+            .addSnapshotListener { snap, err ->
+                if (err != null) close(err) else if (snap != null) trySend(snap.documents.mapNotNull { it.toEvent() })
+            }
+        awaitClose { reg.remove() }
+    }
+
     private fun DocumentSnapshot.toEvent(): CalEvent? {
         val date = getString("date")?.let { runCatching { LocalDate.parse(it) }.getOrNull() } ?: return null
         return CalEvent(

@@ -222,8 +222,15 @@ fun QuestionHistoryScreen(me: UserProfile, partner: UserProfile?, onBack: () -> 
                 )
             }
         }
+        if (paged.canLoadMore) {
+            com.lovelyy.app.ui.components.LoadMoreButton(paged.loadMore, Modifier.align(Alignment.CenterHorizontally).padding(top = 4.dp))
+        }
     }
 }
+
+/** Signals per history page (heartbeats are mixed with the other kinds, so the page is a bit larger). */
+private const val HISTORY_PAGE = 50
+private const val WHEEL_PAGE = 30
 
 @Composable
 private fun AnswerBubble(name: String, avatar: Color, bubble: Color, text: String) {
@@ -242,7 +249,9 @@ private fun AnswerBubble(name: String, avatar: Color, bubble: Color, text: Strin
 fun HeartbeatHistoryScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit) {
     val coupleId = me.coupleId ?: return
     val app = lovelyyApp()
-    val signals by remember(coupleId) { app.signalRepository.observeRecent(coupleId, 150).catch { emit(emptyList()) } }.collectAsStateWithLifecycle(null)
+    // One page at a time (each signal is a billed read); all kinds come back, so a page shows fewer than 50 rows.
+    val paged = com.lovelyy.app.ui.components.rememberPaged(coupleId, HISTORY_PAGE) { app.signalRepository.observeRecent(coupleId, it.toLong()) }
+    val signals = paged.items
     val partnerName = partner?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.home_partner_fallback)
     var filter by rememberSaveable { mutableIntStateOf(0) }
     val list = signals.orEmpty()
@@ -281,6 +290,9 @@ fun HeartbeatHistoryScreen(me: UserProfile, partner: UserProfile?, onBack: () ->
                 )
             }
         }
+        if (paged.canLoadMore) {
+            com.lovelyy.app.ui.components.LoadMoreButton(paged.loadMore, Modifier.align(Alignment.CenterHorizontally).padding(top = 4.dp))
+        }
     }
 }
 
@@ -290,7 +302,8 @@ fun HeartbeatHistoryScreen(me: UserProfile, partner: UserProfile?, onBack: () ->
 fun WheelHistoryScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit) {
     val coupleId = me.coupleId ?: return
     val app = lovelyyApp()
-    val log by remember(coupleId) { app.wheelRepository.observeLog(coupleId).catch { emit(emptyList()) } }.collectAsStateWithLifecycle(null)
+    val paged = com.lovelyy.app.ui.components.rememberPaged(coupleId, WHEEL_PAGE) { app.wheelRepository.observeLog(coupleId, it.toLong()) }
+    val log = paged.items
     val partnerName = partner?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.home_partner_fallback)
     val wheels = log.orEmpty().map { it.wheelId to it.label }.distinctBy { it.first }
     var filter by rememberSaveable { mutableStateOf<String?>(null) }

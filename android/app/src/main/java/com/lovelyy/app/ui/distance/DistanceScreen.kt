@@ -119,7 +119,8 @@ class DistanceViewModel(private val app: LovelyyApplication, private val coupleI
         .catch { Timber.w(it, "Locations unavailable") }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
-    val events: StateFlow<List<CalEvent>?> = app.eventRepository.observe(coupleId)
+    /** Only upcoming plans: this screen shows the next one-time meeting, not the calendar. */
+    val events: StateFlow<List<CalEvent>?> = app.eventRepository.observeUpcoming(coupleId, com.lovelyy.app.data.CoupleClock.today())
         .catch { Timber.w(it, "Calendar unavailable") }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 

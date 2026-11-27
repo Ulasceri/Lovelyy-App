@@ -46,9 +46,16 @@ class CapsuleRepository(private val db: FirebaseFirestore) {
         capsules(coupleId).document(id).delete().await()
     }
 
-    /** Newest 200 letters only; counts derived from this list are "at most 200" (a couple writes a few per year). */
-    fun observe(coupleId: String): Flow<List<Capsule>> = callbackFlow {
-        val reg = capsules(coupleId).orderBy("at", Query.Direction.DESCENDING).limit(200).addSnapshotListener { snap, err ->
+    /** Newest [limit] letters (200 by default; counts derived from that list are "at most 200", a couple writes a few per year). */
+    fun observe(coupleId: String, limit: Long = 200): Flow<List<Capsule>> =
+        observeQuery(capsules(coupleId).orderBy("at", Query.Direction.DESCENDING).limit(limit))
+
+    /** Letters still sealed after [today] (openOn is an ISO date, so a string range works on a single-field index). */
+    fun observeSealed(coupleId: String, today: LocalDate): Flow<List<Capsule>> =
+        observeQuery(capsules(coupleId).whereGreaterThan("openOn", today.toString()).limit(200))
+
+    private fun observeQuery(query: Query): Flow<List<Capsule>> = callbackFlow {
+        val reg = query.addSnapshotListener { snap, err ->
             if (err != null) {
                 close(err)
             } else if (snap != null) {

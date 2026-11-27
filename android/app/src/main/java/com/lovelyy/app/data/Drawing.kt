@@ -53,6 +53,17 @@ object DrawingMath {
     /** [stamp] of a canvas loaded in full (drawing order, oldest first). */
     fun stampOf(ordered: List<Stroke>): String = stamp(ordered.size.toLong(), ordered.lastOrNull()?.id)
 
+    /**
+     * Whether a locally cached canvas ([ordered], at most [max] strokes) is still the server's canvas described by
+     * [serverStamp]. Past [max] strokes only the newest [max] are ever loaded, so then the newest id decides.
+     */
+    fun stampMatches(serverStamp: String, ordered: List<Stroke>, max: Int): Boolean {
+        val count = serverStamp.substringBefore(':').toLongOrNull() ?: return false
+        val newest = serverStamp.substringAfter(':').ifEmpty { null }
+        return if (count > max) ordered.size == max && ordered.lastOrNull()?.id == newest
+        else serverStamp == stampOf(ordered)
+    }
+
     /** Id of the saved drawing for an ordered canvas: same canvas => same id, so a double save is a no-op. */
     fun savedId(ordered: List<Stroke>): String = "d_" + ordered.first().id
 
@@ -78,7 +89,8 @@ class DrawingRepository(private val db: FirebaseFirestore) {
                 "at" to System.currentTimeMillis(),
             ),
         ).await()
-        touch(coupleId, uid)
+        // No presence write here: the caller marks "drawing now" at most every 20 s (DrawingViewModel.touch),
+        // instead of a second write (and a read on the partner's phone) for every stroke.
     }
 
     suspend fun delete(coupleId: String, id: String) {
@@ -142,6 +154,34 @@ class DrawingRepository(private val db: FirebaseFirestore) {
         return DrawingMath.stamp(count, newest)
     }
 
+    /**
+     * The canvas once, for a small preview, without a listener on every stroke: the local cache when it still matches
+     * the server's [stamp] (2 reads), else one full read. Offline: whatever the cache has.
+     */
+    suspend fun canvasOnce(coupleId: String): List<Stroke> {
+        val cached = try {
+            DrawingMath.inDrawingOrder(
+                strokes(coupleId).orderBy("at", Query.Direction.DESCENDING).limit(MAX_STROKES.toLong())
+                    .get(com.google.firebase.firestore.Source.CACHE).await().documents.mapNotNull { d -> d.data?.toStroke(d.id) },
+            )
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (notCached: Exception) {
+            null
+        }
+        if (cached != null) {
+            val server = try {
+                stamp(coupleId)
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (offline: Exception) {
+                return cached
+            }
+            if (DrawingMath.stampMatches(server, cached, MAX_STROKES)) return cached
+        }
+        return current(coupleId)
+    }
+
     /** uid → last time they drew. */
     fun observePresence(coupleId: String): Flow<Map<String, Long>> = callbackFlow {
         val reg = presence(coupleId).addSnapshotListener { snap, err ->
@@ -149,6 +189,16 @@ class DrawingRepository(private val db: FirebaseFirestore) {
             else trySend(snap?.data.orEmpty().mapNotNull { (k, v) -> (v as? Number)?.let { k to it.toLong() } }.toMap())
         }
         awaitClose { reg.remove() }
+    }
+
+    /** How many drawings are saved (count aggregation: one read per 1000, not every heavy drawing); null if unavailable. */
+    suspend fun savedCount(coupleId: String): Long? = try {
+        saved(coupleId).count().get(com.google.firebase.firestore.AggregateSource.SERVER).await().count
+    } catch (e: kotlinx.coroutines.CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        timber.log.Timber.w(e, "Saved drawing count unavailable")
+        null
     }
 
     /** Removes a drawing from Anılar (both partners). */

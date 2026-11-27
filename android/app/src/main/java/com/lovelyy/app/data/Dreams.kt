@@ -83,9 +83,9 @@ class DreamRepository(private val db: FirebaseFirestore) {
         dreams(coupleId).document(id).delete().await()
     }
 
-    /** Newest 300 dreams only; counts derived from this list are "at most 300" (no couple gets near it). */
-    fun observe(coupleId: String): Flow<List<Dream>> = callbackFlow {
-        val reg = dreams(coupleId).orderBy("at", Query.Direction.DESCENDING).limit(300).addSnapshotListener { snap, err ->
+    /** Newest [limit] dreams (300 by default; counts derived from that list are "at most 300", no couple gets near it). */
+    fun observe(coupleId: String, limit: Long = 300): Flow<List<Dream>> = callbackFlow {
+        val reg = dreams(coupleId).orderBy("at", Query.Direction.DESCENDING).limit(limit).addSnapshotListener { snap, err ->
             if (err != null) {
                 close(err)
             } else if (snap != null) {

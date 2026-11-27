@@ -21,7 +21,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lovelyy.app.DeepLink
 import com.lovelyy.app.R
 import com.lovelyy.app.data.Emotion
@@ -52,7 +51,6 @@ import com.lovelyy.app.ui.lovelyyApp
 import com.lovelyy.app.ui.mood.MoodFace
 import com.lovelyy.app.ui.theme.Brown
 import com.lovelyy.app.ui.theme.Quicksand
-import kotlinx.coroutines.flow.catch
 
 private val UnreadBg = Color(0xFFFFEFE4)
 private val UnreadDot = Color(0xFFE0602B)
@@ -114,8 +112,9 @@ fun InboxScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onOp
     val coupleId = me.coupleId ?: return
     val app = lovelyyApp()
     val context = LocalContext.current
-    val signals by remember(coupleId) { app.signalRepository.observeRecent(coupleId, 100).catch { emit(emptyList()) } }
-        .collectAsStateWithLifecycle(null)
+    // One page at a time (each signal is a billed read); "load more" reaches the older ones.
+    val paged = com.lovelyy.app.ui.components.rememberPaged(coupleId, INBOX_PAGE) { app.signalRepository.observeRecent(coupleId, it.toLong()) }
+    val signals = paged.items
     var seen by remember(coupleId) { mutableStateOf(InboxSeen.load(context, coupleId)) }
     val partnerName = partner?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.home_partner_fallback)
     val list = signals.orEmpty().filter { it.to == me.uid }
@@ -146,8 +145,14 @@ fun InboxScreen(me: UserProfile, partner: UserProfile?, onBack: () -> Unit, onOp
                 }
             }
         }
+        if (paged.canLoadMore) {
+            com.lovelyy.app.ui.components.LoadMoreButton(paged.loadMore, Modifier.align(Alignment.CenterHorizontally).padding(top = 8.dp))
+        }
     }
 }
+
+/** Signals per inbox page (both directions come back; only the ones for me are listed). */
+private const val INBOX_PAGE = 40
 
 @Composable
 private fun InboxRow(s: Signal, partnerName: String, read: Boolean, onClick: () -> Unit) {

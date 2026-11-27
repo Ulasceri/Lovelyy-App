@@ -40,4 +40,26 @@ class DrawingMathTest {
         val two = DrawingMath.inDrawingOrder(listOf(st("a", 1), st("b", 2), st("c", 3)))
         assertEquals(DrawingMath.savedId(one), DrawingMath.savedId(two))
     }
+
+    @Test
+    fun stampChangesOnAddUndoAndClear() {
+        val canvas = listOf(st("a", 1), st("b", 2))
+        val stamp = DrawingMath.stampOf(canvas)
+        assertEquals(DrawingMath.stamp(2, "b"), stamp)
+        assertTrue(stamp != DrawingMath.stampOf(canvas + st("c", 3)))
+        assertTrue(stamp != DrawingMath.stampOf(canvas.dropLast(1)))
+        assertEquals(DrawingMath.stamp(0, null), DrawingMath.stampOf(emptyList()))
+    }
+
+    @Test
+    fun cachedCanvasMatchesServerStamp() {
+        val canvas = listOf(st("a", 1), st("b", 2))
+        assertTrue(DrawingMath.stampMatches(DrawingMath.stamp(2, "b"), canvas, max = 600))
+        assertTrue(!DrawingMath.stampMatches(DrawingMath.stamp(3, "c"), canvas, max = 600))
+        assertTrue(!DrawingMath.stampMatches(DrawingMath.stamp(1, "b"), canvas, max = 600))
+        assertTrue(DrawingMath.stampMatches(DrawingMath.stamp(0, null), emptyList(), max = 600))
+        // Over the cap only the newest strokes are loaded: the newest id decides.
+        assertTrue(DrawingMath.stampMatches(DrawingMath.stamp(5, "b"), canvas, max = 2))
+        assertTrue(!DrawingMath.stampMatches(DrawingMath.stamp(5, "z"), canvas, max = 2))
+    }
 }

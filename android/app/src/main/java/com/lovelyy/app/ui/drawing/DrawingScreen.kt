@@ -105,7 +105,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -130,16 +129,23 @@ class DrawingViewModel(private val app: LovelyyApplication, private val coupleId
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
 
     /** How many drawings are saved to Anılar (for the free limit, PlusLimits.Limit.Drawings). */
-    val savedCount: StateFlow<Int> = app.drawingRepository.observeSaved(coupleId)
-        .map { it.size }
-        .catch { Timber.w(it, "Saved drawings unavailable") }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+    // A count aggregation (one read), not a listener on every saved drawing (big documents) just to count them.
+    private val _savedCount = MutableStateFlow(0)
+    val savedCount: StateFlow<Int> = _savedCount
+
+    init { refreshSavedCount() }
+
+    private fun refreshSavedCount() {
+        viewModelScope.launch { app.drawingRepository.savedCount(coupleId)?.let { _savedCount.value = it.toInt() } }
+    }
 
     private var lastTouch = 0L
 
     fun add(color: Long, width: Float, points: List<Float>) {
         viewModelScope.launch {
-            runCatching { app.drawingRepository.add(coupleId, myUid, color, width, points) }.onFailure { Timber.w(it, "Saving the stroke failed") }
+            runCatching { app.drawingRepository.add(coupleId, myUid, color, width, points) }
+                .onSuccess { touch() }
+                .onFailure { Timber.w(it, "Saving the stroke failed") }
         }
     }
 
@@ -167,6 +173,7 @@ class DrawingViewModel(private val app: LovelyyApplication, private val coupleId
                 // false = the partner saved this canvas first; it is cleared already, so just carry on quietly.
                 val saved = app.drawingRepository.saveAndClear(coupleId, me, current)
                 if (saved) Telemetry.track(AnalyticsEvent.DrawingSaved(current.size))
+                refreshSavedCount()
                 onDone()
             } catch (e: CancellationException) {
                 throw e
