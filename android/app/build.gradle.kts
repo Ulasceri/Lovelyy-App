@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -19,7 +21,7 @@ if (file("google-services.json").exists()) {
 // Release (upload) key for Google Play. Never committed: the passwords live in android/keystore.properties
 // (gitignored) or in environment variables, the .jks file outside the repo. See docs/play-console.md step 1.
 // Google Play re-signs the app with its own app-signing key; this key only proves the upload is ours.
-val keystoreProps = java.util.Properties().apply {
+val keystoreProps = Properties().apply {
     val f = rootProject.file("keystore.properties")
     if (f.exists()) f.inputStream().use { load(it) }
 }
