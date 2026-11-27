@@ -6,8 +6,6 @@
 - [ ] Google Cloud Console'da Android API anahtarını com.lovelyy.app + SHA-1'lerle ve Firebase API'leriyle sınırla.
 - [ ] Firebase Console > Authentication > Settings'te Email enumeration protection'ı aç.
 - [ ] Sinyal sınırlarını değiştirmek için Firestore'da config/limits dokümanındaki signalsPerHour / signalsPerDay / minGapSeconds alanlarını düzenle (yoksa oluştur; varsayılan 15 / 60 / 2).
-- [ ] Herkese açık iletişim e-postasını `web/CONTACT_EMAIL` içine yaz ve `python3 web/tools/build.py` çalıştır (şimdilik yer tutucu).
-- [ ] Web sitesini `npx firebase-tools deploy --only hosting --project lovelyy-native` ile yayınla.
 - [ ] Bildirimler için FCM eklenirse gizlilik politikasını ve Data safety taslağını güncelle.
 - [ ] Ada ile giriş yapıp Plans ve History ekranlarındaki Türkçe tarihleri (PR #10 sonrası) gözle kontrol et.
 - [ ] Eşleşme ekranındaki hesap penceresini ve hesap silmeyi Google ile giriş yapan bir hesapla da dene.
@@ -15,3 +13,7 @@
 - [ ] Ruh hali geçmişi yalnızca son 30 günü gösteriyor, daha eski aylara geçiş eklenmeli mi karar ver.
 - [ ] Kaydırma takılmasını (jank) emülatör yerine gerçek bir telefonda ölç.
 - [ ] Zayıf ağ (yavaş/gecikmeli bağlantı) testini emülatör konsol izni ayarlanınca tekrar yap.
+- [ ] Yükleme anahtarını (upload key) oluştur ve `android/keystore.properties` dosyasını yaz (docs/play-console.md bölüm 1).
+- [ ] Android Studio'da SDK 36'yı kur, targetSdk 36 + Billing 8 değişikliğinden sonra emülatörde genel bir tur at.
+- [ ] İlk AAB yüklendikten sonra Play imza SHA-1/SHA-256'larını Firebase'e ekle ve Play Integrity'yi bağla.
+- [ ] Play'de ödeme profilini aç, Plus ürünlerini ve lisans test kullanıcılarını kur (docs/play-console.md bölüm 6).

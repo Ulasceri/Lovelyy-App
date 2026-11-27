@@ -17,7 +17,6 @@ import com.android.billingclient.api.QueryProductDetailsParams
 import com.android.billingclient.api.QueryPurchasesParams
 import com.android.billingclient.api.acknowledgePurchase
 import com.android.billingclient.api.consumePurchase
-import com.android.billingclient.api.queryProductDetails
 import com.android.billingclient.api.queryPurchasesAsync
 import com.lovelyy.app.data.PlusPlan
 import com.lovelyy.app.data.PlusProducts
@@ -81,6 +80,9 @@ class BillingRepository(context: Context) : PurchasesUpdatedListener {
     private val client: BillingClient = BillingClient.newBuilder(context.applicationContext)
         .setListener(this)
         .enablePendingPurchases(PendingPurchasesParams.newBuilder().enableOneTimeProducts().build())
+        // Play Billing 8: reconnects by itself when Google Play drops the connection, so calls after a disconnect
+        // don't fail with SERVICE_DISCONNECTED.
+        .enableAutoServiceReconnection()
         .build()
 
     private val connectLock = Mutex()
@@ -129,16 +131,29 @@ class BillingRepository(context: Context) : PurchasesUpdatedListener {
         return _catalog.value
     }
 
+    /**
+     * One product's details. Uses the callback API (Play Billing 8 hands it a QueryProductDetailsResult) instead of
+     * the ktx wrapper, whose result type changed between major versions.
+     */
     private suspend fun query(id: String, type: String): ProductDetails? {
         val params = QueryProductDetailsParams.newBuilder()
             .setProductList(listOf(QueryProductDetailsParams.Product.newBuilder().setProductId(id).setProductType(type).build()))
             .build()
-        val result = client.queryProductDetails(params)
-        if (result.billingResult.responseCode != BillingResponseCode.OK) {
-            Timber.w("Product query failed: %d", result.billingResult.responseCode)
-            return null
+        return suspendCancellableCoroutine { cont ->
+            client.queryProductDetailsAsync(params) { result, details ->
+                val product = if (result.responseCode == BillingResponseCode.OK) {
+                    details.productDetailsList.firstOrNull()
+                } else {
+                    Timber.w("Product query failed: %d", result.responseCode)
+                    null
+                }
+                if (product == null && result.responseCode == BillingResponseCode.OK) {
+                    // Usually: the product isn't set up (or not active) in Play Console yet, see docs/play-console.md.
+                    Timber.w("Product not found in Google Play: %s", id)
+                }
+                if (cont.isActive) cont.resume(product)
+            }
         }
-        return result.productDetailsList?.firstOrNull()
     }
 
     /**

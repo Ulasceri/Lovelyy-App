@@ -40,11 +40,11 @@ Ertelenen işler: [todo.md](todo.md).
 
 ## Teknoloji
 
-- Kotlin 2.1, Android Gradle Plugin 8.10, `minSdk 26`, `compileSdk/targetSdk 35`, Java 17
+- Kotlin 2.1, Android Gradle Plugin 8.10, `minSdk 26`, `compileSdk/targetSdk 36`, Java 17
 - Jetpack Compose (BOM 2025.06) + Material 3, Quicksand yazı tipi
 - Firebase: Authentication, Firestore, Analytics, Crashlytics, Performance Monitoring
 - Credential Manager + Google ile giriş, Media3 ExoPlayer (kedi videoları), WorkManager (widget yenileme), Timber
-- Google Play Billing 7 (`billing-ktx`): Lovelyy Plus aboneliği ve hediye
+- Google Play Billing 8 (`billing-ktx`): Lovelyy Plus aboneliği ve hediye
 - Sürümlerin tamamı: [`android/gradle/libs.versions.toml`](android/gradle/libs.versions.toml)
 
 ## Klasör yapısı (monorepo)
@@ -78,6 +78,7 @@ Testler: `android/app/src/test/`.
 - Rehber ve kurallar: [CLAUDE.md](CLAUDE.md) · Tasarım dili: [DESIGN.md](DESIGN.md)
 - Ürün: [docs/product.md](docs/product.md) · Tasarım prensipleri: [docs/design-principles.md](docs/design-principles.md)
 - Mimari: [docs/architecture.md](docs/architecture.md) · Güvenlik: [docs/security.md](docs/security.md) · Analytics ve hata raporlama: [docs/analytics.md](docs/analytics.md)
+- Google Play yayını (imzalama, formlar, Plus ürünleri, mağaza metni): [docs/play-console.md](docs/play-console.md) · Data safety: [docs/play-data-safety.md](docs/play-data-safety.md)
 
 ## Derleme, çalıştırma, test
 
@@ -90,6 +91,9 @@ Testler: `android/app/src/test/`.
 - Birim testlerinde bellek hatası olursa: `./gradlew testDebugUnitTest -Dorg.gradle.jvmargs=-Xmx2048m`
 - Telemetri (analytics/Crashlytics/Performance) debug'da varsayılan olarak kapalıdır; açmak için
   `./gradlew assembleDebug -Ptelemetry.debug=true` ya da [docs/analytics.md](docs/analytics.md).
+- **Google Play için imzalı AAB:** `./gradlew bundleRelease`. Yükleme anahtarının şifreleri `android/keystore.properties`
+  dosyasından okunur (gitignore'da, asla commit edilmez); yoksa release derlemesi imzasız çıkar. Her yüklemede
+  `versionCode` bir artırılır. Adımlar: [docs/play-console.md](docs/play-console.md).
 
 ### Lovelyy Plus'ı denemek
 
