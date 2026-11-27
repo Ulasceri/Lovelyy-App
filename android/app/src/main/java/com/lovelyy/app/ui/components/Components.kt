@@ -1,5 +1,6 @@
 package com.lovelyy.app.ui.components
 
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.annotation.StringRes
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
@@ -191,7 +192,8 @@ fun BeatingHeart(modifier: Modifier = Modifier, size: Dp = 72.dp, color: Color =
         imageVector = Icons.Filled.Favorite,
         contentDescription = null,
         tint = color,
-        modifier = modifier.size(size).scale(scale),
+        // Read in the layer phase, so the pulse doesn't recompose every frame.
+        modifier = modifier.size(size).graphicsLayer { scaleX = scale; scaleY = scale },
     )
 }
 

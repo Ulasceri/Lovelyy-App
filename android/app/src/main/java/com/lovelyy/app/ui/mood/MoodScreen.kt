@@ -151,7 +151,7 @@ fun MoodScreen(me: UserProfile, partner: UserProfile?, moods: Map<String, MoodEn
                 )
                 val yourCd = stringResource(R.string.md_your_mood_cd)
                 Person(
-                    face = { MoodFace(sel, Modifier.size(56.dp).offset(y = bob.dp).semantics { contentDescription = yourCd }) },
+                    face = { MoodFace(sel, Modifier.size(56.dp).offset { androidx.compose.ui.unit.IntOffset(0, bob.dp.roundToPx()) }.semantics { contentDescription = yourCd }) },
                     who = stringResource(R.string.md_you),
                     label = stringResource(sel.labelRes()),
                     time = if (mine != null && mine.kind == sel) timeAgo(mine.at) else stringResource(R.string.md_now),

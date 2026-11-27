@@ -1,5 +1,6 @@
 package com.lovelyy.app.ui.pairing
 
+import androidx.compose.ui.graphics.graphicsLayer
 import android.content.Context
 import android.content.Intent
 import androidx.activity.compose.BackHandler
@@ -305,7 +306,7 @@ private fun CoupleAvatars(myName: String, modifier: Modifier = Modifier) {
             contentAlignment = Alignment.Center,
         ) {
             Box(
-                Modifier.size(36.dp).scale(beat).softShadow(CircleShape, 4.dp).clip(CircleShape).background(CreamCard),
+                Modifier.size(36.dp).graphicsLayer { scaleX = beat; scaleY = beat }.softShadow(CircleShape, 4.dp).clip(CircleShape).background(CreamCard),
                 contentAlignment = Alignment.Center,
             ) { Icon(Icons.Rounded.Favorite, null, tint = Peach, modifier = Modifier.size(18.dp)) }
         }
@@ -404,11 +405,11 @@ private fun PulseDot() {
         0f, 1f, infiniteRepeatable(tween(1800, easing = LinearEasing)), label = "t",
     )
     Box(Modifier.size(18.dp), contentAlignment = Alignment.Center) {
+        // Drawn in the draw phase: the pulse doesn't recompose every frame.
         Box(
             Modifier
-                .size(10.dp + 8.dp * t)
-                .clip(CircleShape)
-                .background(Mint.copy(alpha = 0.9f * (1f - t)))
+                .size(18.dp)
+                .drawBehind { drawCircle(Mint.copy(alpha = 0.9f * (1f - t)), radius = (10.dp + 8.dp * t).toPx() / 2f) }
         )
         Box(Modifier.size(10.dp).clip(CircleShape).background(Mint))
     }

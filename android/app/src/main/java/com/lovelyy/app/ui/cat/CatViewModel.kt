@@ -70,12 +70,17 @@ class CatViewModel(private val app: LovelyyApplication, private val coupleId: St
 
     private val repo = app.catRepository
     private val doc = MutableStateFlow<CatDoc?>(null)
-    private val clock = MutableStateFlow(TrustedClock.now())
     private val events = Channel<CatEvent>(Channel.BUFFERED)
     val oneTimeEvents = events.receiveAsFlow()
 
-    val ui: StateFlow<CatUi?> = combine(doc, clock) { d, now -> d?.let { CatUi(it, CatRules.levels(it, now)) } }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+    /**
+     * Needs decay with time: the levels are recomputed on every cat change and every [TICK_MS] while a screen shows
+     * them. Screens collect with their lifecycle, so the timer stops when the app is in the background.
+     */
+    val ui: StateFlow<CatUi?> = combine(doc, ticks()) { d, _ -> d?.let { CatUi(it, CatRules.levels(it, TrustedClock.now())) } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    private fun ticks() = kotlinx.coroutines.flow.flow { while (true) { emit(Unit); delay(TICK_MS) } }
 
     init {
         viewModelScope.launch {
@@ -88,7 +93,6 @@ class CatViewModel(private val app: LovelyyApplication, private val coupleId: St
                 }
                 .collect { d ->
                     doc.value = d
-                    clock.value = TrustedClock.now()
                     val last = d.lastAction
                     if (!first && last != null && last != previous && last.uid != myUid &&
                         TrustedClock.now() - last.at < PARTNER_EVENT_MAX_AGE_MS
@@ -100,13 +104,6 @@ class CatViewModel(private val app: LovelyyApplication, private val coupleId: St
                     CatWidget.save(app, coupleId, d)
                     maybeExplainStreak(d)
                 }
-        }
-        // Needs decay with time: refresh the computed levels regularly.
-        viewModelScope.launch {
-            while (true) {
-                delay(TICK_MS)
-                clock.value = TrustedClock.now()
-            }
         }
     }
 
