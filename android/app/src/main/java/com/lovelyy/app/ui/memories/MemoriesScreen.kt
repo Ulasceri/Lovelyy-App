@@ -64,7 +64,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
+import com.lovelyy.app.data.ListLimits
 import timber.log.Timber
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
@@ -76,11 +80,27 @@ class MemoriesViewModel(app: LovelyyApplication, coupleId: String) : ViewModel()
         catch { Timber.w(it, "Memories source unavailable") }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), initial)
 
     val notes = app.noteRepository.observe(coupleId).state(emptyList())
+
+    /** Real note total, asked only when the loaded page is full (null = unknown, shown as "200+"). */
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    val noteTotal: StateFlow<Long?> = notes
+        .map { it.size }
+        .distinctUntilChanged()
+        .mapLatest { if (ListLimits.needsCount(it, ListLimits.NOTES_PAGE)) app.noteRepository.count(coupleId) else null }
+        .state(null)
     val capsules = app.capsuleRepository.observe(coupleId).state(emptyList())
     val dreams = app.dreamRepository.observe(coupleId).state(emptyList())
     val saved = app.drawingRepository.observeSaved(coupleId).state(emptyList())
     val strokes = app.drawingRepository.observe(coupleId).state(emptyList())
     val presence = app.drawingRepository.observePresence(coupleId).state(emptyMap())
+}
+
+/** "320 not", or "200+ not" while the real total is unknown and the loaded page is full. */
+@Composable
+private fun noteCountText(loaded: Int, total: Long?): String {
+    val label = ListLimits.countLabel(loaded, ListLimits.NOTES_PAGE, total)
+    return if (label.atLeast) stringResource(R.string.mm_notes_count_plus, label.count)
+    else pluralStringResource(R.plurals.mm_notes_count, label.count, label.count)
 }
 
 /** One line of "Son anılar". [who] null = something you did together. */
@@ -101,6 +121,7 @@ fun MemoriesScreen(
     val app = lovelyyApp()
     val vm: MemoriesViewModel = viewModel(key = "memories-$coupleId") { MemoriesViewModel(app, coupleId) }
     val notes by vm.notes.collectAsStateWithLifecycle()
+    val noteTotal by vm.noteTotal.collectAsStateWithLifecycle()
     val capsules by vm.capsules.collectAsStateWithLifecycle()
     val dreams by vm.dreams.collectAsStateWithLifecycle()
     val saved by vm.saved.collectAsStateWithLifecycle()
@@ -143,7 +164,7 @@ fun MemoriesScreen(
             val latest = notes.maxByOrNull { it.at }
             SmallTile(
                 NOTE_D, PeachSoft, stringResource(R.string.feature_notes),
-                if (notes.isEmpty()) stringResource(R.string.mm_notes_none) else pluralStringResource(R.plurals.mm_notes_count, notes.size.toInt(), notes.size),
+                if (notes.isEmpty()) stringResource(R.string.mm_notes_none) else noteCountText(notes.size, noteTotal),
                 latest?.let { stringResource(R.string.mm_notes_new, it.text.lineSequence().first().take(18).let { t -> if (it.text.length > 18) "$t…" else t }) },
                 Modifier.weight(1f), onNotes,
             )
@@ -224,7 +245,9 @@ private fun recentMemories(
             year++
         }
     }
-    return list.sortedByDescending { it.at }.take(5)
+    val now = System.currentTimeMillis()
+    // A partner clock running ahead must not pin an item to the top with a future date.
+    return list.map { it.copy(at = com.lovelyy.app.data.DisplayTime.clamp(it.at, now)) }.sortedByDescending { it.at }.take(5)
 }
 
 private fun LocalDate.toEpochMillis(): Long = atStartOfDay(com.lovelyy.app.data.CoupleClock.zone()).toInstant().toEpochMilli() + 12 * 3_600_000L

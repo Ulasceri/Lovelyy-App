@@ -16,10 +16,17 @@ class TurkishSuffixTest {
     fun restore() = Locale.setDefault(original)
 
     @Test
-    fun otherLanguagesLeaveNamesUnchanged() {
+    fun unshippedLanguageFallsBackToTurkish() {
+        // Only Turkish strings ship, so an English phone still reads Turkish text and needs Turkish endings.
         Locale.setDefault(Locale.ENGLISH)
-        assertEquals("Elif", TurkishSuffix.dative("Elif"))
-        assertEquals("Elif", TurkishSuffix.locative("Elif"))
+        assertEquals("Elif'e", TurkishSuffix.dative("Elif"))
+        assertEquals("tr", AppLocale.current().language)
+    }
+
+    @Test
+    fun matchingDeviceLocaleKeepsItsRegion() {
+        Locale.setDefault(Locale.forLanguageTag("tr-CY"))
+        assertEquals(Locale.forLanguageTag("tr-CY"), AppLocale.current())
     }
 
     @Test

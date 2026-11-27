@@ -97,7 +97,11 @@ object CatWidget {
     private fun renderWide(context: Context): RemoteViews {
         val doc = load(context)
         val views = RemoteViews(context.packageName, R.layout.widget_cat_wide)
-        views.setOnClickPendingIntent(R.id.wide_root, openApp(context, DeepLink.CAT))
+        // Plus-only widget: without Plus it shows a gentle "Plus ile" panel and a tap opens the Plus lock (P4).
+        val plus = WidgetData.plusActive(context)
+        views.setViewVisibility(R.id.wide_info, if (plus) android.view.View.VISIBLE else android.view.View.GONE)
+        views.setViewVisibility(R.id.wide_locked, if (plus) android.view.View.GONE else android.view.View.VISIBLE)
+        views.setOnClickPendingIntent(R.id.wide_root, openApp(context, if (plus) DeepLink.CAT else DeepLink.PLUS_LOCK_WIDE))
         val couple = WidgetData.couple(context)
         views.setTextViewText(
             R.id.wide_couple,

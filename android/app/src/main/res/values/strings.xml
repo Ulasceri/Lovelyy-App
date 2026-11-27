@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Lovelyy</string>
+    <!-- Translators: the language code of this strings file (e.g. "en" in values-en). Dates and name endings follow it. -->
+    <string name="app_language">tr</string>
 
     <!-- Login -->
     <string name="login_google">Google ile devam et</string>
@@ -55,6 +57,7 @@
     <string name="cat_name_title">Kedinize bir isim verin</string>
     <string name="cat_name_body">İsmi ikiniz de göreceksiniz, istediğiniz zaman değiştirebilirsiniz.</string>
     <string name="cat_name_hint">Örn. Mırmır</string>
+    <string name="cat_offline">İnternet yok, %1$s için sonra bakalım</string>
     <string name="cat_error">Bağlantı sorunu oldu, tekrar dener misin?</string>
     <string name="action_save">Kaydet</string>
     <string name="action_cancel">Vazgeç</string>
@@ -495,6 +498,7 @@
     <string name="n_theirs">%1$s</string>
     <string name="n_pinned">Sabit</string>
     <string name="n_write">Not yaz</string>
+    <string name="n_load_more">Daha eski notları göster</string>
     <string name="n_empty">Henüz not yok. İlk notu sen yaz.</string>
     <string name="n_today">Bugün %1$s</string>
     <string name="n_yesterday">Dün %1$s</string>
@@ -786,6 +790,7 @@
         <item quantity="one">%1$d not</item>
         <item quantity="other">%1$d not</item>
     </plurals>
+    <string name="mm_notes_count_plus">%1$d+ not</string>
     <string name="mm_notes_new">Yeni: “%1$s”</string>
     <string name="mm_notes_none">Henüz not yok</string>
     <plurals name="mm_capsule_count">
@@ -1106,4 +1111,169 @@
         <item>Ct</item>
         <item>Pz</item>
     </string-array>
+
+    <!-- Lovelyy Plus (design round 3, P1-P10). Prices are fallbacks when Google Play can't be reached. -->
+    <string name="plus_name">Lovelyy Plus</string>
+    <string name="plus_pill">Plus</string>
+    <string name="plus_one_sub">İkiniz için tek abonelik</string>
+    <string name="plus_one_sub_long">İkiniz için tek abonelik. Biri alır, ikiniz kullanır.</string>
+    <string name="plus_price_yearly_fallback" translatable="false">₺499,99</string>
+    <string name="plus_price_first_year_fallback" translatable="false">₺399,99</string>
+    <string name="plus_price_monthly_fallback" translatable="false">₺79,99</string>
+    <string name="plus_price_gift_fallback" translatable="false">₺499,99</string>
+    <string name="plus_terms_url" translatable="false">https://lovelyy-native.web.app/kullanim-sartlari.html</string>
+    <string name="plus_privacy_url" translatable="false">https://lovelyy-native.web.app/gizlilik.html</string>
+    <string name="plus_trial_title">14 gün Plus ikinize hediye</string>
+    <string name="plus_trial_body">Kart yok, ödeme yok. 14 gün sonra kendiliğinden biter, ücretsiz haliyle devam edersiniz.</string>
+    <string name="plus_trial_start">Başlayalım</string>
+    <string name="plus_b_streak">Seri koruması</string>
+    <string name="plus_b_streak_sub">Ayda 2 izin günü; kaçan günü 24 saat içinde telafi</string>
+    <string name="plus_b_things">%1$s eşyaları</string>
+    <string name="plus_b_things_sub">Mama kabı, yatak, oyuncak: birlikte seçin</string>
+    <string name="plus_b_widgets">Geniş kedi ve kalp widget\'ları</string>
+    <string name="plus_b_widgets_sub">%1$s ana ekranınızda, temalarıyla</string>
+    <string name="plus_b_question">İkinci günlük soru ve tüm geçmiş</string>
+    <string name="plus_b_question_sub">Soru paketleri, arşiv, sınırsız listeler</string>
+    <string name="plus_card_trial_pill">Plus · deneme</string>
+    <string name="plus_card_trial_day">%1$d. gün / 14</string>
+    <plurals name="plus_days_left">
+        <item quantity="one">%d gün kaldı</item>
+        <item quantity="other">%d gün kaldı</item>
+    </plurals>
+    <string name="plus_until">%1$s kadar</string>
+    <string name="plus_card_trial_note">İkinize hediye. Kart istemedik, kendiliğinden biter.</string>
+    <string name="plus_card_more">Neler var?</string>
+    <string name="plus_card_progress_cd">Deneme: 14 günün %1$d. günü</string>
+    <string name="plus_plan_yearly">Plus · yıllık</string>
+    <string name="plus_plan_monthly">Plus · aylık</string>
+    <string name="plus_plan_gift">Plus · hediye</string>
+    <string name="plus_state_active">Etkin</string>
+    <string name="plus_state_ending">Yenilenmeyecek</string>
+    <string name="plus_state_off">Kapalı</string>
+    <string name="plus_renews_on">%1$s yenilenir</string>
+    <string name="plus_ends_on">%1$s bitiyor</string>
+    <string name="plus_card_paid_note">İkinizde de açık.</string>
+    <string name="plus_card_free_title">Plus ile ikinize daha fazlası</string>
+    <string name="plus_card_free_sub">Seri koruması, geniş widget\'lar ve tüm geçmiş. İkiniz için tek abonelik.</string>
+    <string name="plus_card_see_plans">Planlara bak</string>
+    <plurals name="plus_day12_title">
+        <item quantity="one">Plus\'ın bitmesine %d gün</item>
+        <item quantity="other">Plus\'ın bitmesine %d gün</item>
+    </plurals>
+    <string name="plus_day12_body">Seri koruması, %1$s eşyaları ve geniş widget ikinizde kalsın mı?</string>
+    <string name="plus_card_close">Kartı kapat</string>
+    <string name="plus_takeover_title_soon">Plus bugün bitiyor</string>
+    <string name="plus_takeover_title_over">Plus bitti</string>
+    <string name="plus_takeover_body">%1$s aboneliği %2$s sona eriyor. İstersen sen devam ettir: hiçbir şey kesilmez, ikinizde de açık kalır.</string>
+    <string name="plus_takeover_body_over">%1$s aboneliği sona erdi. İstersen sen devam ettir; Plus ikinizde de yeniden açılır.</string>
+    <string name="plus_takeover_card_cta">Ben devam ettireyim</string>
+    <string name="plus_takeover_note">%1$s yeniden ücret alınmaz. Abonelik bundan sonra senin hesabında olur.</string>
+    <string name="plus_takeover_buy">Ben devam ettireyim · %1$s</string>
+    <string name="plus_takeover_button">Plus\'ı ben devam ettireyim</string>
+    <string name="plus_later">Şimdi değil</string>
+    <string name="plus_yearly">Yıllık</string>
+    <string name="plus_monthly">Aylık</string>
+    <string name="plus_yearly_sub">Yılda bir yenilenir</string>
+    <string name="plus_yearly_offer_sub">İlk yıl, sonra yılda %1$s</string>
+    <string name="plus_monthly_sub">Her ay yenilenir</string>
+    <string name="plus_per_year">yılda</string>
+    <string name="plus_per_month">ayda</string>
+    <string name="plus_first_year">ilk yıl</string>
+    <string name="plus_offer_badge">İlk yıla özel · %1$s kaldı</string>
+    <string name="plus_paywall_close">Kapat, ücretsiz devam et</string>
+    <string name="plus_paywall_title_trial">14 günlük Plus\'ınız bitti</string>
+    <string name="plus_paywall_title">Plus ile ikinize daha fazlası</string>
+    <string name="plus_paywall_lose">İkinizin kaybedeceği şeyler</string>
+    <string name="plus_paywall_gain">Plus\'ta neler var</string>
+    <plurals name="plus_row_streak_count">
+        <item quantity="one">%d günlük seriniz</item>
+        <item quantity="other">%d günlük seriniz</item>
+    </plurals>
+    <string name="plus_row_streak_sub">Seri korumasıyla kaçan bir gün seriyi bozmaz</string>
+    <string name="plus_row_drawing">Tüm fırçalar, sınırsız çizim galerisi</string>
+    <string name="plus_row_drawing_sub">Ücretsizde yalnızca son 10 çizim ve 6 renk</string>
+    <string name="plus_row_widget">Geniş kedi widget\'ı ana ekranda</string>
+    <string name="plus_row_widget_sub">İkinizin telefonunda da duruyor</string>
+    <string name="plus_buy_continue">Plus\'ı sürdür · %1$s</string>
+    <string name="plus_buy_start">Plus\'ı başlat · %1$s</string>
+    <string name="plus_disc_yearly_offer">Yıllık plan ilk yıl %1$s, sonra yılda %2$s ile kendiliğinden yenilenir. İstediğin zaman Google Play\'den iptal edebilirsin.</string>
+    <string name="plus_disc_yearly">Yıllık plan yılda %1$s ile kendiliğinden yenilenir. İstediğin zaman Google Play\'den iptal edebilirsin.</string>
+    <string name="plus_disc_monthly">Aylık plan ayda %1$s ile kendiliğinden yenilenir. İstediğin zaman Google Play\'den iptal edebilirsin.</string>
+    <string name="plus_restore">Satın alımları geri yükle</string>
+    <string name="plus_restore_sub">Telefon değiştirdiysen ya da Plus görünmüyorsa</string>
+    <string name="plus_terms">Kullanım şartları</string>
+    <string name="plus_privacy">Gizlilik</string>
+    <string name="plus_lock_preview">Önizleme</string>
+    <string name="plus_lock_wide_title">Geniş kedi widget\'ı Plus\'ta</string>
+    <string name="plus_lock_wide_body">%1$s dört ihtiyacı ve seriniz ana ekranda. Plus ikiniz için tek abonelik: ayda %2$s ya da yılda %3$s.</string>
+    <string name="plus_lock_heart_title">Tek dokunuşla kalp Plus\'ta</string>
+    <string name="plus_lock_heart_body">Ana ekrandan tek dokunuşla kalp gönder. Plus ikiniz için tek abonelik: ayda %1$s ya da yılda %2$s.</string>
+    <string name="plus_lock_plans">Planları gör</string>
+    <string name="plus_gift_top">Plus hediye et</string>
+    <string name="plus_gift_title">%1$s Plus hediye et</string>
+    <string name="plus_gift_sub">Tek hediye, ikinizde de açılır.</string>
+    <string name="plus_gift_product">1 yıl Plus hediye</string>
+    <string name="plus_one_time">tek ödeme</string>
+    <string name="plus_gift_no_renew">Yenilenmez, sonradan sürpriz ödeme çıkmaz.</string>
+    <string name="plus_gift_no_renew_sub">Bir yıl sonra kendiliğinden biter; isterseniz o zaman uzatırsınız.</string>
+    <string name="plus_gift_note">Kısa bir not</string>
+    <string name="plus_gift_note_optional">(istersen)</string>
+    <string name="plus_gift_note_count">%1$d / %2$d</string>
+    <string name="plus_gift_note_hint">İyi ki varsın…</string>
+    <string name="plus_gift_partner_sees">%1$s uygulamayı açınca notunla birlikte bir kutlama görür.</string>
+    <string name="plus_gift_buy">Hediye et · %1$s</string>
+    <string name="plus_gift_disc">Tek seferlik ödeme, abonelik değildir. Ödeme Google Play ile alınır.</string>
+    <string name="plus_gift_cta_sub">1 yıl, tek ödeme, yenilenmez</string>
+    <string name="plus_cele_badge">Plus açıldı</string>
+    <string name="plus_cele_gift_title">%1$s sana Plus hediye etti</string>
+    <string name="plus_cele_gift_sub">1 yıl boyunca ikinizde de açık.</string>
+    <string name="plus_cele_sub_title">Plus açıldı, ikinizde de</string>
+    <string name="plus_cele_sub_sub">%1$s Plus\'ı aldı. İkiniz için tek abonelik.</string>
+    <string name="plus_cele_widgets">Geniş widget\'lar</string>
+    <string name="plus_cele_heart">%1$s kalp gönder</string>
+    <string name="plus_manage_title">Lovelyy Plus</string>
+    <string name="plus_bought_by_me">Sen satın aldın</string>
+    <string name="plus_bought_by_me_sub">Tek abonelik, %1$s açık</string>
+    <string name="plus_bought_by">%1$s satın aldı</string>
+    <string name="plus_gifted_by_me">Sen hediye ettin</string>
+    <string name="plus_gifted_by_me_sub">1 yıllık hediye, %1$s da açık</string>
+    <string name="plus_gifted_by">%1$s hediye etti</string>
+    <string name="plus_managed_by">Aboneliği %1$s yönetiyor</string>
+    <string name="plus_price_year">Yılda %1$s · Google Play</string>
+    <string name="plus_price_month">Ayda %1$s · Google Play</string>
+    <string name="plus_price_gift">Tek seferlik hediye · yenilenmez</string>
+    <plurals name="plus_ends_left">
+        <item quantity="one">%d gün kaldı · o güne kadar ikinizde de açık</item>
+        <item quantity="other">%d gün kaldı · o güne kadar ikinizde de açık</item>
+    </plurals>
+    <string name="plus_f1">Seri koruması: izin günü ve telafi</string>
+    <string name="plus_f2">%1$s eşyaları ve mevsim takımları</string>
+    <string name="plus_f3">Geniş kedi, kalp widget\'ı ve temalar</string>
+    <string name="plus_f4">İkinci günlük soru, paketler, arşiv</string>
+    <string name="plus_f5">Tüm fırçalar, sınırsız çizim galerisi</string>
+    <string name="plus_f6">Sınırsız liste, tüm geçmiş, uygulama simgeleri</string>
+    <string name="plus_manage_link">Aboneliği yönet</string>
+    <string name="plus_manage_link_sub">Google Play\'de açılır: plan değiştir ya da iptal et</string>
+    <string name="plus_manage_footer">İptal edersen Plus dönem sonuna kadar sürer. Sonra hiçbir şey silinmez: sınırı aşan listeler ve eski geçmiş yalnızca okunur olur.</string>
+    <string name="plus_partner_footer">%1$s aboneliği yenilenirken ikinci bir satın alma kapalıdır; Plus zaten ikinizde açık. Yalnızca bitmek üzereyken devralabilirsin.</string>
+    <string name="plus_plans">Planlar</string>
+    <string name="plus_free_title">Ücretsiz sürümdesiniz</string>
+    <string name="plus_free_sub">Hiçbir şey silinmedi; Plus\'ı istediğin zaman açabilirsin.</string>
+    <string name="plus_err_blocked">Plus zaten ikinizde açık ve yenileniyor; ikinci bir satın almaya gerek yok.</string>
+    <string name="plus_err_unavailable">Google Play\'e şu an ulaşılamadı. Biraz sonra yeniden dene.</string>
+    <string name="plus_err_failed">Satın alma tamamlanamadı. Ücret alınmadı, yeniden deneyebilirsin.</string>
+    <string name="plus_err_record">Satın alma alındı ama kaydedilemedi. İnternetini kontrol edip \"Satın alımları geri yükle\"ye dokun.</string>
+    <string name="plus_pending">Ödemen onay bekliyor. Onaylanınca Plus ikinizde de açılır.</string>
+    <string name="plus_restored">Plus geri yüklendi.</string>
+    <string name="plus_restore_none">Bu Google hesabında Lovelyy Plus satın alımı bulunamadı.</string>
+    <string name="plus_done">Plus açıldı, ikinizde de.</string>
+    <string name="plus_gift_done">Hediyen gönderildi.</string>
+    <string name="plus_widget_locked">Plus ile</string>
+    <string name="plus_widget_locked_sub">Dokun, ayrıntılar</string>
+    <string name="plus_debug_title" translatable="false">Debug · Plus</string>
+    <string name="plus_debug_day" translatable="false">+1 gün</string>
+    <string name="plus_debug_real_time" translatable="false">Gerçek zaman</string>
+    <string name="plus_debug_stop_renew" translatable="false">Yenilemeyi kapat</string>
+    <string name="plus_debug_reset" translatable="false">Satın alımı sıfırla</string>
+    <string name="plus_debug_fake" translatable="false">Sahte satın alma: %1$s</string>
 </resources>

@@ -75,6 +75,19 @@ class AppViewModel(private val app: LovelyyApplication) : ViewModel() {
         pairedFlowTick.value++
     }
 
+    /** P1 "Başlayalım": start the couple's 14-day Plus trial (once; the other phone or Home may already have). */
+    fun startTrial(coupleId: String) {
+        viewModelScope.launch {
+            try {
+                if (app.plusRepository.ensureTrial(coupleId, System.currentTimeMillis())) Telemetry.track(AnalyticsEvent.TrialStarted)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.w(e, "Starting the Plus trial failed")
+            }
+        }
+    }
+
     fun notificationPrimerAnswered(allowed: Boolean) =
         Telemetry.track(AnalyticsEvent.PermissionPrimerAnswered("notifications", allowed))
 

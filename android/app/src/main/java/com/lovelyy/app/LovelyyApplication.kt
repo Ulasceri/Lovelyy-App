@@ -26,6 +26,8 @@ class LovelyyApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        // Dates and name endings follow the language of the strings Android shows (docs/LOCALIZATION.md).
+        com.lovelyy.app.text.AppLocale.init(this)
         // Logging, analytics, crash reports, performance. See docs/analytics.md.
         Telemetry.init(this)
         // App Check before any Firestore call, so every request carries a token (docs/security.md).
@@ -57,6 +59,9 @@ class LovelyyApplication : Application() {
     val drawingRepository by lazy { DrawingRepository(FirebaseFirestore.getInstance()) }
     val leaveRepository by lazy { LeaveRepository(FirebaseFirestore.getInstance(), FirebaseAuth.getInstance()) }
     val signalCenter by lazy { SignalCenter(this) }
+    /** Lovelyy Plus: the couple's plus map (Firestore) and Google Play purchases. */
+    val plusRepository by lazy { com.lovelyy.app.data.PlusRepository(FirebaseFirestore.getInstance()) }
+    val billingRepository by lazy { com.lovelyy.app.billing.BillingRepository(this) }
 
     /** A screen asked for by a widget or notification tap; Home opens it and clears it. */
     val pendingRoute = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)

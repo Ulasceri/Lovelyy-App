@@ -1,5 +1,6 @@
 package com.lovelyy.app.data
 
+import com.google.firebase.firestore.AggregateSource
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
@@ -8,6 +9,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+import timber.log.Timber
 
 /** Sticky-note colors (index into the palette in ui/notes). */
 const val NOTE_COLORS = 5
@@ -110,9 +112,30 @@ class NoteRepository(private val db: FirebaseFirestore) {
         notes(coupleId).document(id).delete().await()
     }
 
-    /** All notes, pinned first, then newest first. */
-    fun observe(coupleId: String): Flow<List<Note>> = callbackFlow {
-        val reg = notes(coupleId).orderBy("at", Query.Direction.DESCENDING).limit(200).addSnapshotListener { snap, err ->
+    /**
+     * The newest [limit] notes (default one page, [ListLimits.NOTES_PAGE]), pinned first, then newest first.
+     * Older notes are reached by calling this again with [ListLimits.nextLimit] ("load more"); the listener
+     * is then re-created, so the whole window is re-read once.
+     */
+    fun observe(coupleId: String, limit: Int = ListLimits.NOTES_PAGE): Flow<List<Note>> = observeQuery(
+        notes(coupleId).orderBy("at", Query.Direction.DESCENDING).limit(limit.toLong()),
+    )
+
+    /** Every note, no limit. Only for search, and only started once the user types a query. */
+    fun observeAll(coupleId: String): Flow<List<Note>> = observeQuery(notes(coupleId).orderBy("at", Query.Direction.DESCENDING))
+
+    /** The real number of notes (server-side count aggregation, billed as ~1 read per 1000 notes); null if unavailable (offline). */
+    suspend fun count(coupleId: String): Long? = try {
+        notes(coupleId).count().get(AggregateSource.SERVER).await().count
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        Timber.w(e, "Note count unavailable")
+        null
+    }
+
+    private fun observeQuery(query: Query): Flow<List<Note>> = callbackFlow {
+        val reg = query.addSnapshotListener { snap, err ->
             if (err != null) {
                 close(err)
             } else if (snap != null) {

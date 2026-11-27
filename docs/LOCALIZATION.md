@@ -18,6 +18,7 @@ enums) found only a handful of literal UI strings; the rest of the work was maki
 | Literals moved | Weekday header of the calendar (`cal_weekdays_short` string-array), letter quote marks (`ol_quote`), the cat need-bar `contentDescription` (reuses `cc_percent`). |
 | Dates / time | New `text/AppLocale.kt`: `AppLocale.current()` (never cached) and `AppLocale.formatter(skeleton)`, built on `DateFormat.getBestDateTimePattern`. All hardcoded `Locale("tr")` / `"d MMMM yyyy"` patterns were replaced, the per-file `TR` constants removed, top-level formatters became getters so a language change is picked up. Month/weekday names and word order now follow the locale. |
 | Case / numbers | `uppercase/lowercase/titlecase` and `NumberFormat` use `AppLocale.current()` (matters for Turkish dotted/dotless i vs other languages). Geocoder (city names) uses the current locale. |
+| UI language | `AppLocale.current()` follows the language of the strings Android shows: the `app_language` string (`tr` in `values/`). If the device or per-app language has a `values-xx`, that locale is used; otherwise the Turkish default strings show and dates/name endings follow them (no English dates inside Turkish text). |
 | Turkish grammar | `TurkishSuffix` ("Elif'e", "Ulaş'ın", "Perşembe'den") only applies when the UI language is Turkish; any other language gets the plain name, so a translation just writes `%1$s`. Unit test added for this. |
 | Per-app language | `res/xml/locales_config.xml` (only `tr` for now) referenced from the manifest via `android:localeConfig`. |
 | Widgets / channel | `widget/LocaleChangedReceiver` (manifest, `LOCALE_CHANGED`) redraws all widgets and refreshes the notification channel name/description. |
@@ -26,7 +27,8 @@ enums) found only a handful of literal UI strings; the rest of the work was maki
 
 1. Create `android/app/src/main/res/values-xx/strings.xml` (e.g. `values-en`) with every key of `values/strings.xml`,
    including each `<plurals>` (use all quantities the language needs, e.g. `few`/`many` for Polish or Russian) and the
-   `cal_weekdays_short` array (Monday first).
+   `cal_weekdays_short` array (Monday first). Set `app_language` to the language code (`en`); dates and
+   case follow it automatically.
 2. Add `<locale android:name="xx" />` to `res/xml/locales_config.xml`. The user then picks the language in
    system Settings > Apps > Lovelyy > Language (Android 13+).
 3. Android 12 and below: per-app language needs AppCompat (`AppCompatDelegate.setApplicationLocales`) plus
